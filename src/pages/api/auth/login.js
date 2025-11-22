@@ -1,9 +1,7 @@
-// src/pages/api/auth/login.js
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 
 export default async function handler(req, res) {
-  // Hanya menerima method POST (kirim data rahasia)
   if (req.method !== 'POST') return res.status(405).end();
 
   const { username, password } = req.body;
@@ -13,32 +11,46 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Cari user di database berdasarkan username
+    // 1. Cari user di tabel users
     const user = await prisma.users.findFirst({
       where: { username: username }
     });
 
-    // 2. Jika user tidak ditemukan
     if (!user) {
       return res.status(401).json({ message: 'Username tidak ditemukan' });
     }
 
-    // 3. Cek password (Sesuai kolom di DB Anda)
-    // Catatan: Untuk production nanti sebaiknya password di-hash (dienkripsi)
+    // 2. Cek password
     if (user.password !== password) {
       return res.status(401).json({ message: 'Password salah' });
     }
 
-    // 4. Login Sukses!
-    // Kita kirim data user tapi HAPUS passwordnya agar aman
+    // 3. AMBIL ROLE ID DARI TABEL EMPLOYEE
+    // Kita cari data pegawai berdasarkan users_id
+    const employee = await prisma.employee.findFirst({
+      where: { users_id: user.id },
+      include: { role: true } // Opsional: ambil nama role juga
+    });
+
+    // Jika user ada tapi belum diset sebagai pegawai (belum punya role)
+    if (!employee) {
+      return res.status(403).json({ message: 'Akun ini belum memiliki Jabatan/Role.' });
+    }
+
+    // 4. Login Sukses & Kirim Data Lengkap
     const { password: _, ...userWithoutPassword } = user;
     
     return res.status(200).json({ 
         message: 'Login Berhasil', 
-        user: serialize(userWithoutPassword) 
+        user: {
+          ...serialize(userWithoutPassword),
+          roleId: employee.role_id.toString(), // PENTING: Kirim Role ID ke frontend
+          roleName: employee.role?.role
+        }
     });
 
   } catch (error) {
+    console.error("Login Error:", error);
     return res.status(500).json({ error: error.message });
   }
 }

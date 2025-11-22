@@ -6,8 +6,7 @@ import { logout } from '../store/slices/authSlice';
 import { Assets } from "../assets";
 import Swal from 'sweetalert2';
 
-// --- 1. ICON MAPPING ---
-// Kunci (Key) harus SAMA PERSIS dengan kolom 'url' di database public.menu
+// --- ICON MAPPING (Sama seperti sebelumnya) ---
 const ICON_MAP = {
   "/Admin/Dashboard": (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -50,12 +49,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const [openMenus, setOpenMenus] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- 2. LOGIC FETCH & TRANSFORM DATA ---
+  // --- LOGIC FETCH & TRANSFORM DATA ---
   useEffect(() => {
     const fetchMenus = async () => {
       const roleId = user?.roleId || user?.role_id;
-      
-      // Jika belum ada roleId, jangan fetch dulu
       if (!roleId) {
         setIsLoading(false); 
         return;
@@ -66,34 +63,22 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         const data = await res.json(); 
 
         if (res.ok) {
-          // Ambil object menu-nya saja dari response permission
           const rawMenus = data.map(item => item.menu);
-
-          // [PERBAIKAN PENTING]: Normalisasi ID ke String agar pencocokan akurat
           const normalizedMenus = rawMenus.map(m => ({
             ...m,
-            id: String(m.id), // Paksa ID jadi string
-            parent_id: m.parent_id ? String(m.parent_id) : null // Paksa ParentID jadi string
+            id: String(m.id),
+            parent_id: m.parent_id ? String(m.parent_id) : null
           }));
 
-          // 1. Ambil Semua Parent (yang parent_id-nya null)
           const parents = normalizedMenus.filter(m => !m.parent_id);
-          
-          // 2. Ambil Semua Child (yang punya parent_id)
           const children = normalizedMenus.filter(m => m.parent_id);
 
-          // 3. Susun Hierarki
           const structuredMenu = parents.map(parent => {
-            // Cari anak yang parent_id-nya SAMA dengan id parent ini
             const myChildren = children.filter(child => child.parent_id === parent.id);
-            
             return {
               name: parent.nama_menu,
               path: parent.url || "#",
-              // Pilih icon berdasarkan URL, fallback ke default jika tidak ketemu
               icon: ICON_MAP[parent.url] || ICON_MAP["default"],
-              
-              // Format anak-anaknya
               subItems: myChildren.map(child => ({
                 name: child.nama_menu,
                 path: child.url
@@ -101,7 +86,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             };
           });
 
-          // Safety Net: Pastikan Dashboard selalu muncul jika user admin tapi belum di-assign menu
           if (!structuredMenu.find(m => m.path === '/Admin/Dashboard')) {
              structuredMenu.unshift({
                name: "Beranda",
@@ -123,11 +107,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     fetchMenus();
   }, [user]);
 
-  // --- 3. SECURITY CHECK (REDIRECT JIKA DILARANG) ---
+  // --- SECURITY CHECK ---
   useEffect(() => {
     if (!isLoading && menuItems.length > 0) {
       const currentPath = router.pathname;
-      
       let allowedPaths = [];
       menuItems.forEach(item => {
         allowedPaths.push(item.path);
@@ -177,7 +160,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     }).then((result) => {
       if (result.isConfirmed) {
         dispatch(logout());
-        // Hapus juga local storage agar bersih total
         localStorage.removeItem('adminUser');
         router.push('/Admin/LoginAdmin');
       }
@@ -191,19 +173,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const isExpanded = openMenus[item.name] || isActiveParent;
 
     return (
-      <div key={index} className="mb-2">
+      <div key={index} className="mb-3"> {/* Margin bottom antar item diperbesar */}
         {hasSubItems ? (
-          // TIPE 1: MENU DROPDOWN (Ada Submenu)
+          // TIPE 1: MENU DROPDOWN
           <div>
             <button
               onClick={() => toggleMenu(item.name)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg font-['Poppins'] font-medium transition-all duration-200 
-                ${isActiveParent ? 'text-gray-800' : 'text-gray-500 hover:bg-gray-50'}
+              className={`w-full flex items-center justify-between px-6 py-3.5 rounded-xl font-['Poppins'] font-medium transition-all duration-200 
+                ${isActiveParent ? 'text-gray-900 bg-gray-50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}
               `}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <span className={isActiveParent ? 'text-gray-700' : 'text-gray-400'}>{item.icon}</span>
-                <span>{item.name}</span>
+                <span className="text-[15px]">{item.name}</span>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -211,18 +193,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </button>
 
             {isExpanded && (
-              <div className="mt-1 pl-4 space-y-1">
+              <div className="mt-2 pl-6 space-y-1">
                 {item.subItems.map((sub, subIndex) => {
                   const isSubActive = router.pathname === sub.path;
                   return (
                     <Link
                       key={subIndex}
                       href={sub.path}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-['Poppins'] transition-colors 
-                        ${isSubActive ? 'text-[#5FCF2F] font-semibold' : 'text-gray-500 hover:text-gray-700'}
+                      className={`flex items-center gap-3 px-6 py-2.5 rounded-lg text-sm font-['Poppins'] transition-colors 
+                        ${isSubActive ? 'text-[#39B54A] font-semibold' : 'text-gray-500 hover:text-gray-700'}
                       `}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50"></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-[#39B54A]' : 'bg-gray-300'}`}></span>
                       {sub.name}
                     </Link>
                   );
@@ -231,18 +213,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             )}
           </div>
         ) : (
-          // TIPE 2: SINGLE LINK (Tanpa Submenu)
+          // TIPE 2: SINGLE LINK (Seperti Beranda)
           <Link
             href={item.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-['Poppins'] font-medium transition-all duration-200 
+            className={`flex items-center gap-4 px-6 py-3.5 rounded-xl font-['Poppins'] font-medium transition-all duration-200 
               ${router.pathname === item.path 
-                ? 'bg-[#5FCF2F] text-white shadow-md shadow-green-200' 
+                // UPDATE: Gradient Hijau yang SAMA PERSIS dengan Cards Dashboard
+                ? 'bg-gradient-to-r from-[#94E93F] to-[#39B54A] text-white shadow-lg shadow-green-200' 
                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }
             `}
           >
             {item.icon}
-            <span>{item.name}</span>
+            <span className="text-[15px]">{item.name}</span>
           </Link>
         )}
       </div>
@@ -251,48 +234,51 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:flex h-screen w-64 bg-white shadow-xl flex-col sticky top-0 z-50">
-        <div className="pt-8 pb-6 flex justify-center">
-          <img src={Assets?.Logo || "/assets/logo.png"} alt="DIVUS Logo" className="w-32" />
+      {/* Desktop Sidebar (LEBAR DIUBAH KE 280px) */}
+      <div className="hidden lg:flex h-screen w-[280px] bg-white shadow-2xl flex-col sticky top-0 z-50">
+        {/* Logo Area */}
+        <div className="pt-10 pb-8 flex justify-center">
+          <img src={Assets?.Logo || "/assets/logo.png"} alt="DIVUS Logo" className="w-40" />
         </div>
 
-        <nav className="flex-1 px-4 overflow-y-auto scrollbar-hide">
+        {/* Menu Area */}
+        <nav className="flex-1 px-5 overflow-y-auto scrollbar-hide">
           {isLoading ? (
              <div className="space-y-4 mt-4 px-2">
-               <div className="h-10 bg-gray-100 rounded animate-pulse"></div>
-               <div className="h-10 bg-gray-100 rounded animate-pulse"></div>
-               <div className="h-10 bg-gray-100 rounded animate-pulse"></div>
+               <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
+               <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
+               <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
              </div>
           ) : (
              menuItems.map((item, idx) => renderMenuItem(item, idx))
           )}
         </nav>
 
-        <div className="p-4 mt-auto border-t border-gray-100 bg-white">
-          <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-lg font-['Poppins'] font-medium text-white bg-[#FF3B3B] hover:bg-[#e63535] transition-all shadow-md shadow-red-100">
+        {/* Logout Button */}
+        <div className="p-6 mt-auto border-t border-gray-100 bg-white">
+          <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-['Poppins'] font-medium text-white bg-[#FF3B3B] hover:bg-[#e63535] transition-all shadow-lg shadow-red-100">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             <span>Log out</span>
           </button>
         </div>
       </div>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay (Juga disesuaikan ke 280px) */}
       {isOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={() => setIsOpen(false)}></div>
-          <div className="relative w-64 bg-white shadow-2xl flex flex-col h-full">
+          <div className="relative w-[280px] bg-white shadow-2xl flex flex-col h-full">
             <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="pt-8 pb-6 flex justify-center">
-              <img src={Assets?.Logo || "/assets/logo.png"} alt="DIVUS Logo" className="w-32" />
+            <div className="pt-10 pb-8 flex justify-center">
+              <img src={Assets?.Logo} alt="DIVUS Logo" className="w-32" />
             </div>
-            <nav className="flex-1 px-4 overflow-y-auto">
+            <nav className="flex-1 px-5 overflow-y-auto">
               {menuItems.map((item, idx) => renderMenuItem(item, idx))}
             </nav>
-            <div className="p-4 mt-auto border-t">
-              <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-lg font-['Poppins'] font-medium text-white bg-[#FF3B3B] hover:bg-[#e63535]">
+            <div className="p-6 mt-auto border-t">
+              <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-['Poppins'] font-medium text-white bg-[#FF3B3B] hover:bg-[#e63535]">
                 <span>Log out</span>
               </button>
             </div>

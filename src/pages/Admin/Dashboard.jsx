@@ -1,274 +1,303 @@
-import React, { useState } from "react";
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect, useRef } from "react";
+import Head from 'next/head';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Defs, LinearGradient, Stop 
+} from 'recharts';
+import AdminLayouts from '../../layouts/AdminLayouts'; 
 
 const DashboardAdmin = () => {
+  // --- STATE DATA ---
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- STATE FILTER ---
   const [searchQuery, setSearchQuery] = useState("");
-  const [kategoriFilter, setKategoriFilter] = useState("Semua Kategori");
-  const [aksiFilter, setAksiFilter] = useState("Semua Aksi");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("Keseluruhan");
+  const [actionFilter, setActionFilter] = useState("Semua Aksi");
+  const [selectedChart, setSelectedChart] = useState("proyek");
+  const [timeFilter, setTimeFilter] = useState("Keseluruhan"); 
+  
+  // --- STATE DROPDOWN UI ---
+  const [openActionDropdown, setOpenActionDropdown] = useState(false);
+  const [openChartDropdown, setOpenChartDropdown] = useState(false);
+  const [openTimeDropdown, setOpenTimeDropdown] = useState(false);
 
-  // Data statistik
+  const chartDropdownRef = useRef(null);
+  const timeDropdownRef = useRef(null);
+  const actionDropdownRef = useRef(null);
+
+  // --- 1. FETCH DATA ---
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard?filter=${timeFilter}`);
+        const data = await res.json();
+        if (res.ok) setDashboardData(data);
+      } catch (error) {
+        console.error("Error fetch dashboard:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, [timeFilter]); // Fetch ulang saat filter waktu berubah
+
+  // --- FORMATTING ---
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString('id-ID', { 
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+    });
+  };
+
+  // Generate Judul Dinamis (Bulan/Tahun)
+  const getDynamicTitle = () => {
+    const date = new Date();
+    const monthName = date.toLocaleDateString('id-ID', { month: 'long' });
+    const year = date.getFullYear();
+
+    const baseTitle = chartConfig[selectedChart].title;
+
+    if (timeFilter === 'Bulan Ini') return `${baseTitle} - ${monthName} ${year}`;
+    if (timeFilter === 'Tahun Ini') return `${baseTitle} - Tahun ${year}`;
+    return `${baseTitle} (Total Keseluruhan)`;
+  };
+
+  // --- DATA UNTUK RENDER ---
   const stats = [
-    { value: "10", label: "Tahun" },
-    { value: "90", label: "Total Mitra" },
-    { value: "500", label: "Total Produk" },
-    { value: "100", label: "Total Projek" },
-    { value: "5", label: "Total Layanan" },
+    { value: dashboardData?.stats?.years || 0, label: "Tahun" },
+    { value: dashboardData?.stats?.mitra || 0, label: "Total Mitra" },
+    { value: dashboardData?.stats?.produk || 0, label: "Total Produk" },
+    { value: dashboardData?.stats?.proyek || 0, label: "Total Projek" },
+    { value: dashboardData?.stats?.layanan || 0, label: "Total Layanan" },
   ];
 
-  // Data log aktivitas
-  const logActivities = [
-    {
-      tanggal: "2025-10-13 22:45",
-      user: "Admin 1",
-      aksi: "Tambah Produk",
-      detail: "Menambahkan Annual Produk Dengan Deskripsi Broser PT Pertamina",
-    },
-    {
-      tanggal: "2025-10-13 21:30",
-      user: "Admin 2",
-      aksi: "Edit Layanan",
-      detail: "Mengubah deskripsi layanan konsultasi IT",
-    },
-    {
-      tanggal: "2025-10-13 20:15",
-      user: "Admin 1",
-      aksi: "Hapus Projek",
-      detail: "Menghapus projek lama yang sudah selesai",
-    },
-  ];
+  // Config Grafik
+  const chartConfig = {
+    proyek: { label: "Grafik Proyek", title: "Statistik Proyek", color: "#8884d8", gradientId: "colorProyek" },
+    mitra: { label: "Grafik Mitra", title: "Statistik Mitra", color: "#39B54A", gradientId: "colorMitra" },
+    produk: { label: "Grafik Produk", title: "Statistik Produk", color: "#3B82F6", gradientId: "colorProduk" }
+  };
 
-  // Dropdown options
-  const dropdownOptions = ["Keseluruhan", "Tahun Ini", "Bulan Ini"];
+  // Ambil data grafik yang sesuai dari API response
+  const currentData = dashboardData?.charts?.[selectedChart] || [];
+  const currentConfig = chartConfig[selectedChart];
+
+  // Filter Log
+  const filteredLogs = (dashboardData?.logs || []).filter((log) => {
+    const searchLower = searchQuery.toLowerCase();
+    const userName = log.users?.username || "Unknown";
+    
+    const matchesSearch = 
+      (log.details || "").toLowerCase().includes(searchLower) ||
+      userName.toLowerCase().includes(searchLower) ||
+      (log.action || "").toLowerCase().includes(searchLower);
+
+    const matchesAction = 
+      actionFilter === "Semua Aksi" || 
+      (log.action || "").toLowerCase().includes(actionFilter.toLowerCase().split(" ")[0].toLowerCase());
+
+    return matchesSearch && matchesAction;
+  });
+
+  // Click Outside Listener
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (chartDropdownRef.current && !chartDropdownRef.current.contains(event.target)) setOpenChartDropdown(false);
+      if (timeDropdownRef.current && !timeDropdownRef.current.contains(event.target)) setOpenTimeDropdown(false);
+      if (actionDropdownRef.current && !actionDropdownRef.current.contains(event.target)) setOpenActionDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB] px-4 md:px-10 py-8 font-medium font-['Poppins']">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 font-['Poppins'] mb-2">
-            Dashboard Overview
-          </h1>
-          <p className="text-gray-600 font-medium font-['Poppins']">
-            Selamat datang di dashboard manajemen
-          </p>
-        </div>
+    
+      <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
+        <Head><title>Dashboard - Divus Admin</title></Head>
 
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          {/* Dropdown Keseluruhan */}
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border font-['Poppins'] text-gray-700 hover:bg-gray-50"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                />
+        {/* TOP BAR */}
+        <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+          <div className="relative w-1/3">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-
-              {selectedFilter}
-
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu */}
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg z-10">
-                {dropdownOptions.map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => {
-                      setSelectedFilter(option);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-sm font-['Poppins'] hover:bg-gray-100 ${selectedFilter === option
-                        ? "text-[#27D14C] font-semibold"
-                        : "text-gray-700"
-                      }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            )}
+            </div>
+            <input type="text" className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm" placeholder="Search.." />
           </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden md:block">
+              <p className="text-sm font-medium text-white">Hi, SuperAdmin</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0h-3v-1a4 4 0 10-8 0v1H3z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </header>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-2">
-            <span className="text-gray-700">Hi, Admin</span>
-            <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white font-bold">
-              A
+        <div className="px-8 pt-8">
+          
+          {/* HEADER & FILTER WAKTU */}
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-black">Dashboard Overview</h1>
+            <div className="relative" ref={timeDropdownRef}>
+              <button 
+                onClick={() => setOpenTimeDropdown(!openTimeDropdown)}
+                className={`bg-white px-5 py-2.5 rounded-lg shadow-sm border flex items-center gap-3 cursor-pointer transition-all duration-200 ${openTimeDropdown ? 'border-green-500 ring-2 ring-green-500/10' : 'border-gray-200 hover:border-green-500'}`}
+              >
+                <span className="text-sm font-medium text-gray-600">Filter:</span>
+                <span className="text-sm font-bold text-[#27D14C]">{timeFilter}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-400 transition-transform ${openTimeDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {openTimeDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  {["Keseluruhan", "Tahun Ini", "Bulan Ini"].map((opt) => (
+                    <button key={opt} onClick={() => { setTimeFilter(opt); setOpenTimeDropdown(false); }} className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${timeFilter === opt ? 'bg-green-50 text-[#27D14C]' : 'text-gray-600'}`}>{opt}</button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-
-          {/* Register Admin Button */}
-          <button className="px-4 md:px-6 py-2 bg-[#27D14C] text-white font-semibold font-['Poppins'] rounded-lg hover:bg-[#20b93f] transition shadow-md">
-            Register Admin
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className="bg-[#27D14C] rounded-2xl p-6 text-center text-white shadow-lg"
-          >
-            <h2 className="text-3xl md:text-5xl font-bold font-['Poppins'] mb-2">
-              {stat.value}
-            </h2>
-            <p className="text-base md:text-lg font-['Poppins']">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Log Aktivitas Section */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-gray-800"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="text-xl font-bold text-gray-800 font-['Poppins']">
-            Log Aktivitas
-          </h3>
-        </div>
-
-        <p className="text-gray-600 font-['Poppins'] mb-6">
-          Kelola produk dan layanan yang ditawarkan
-        </p>
-
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search log aktivitas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-['Poppins']"
-            />
+          {/* STATS CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+            {stats.map((stat, index) => (
+              <div key={index} className="rounded-2xl p-6 flex flex-col items-center justify-center text-white shadow-lg h-40 transition-transform hover:scale-105" style={{ background: "linear-gradient(180deg, #94E93F 0%, #39B54A 100%)", boxShadow: "0 4px 15px rgba(74, 222, 128, 0.3)" }}>
+                <span className="text-5xl font-bold mb-2">{isLoading ? "..." : stat.value}</span>
+                <span className="text-lg font-medium">{stat.label}</span>
+              </div>
+            ))}
           </div>
 
-          {/* Kategori Filter */}
-          <select
-            value={kategoriFilter}
-            onChange={(e) => setKategoriFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-['Poppins'] bg-white"
-          >
-            <option>Semua Kategori</option>
-            <option>Tambah Produk</option>
-            <option>Edit Layanan</option>
-            <option>Hapus Projek</option>
-          </select>
+          {/* CHART SECTION */}
+          <div className="bg-white rounded-2xl p-8 shadow-sm mb-10 border border-gray-100 h-[550px] relative flex flex-col">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">{getDynamicTitle()}</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                   {timeFilter === 'Bulan Ini' ? 'Data per tanggal (Harian)' : 'Data per bulan (Bulanan)'}
+                </p>
+              </div>
 
-          {/* Aksi Filter */}
-          <select
-            value={aksiFilter}
-            onChange={(e) => setAksiFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-['Poppins'] bg-white"
-          >
-            <option>Semua Aksi</option>
-            <option>Tambah</option>
-            <option>Edit</option>
-            <option>Hapus</option>
-          </select>
-        </div>
+              {/* FILTER JENIS GRAFIK */}
+              <div className="relative mt-4 sm:mt-0" ref={chartDropdownRef}>
+                <button 
+                  onClick={() => setOpenChartDropdown(!openChartDropdown)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 shadow-sm ${openChartDropdown ? 'border-[#27D14C] ring-2 ring-[#27D14C]/10 bg-white' : 'border-gray-200 bg-white hover:border-[#27D14C]'}`}
+                >
+                  <span className="text-sm font-medium text-gray-600">Tampilkan:</span>
+                  <span className="text-sm font-bold text-[#27D14C]">{currentConfig.label}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-400 ml-2 transition-transform ${openChartDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {openChartDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    {Object.keys(chartConfig).map((key) => (
+                      <button key={key} onClick={() => { setSelectedChart(key); setOpenChartDropdown(false); }} className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${selectedChart === key ? 'bg-green-50 text-[#27D14C]' : 'text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]'}`}>{chartConfig[key].label}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700 font-['Poppins']">
-                  Tanggal
-                </th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700 font-['Poppins']">
-                  User
-                </th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700 font-['Poppins']">
-                  Aksi
-                </th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700 font-['Poppins']">
-                  Detail
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {logActivities.map((log, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4 text-gray-600 font-['Poppins']">
-                    {log.tanggal}
-                  </td>
-                  <td className="py-3 px-4 text-gray-600 font-['Poppins']">
-                    {log.user}
-                  </td>
-                  <td className="py-3 px-4 text-[#27D14C] font-['Poppins']">
-                    {log.aksi}
-                  </td>
-                  <td className="py-3 px-4 text-gray-600 font-['Poppins']">
-                    {log.detail}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <div className="flex-grow w-full h-full min-h-0">
+              {isLoading ? (
+                 <div className="w-full h-full flex items-center justify-center text-gray-400">Memuat Grafik...</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={currentData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id={currentConfig.gradientId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={currentConfig.color} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={currentConfig.color} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '12px' }} cursor={{ stroke: '#E5E7EB', strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="total" stroke={currentConfig.color} strokeWidth={3} fillOpacity={1} fill={`url(#${currentConfig.gradientId})`} activeDot={{ r: 6, strokeWidth: 0, fill: 'white', stroke: currentConfig.color }} animationDuration={800} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+
+          {/* LOG AKTIVITAS */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <h2 className="text-2xl font-bold text-gray-900">Log Aktivitas</h2>
+              </div>
+              <p className="text-gray-500">Aktivitas terbaru yang tercatat di sistem</p>
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+              <div className="relative flex-grow">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
+                <input type="text" placeholder="Search log aktivitas." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 text-sm" />
+              </div>
+
+              <div className="relative w-full md:w-auto" ref={actionDropdownRef}>
+                <button onClick={() => setOpenActionDropdown(!openActionDropdown)} className={`w-full md:w-48 flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all duration-200 ${openActionDropdown ? 'border-[#27D14C] ring-2 ring-[#27D14C]/10 bg-white' : 'border-gray-300 bg-white hover:border-gray-400'}`}>
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    <span className={`text-sm font-medium ${actionFilter !== "Semua Aksi" ? 'text-[#27D14C]' : 'text-gray-700'}`}>{actionFilter}</span>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-400 transition-transform ${openActionDropdown ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {openActionDropdown && (
+                  <div className="absolute right-0 mt-2 w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    {["Semua Aksi", "Tambah", "Edit", "Hapus"].map((opt) => (
+                      <button key={opt} onClick={() => { setActionFilter(opt); setOpenActionDropdown(false); }} className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${actionFilter === opt ? 'bg-green-50 text-[#27D14C]' : 'text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]'}`}>{opt}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-4 px-6 text-sm font-semibold text-gray-700 border-b border-gray-200">Tanggal</th>
+                    <th className="py-4 px-6 text-sm font-semibold text-gray-700 border-b border-gray-200">User</th>
+                    <th className="py-4 px-6 text-sm font-semibold text-gray-700 border-b border-gray-200">Aksi</th>
+                    <th className="py-4 px-6 text-sm font-semibold text-gray-700 border-b border-gray-200">Detail</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogs.length > 0 ? (
+                    filteredLogs.map((log, index) => (
+                      <tr key={index} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-6 text-sm text-gray-600 border-b border-gray-100 whitespace-nowrap">{formatDate(log.created_at || log.tanggal)}</td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-b border-gray-100">{log.users?.username || log.user || 'Unknown'}</td>
+                        <td className="py-4 px-6 text-sm font-medium text-gray-800 border-b border-gray-100">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${(log.action || log.aksi || "").includes('Hapus') ? 'bg-red-100 text-red-600' : (log.action || log.aksi || "").includes('Edit') ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'}`}>
+                            {log.action || log.aksi}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 border-b border-gray-100 max-w-md truncate" title={log.details || log.detail}>{log.details || log.detail}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-gray-400 text-sm">Tidak ada aktivitas yang ditemukan.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 

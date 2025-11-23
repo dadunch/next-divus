@@ -5,13 +5,15 @@ import { useSelector } from 'react-redux';
 import { Plus, Search, ArrowLeft, Pencil, Trash2, LayoutGrid } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-import AdminLayouts from '../../../../layouts/AdminLayouts';
+// HAPUS IMPORT LAYOUT (Karena sudah dihandle _app.js)
+// import AdminLayouts from '../../../../layouts/AdminLayouts';
+
 import AddProjectModal from '../../../../components/Modals/AddProjectModal';
 
 const ClientProjects = () => {
   const router = useRouter();
-  const { id } = router.query; // Ambil ID Client dari URL
-  const { user } = useSelector((state) => state.auth);
+  const { id } = router.query; 
+  const { user } = useSelector((state) => state.auth); // Ambil data user login
 
   // State
   const [clientData, setClientData] = useState(null);
@@ -19,7 +21,7 @@ const ClientProjects = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch Data Client & Proyek
+  // Fetch Data
   const fetchData = async () => {
     if (!id) return;
     setIsLoading(true);
@@ -42,7 +44,7 @@ const ClientProjects = () => {
     }
   }, [router.isReady, id]);
 
-  // Delete Project Handler
+  // --- PERBAIKAN LOG HAPUS ---
   const handleDeleteProject = (projectId) => {
     Swal.fire({
       title: 'Hapus Proyek?',
@@ -53,10 +55,22 @@ const ClientProjects = () => {
       confirmButtonText: 'Hapus'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
-        if (res.ok) {
-          fetchData(); // Refresh data
-          Swal.fire('Terhapus!', 'Proyek berhasil dihapus.', 'success');
+        try {
+          const res = await fetch(`/api/projects/${projectId}`, { 
+              method: 'DELETE', 
+              // WAJIB ADA: Headers & Body berisi userId agar log tercatat
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: user?.id }) 
+          });
+
+          if (res.ok) {
+            fetchData(); // Refresh data
+            Swal.fire('Terhapus!', 'Proyek berhasil dihapus.', 'success');
+          } else {
+            throw new Error("Gagal menghapus");
+          }
+        } catch (error) {
+          Swal.fire('Error', 'Gagal menghapus proyek.', 'error');
         }
       }
     });
@@ -67,6 +81,7 @@ const ClientProjects = () => {
     p.project_name.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
+  // --- HAPUS WRAPPER ADMINLAYOUTS DI SINI ---
   return (
       <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
         <Head>
@@ -119,7 +134,7 @@ const ClientProjects = () => {
               </button>
               
               <button 
-                onClick={() => router.push('/Admin/Proyek/Kategori')} // Sesuaikan path halaman kategori Anda
+                onClick={() => router.push('/Admin/Proyek/Kategori')} 
                 className="bg-[#2D2D39] hover:bg-black text-white px-5 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all"
               >
                 <LayoutGrid size={18} />
@@ -188,7 +203,7 @@ const ClientProjects = () => {
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           onSuccess={fetchData}
-          clientId={id} // Kirim ID Client ke modal
+          clientId={id} 
         />
 
       </div>

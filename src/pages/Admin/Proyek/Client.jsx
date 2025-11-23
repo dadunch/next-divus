@@ -64,7 +64,9 @@ const ClientPage = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+          const res = await fetch(`/api/clients/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user?.id }) });
+          
           
           if (res.ok) {
             setClients(prev => prev.filter(client => client.id !== id));

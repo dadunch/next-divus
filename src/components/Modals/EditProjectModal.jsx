@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, Check } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { useSelector } from 'react-redux';
 
-const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
-  const { user } = useSelector((state) => state.auth);
-  
+const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) => {
   // State Data
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -30,7 +27,18 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
     }
   }, [isOpen]);
 
-  // 2. Click Outside untuk menutup DROPDOWN (bukan modal)
+  // 2. Isi Form saat projectData berubah (saat tombol edit diklik)
+  useEffect(() => {
+    if (projectData) {
+      setFormData({
+        project_name: projectData.project_name || '',
+        category_id: projectData.category_id || '',
+        tahun: projectData.tahun || new Date().getFullYear()
+      });
+    }
+  }, [projectData]);
+
+  // 3. Click Outside untuk menutup DROPDOWN
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -41,7 +49,7 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 3. Handle Submit
+  // 4. Handle Submit (Update Proyek)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -50,7 +58,8 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
         icon: 'warning',
         title: 'Data Belum Lengkap',
         text: 'Mohon isi semua form.',
-        confirmButtonColor: '#F59E0B'
+        confirmButtonColor: '#F59E0B',
+        customClass: { popup: 'font-["Poppins"] rounded-xl' }
       });
       return;
     }
@@ -58,13 +67,13 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
+      // Endpoint untuk Update (PUT)
+      const res = await fetch(`/api/projects/${projectData.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          client_id: clientId,
-          userId: user?.id
+          userId: userId // Penting untuk Log Aktivitas
         }),
       });
 
@@ -73,24 +82,30 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
       Swal.fire({
         icon: 'success',
         title: 'Berhasil!',
-        text: 'Proyek baru ditambahkan.',
+        text: 'Data proyek berhasil diperbarui.',
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
+        customClass: { popup: 'font-["Poppins"] rounded-xl' }
       });
       
-      onSuccess();
+      onSuccess(); // Refresh data di parent
       handleClose();
 
     } catch (error) {
-      Swal.fire('Error', 'Gagal menambahkan proyek', 'error');
+      console.error(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: 'Terjadi kesalahan saat menyimpan data.',
+        confirmButtonColor: '#EF4444',
+        customClass: { popup: 'font-["Poppins"] rounded-xl' }
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Reset Form saat tutup
   const handleClose = () => {
-    setFormData({ project_name: '', category_id: '', tahun: new Date().getFullYear() });
     setIsDropdownOpen(false);
     onClose();
   };
@@ -103,12 +118,12 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
   if (!isOpen) return null;
 
   return (
-    // 1. Backdrop dengan onClick={onClose} -> Klik luar tutup modal
+    // Backdrop
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']"
       onClick={handleClose}
     >
-      {/* 2. Stop Propagation -> Klik dalam kotak JANGAN tutup modal */}
+      {/* Modal Container */}
       <div 
         className="bg-white rounded-2xl w-full max-w-lg shadow-2xl transform transition-all scale-100 overflow-visible"
         onClick={(e) => e.stopPropagation()}
@@ -117,8 +132,8 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
         {/* Header */}
         <div className="px-8 pt-8 pb-2 flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Tambah Proyek Baru</h2>
-            <p className="text-gray-500 mt-1 text-sm">Masukkan informasi proyek</p>
+            <h2 className="text-2xl font-bold text-gray-900">Edit Proyek</h2>
+            <p className="text-gray-500 mt-1 text-sm">Perbarui informasi proyek</p>
           </div>
           <button 
             onClick={handleClose} 
@@ -150,52 +165,38 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
             {/* Trigger Button */}
             <div 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`
-                w-full border rounded-lg px-4 py-3 flex justify-between items-center cursor-pointer bg-white transition-all duration-200
-                ${isDropdownOpen 
-                  ? 'border-[#27D14C] ring-2 ring-[#27D14C]/20' 
-                  : 'border-gray-300 hover:border-gray-400'
-                }
-              `}
+              className={`w-full border rounded-lg px-4 py-3 flex justify-between items-center cursor-pointer transition-all ${isDropdownOpen ? 'border-[#27D14C] ring-2 ring-[#27D14C]/20' : 'border-gray-300 hover:border-gray-400'}`}
             >
-              <span className={`${formData.category_id ? 'text-gray-800 font-medium' : 'text-gray-400'}`}>
+              <span className={`text-sm ${formData.category_id ? 'text-gray-800 font-medium' : 'text-gray-400'}`}>
                 {getSelectedCategoryLabel()}
               </span>
-              <ChevronDown 
-                size={20} 
-                className={`text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} 
-              />
+              <ChevronDown size={20} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </div>
 
-            {/* Dropdown Menu List */}
+            {/* Dropdown Options */}
             {isDropdownOpen && (
-              <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
-                {categories.length > 0 ? (
-                  categories.map((cat) => (
-                    <div
-                      key={cat.id}
-                      onClick={() => {
-                        setFormData({...formData, category_id: cat.id});
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`
-                        px-4 py-3 cursor-pointer text-sm flex justify-between items-center transition-colors
-                        ${formData.category_id == cat.id 
-                          ? 'bg-green-50 text-[#27D14C] font-semibold' 
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]'
-                        }
-                      `}
-                    >
-                      {cat.bidang}
-                      {formData.category_id == cat.id && <Check size={16} />}
-                    </div>
-                  ))
+              <ul className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-auto focus:outline-none py-2 animate-in fade-in zoom-in-95 duration-200">
+                {categories.length === 0 ? (
+                  <li className="px-4 py-3 text-sm text-gray-500 text-center">Tidak ada kategori.</li>
                 ) : (
-                  <div className="p-4 text-center text-gray-400 text-sm italic">
-                    Belum ada bidang. Silakan tambah di menu "Kelola Bidang".
-                  </div>
+                  categories.map((category) => {
+                    const isSelected = category.id == formData.category_id;
+                    return (
+                      <li 
+                        key={category.id}
+                        onClick={() => {
+                          setFormData({...formData, category_id: category.id});
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`px-4 py-3 text-sm cursor-pointer flex justify-between items-center transition-colors ${isSelected ? 'bg-[#27D14C]/10 text-[#27D14C] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {category.bidang}
+                        {isSelected && <Check size={18} />}
+                      </li>
+                    );
+                  })
                 )}
-              </div>
+              </ul>
             )}
           </div>
 
@@ -204,14 +205,16 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
             <label className="block text-sm font-bold text-gray-700 mb-2">Tahun</label>
             <input 
               type="number" 
+              min="2000"
+              max={new Date().getFullYear() + 5}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#27D14C] transition-all"
+              placeholder="Contoh: 2023"
               value={formData.tahun}
               onChange={e => setFormData({...formData, tahun: e.target.value})}
-              placeholder="YYYY"
             />
           </div>
 
-          {/* Action Buttons */}
+          {/* Footer Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <button 
               type="button"
@@ -222,11 +225,21 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
               Batal
             </button>
             <button 
-              type="submit" 
+              type="submit"
               disabled={isSubmitting}
-              className="px-8 py-2.5 rounded-lg bg-[#2D2D39] text-white font-medium hover:bg-black transition-colors shadow-lg flex items-center gap-2"
+              className="px-6 py-2.5 rounded-lg bg-[#2D2D39] text-white font-medium hover:bg-black transition-colors shadow-lg disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Menyimpan...' : 'Tambah'}
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan Perubahan'
+              )}
             </button>
           </div>
 
@@ -236,4 +249,4 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
   );
 };
 
-export default AddProjectModal;
+export default EditProjectModal;

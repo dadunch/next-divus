@@ -31,7 +31,23 @@ const ProductPage = () => {
       console.log('Fetch response:', res.ok, data); // Debug log
       
       if (res.ok) {
-        setProducts(Array.isArray(data) ? data : []);
+        // Fetch client names untuk setiap produk
+        const productsWithClients = await Promise.all(
+          data.map(async (product) => {
+            if (product.client_id) {
+              try {
+                const clientRes = await fetch(`/api/clients/${product.client_id}`);
+                const clientData = await clientRes.json();
+                return { ...product, client: clientData };
+              } catch (error) {
+                return product;
+              }
+            }
+            return product;
+          })
+        );
+        
+        setProducts(Array.isArray(productsWithClients) ? productsWithClients : []);
       } else {
         console.error('API Error:', data);
         setProducts([]);
@@ -169,11 +185,15 @@ const ProductPage = () => {
               >
                 {/* Gambar Produk */}
                 <div className="relative h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {product.image_url ? (
+                  {product.foto_produk && product.foto_produk.trim() !== '' ? (
                     <img 
-                      src={product.image_url} 
-                      alt={product.name}
+                      src={product.foto_produk} 
+                      alt={product.nama_produk}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"><span class="text-gray-400 text-sm">No Image</span></div>';
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
@@ -183,7 +203,7 @@ const ProductPage = () => {
                   
                   {/* Tahun Badge */}
                   <div className="absolute top-3 left-3 bg-[#1E1E2D] text-white px-3 py-1 rounded-lg text-sm font-semibold">
-                    {product.year ? product.year.toString() : "2023"}
+                    {product.tahun ? product.tahun.toString() : "2023"}
                   </div>
 
                   {/* Action Icons */}
@@ -208,21 +228,20 @@ const ProductPage = () => {
                 {/* Info Produk */}
                 <div className="p-5">
                   <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">
-                    {product.name}
+                    {product.nama_produk}
                   </h3>
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {product.description || "No deskripsi"}
+                    {product.deskripsi || "Belum ada deskripsi"}
                   </p>
                   
                   {/* Detail Info */}
                   <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                    <span>Partner: {product.partner_name || "-"}</span>
-                    <span>Tahun: {product.year ? product.year.toString() : "-"}</span>
+                    <span>Tahun: {product.tahun ? product.tahun.toString() : "-"}</span>
                   </div>
 
                   {/* Tombol Lihat Detail */}
                   <button
-                    onClick={() => router.push(`/Admin/Portofolio/Produk/${product.id}`)}
+                    onClick={() => router.push(`/Admin/Proyek/Produk/${product.id}`)}
                     className="w-full bg-[#2D2D39] hover:bg-black text-white py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
                   >
                     <Eye size={18} />
@@ -238,7 +257,7 @@ const ProductPage = () => {
 
       {/* MODAL TAMBAH PRODUK */}
       {isModalOpen && (
-        <AddProductModul
+        <AddProductModul 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
           onSuccess={fetchProducts} 

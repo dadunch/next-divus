@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import Head from 'next/head';
+import React, { useState, useEffect } from 'react'; // <--- Pastikan ada useState
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import { useSelector } from 'react-redux';
-import { ArrowLeft, Pencil, Trash2, Calendar, Tag, FileText } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Calendar, User, FileText } from 'lucide-react';
 import Swal from 'sweetalert2';
+import EditProductModal from '../../../../components/Modals/EditProductModal';
 
 const ProductDetail = () => {
   const router = useRouter();
@@ -12,7 +13,10 @@ const ProductDetail = () => {
 
   // State
   const [productData, setProductData] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [clientData, setClientData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [product, setProduct] = useState(null);
 
   // Fetch Data Detail Produk
   const fetchProductData = async () => {
@@ -20,13 +24,36 @@ const ProductDetail = () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/api/products/${id}`);
+      
+      if (!res.ok) {
+        throw new Error('Produk tidak ditemukan');
+      }
+      
       const data = await res.json();
-      if (res.ok) {
-        setProductData(data);
+      console.log('Product detail:', data);
+      
+      setProductData(data);
+      
+      // Fetch client data jika ada client_id
+      if (data.client_id) {
+        try {
+          const clientRes = await fetch(`/api/clients/${data.client_id}`);
+          if (clientRes.ok) {
+            const clientData = await clientRes.json();
+            console.log('Client data:', clientData);
+            setClientData(clientData);
+          }
+        } catch (clientError) {
+          console.warn('Failed to fetch client:', clientError);
+        }
       }
     } catch (error) {
       console.error("Error fetching product:", error);
-      Swal.fire('Error', 'Gagal memuat data produk', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Gagal memuat data produk'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -54,13 +81,12 @@ const ProductDetail = () => {
         try {
           const res = await fetch(`/api/products/${id}`, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user?.id })
+            headers: { 'Content-Type': 'application/json' }
           });
 
           if (res.ok) {
             Swal.fire('Terhapus!', 'Produk berhasil dihapus.', 'success');
-            router.push('/Admin/Portofolio/Produk');
+            router.push('/Admin/Proyek/Produk');
           } else {
             throw new Error("Gagal menghapus");
           }
@@ -71,15 +97,10 @@ const ProductDetail = () => {
     });
   };
 
-  // Handle Edit
-  const handleEdit = () => {
-    router.push(`/Admin/Portofolio/Produk/Edit/${id}`);
-  };
-
   return (
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
       <Head>
-        <title>{productData?.product_name || "Detail Produk"} - Divus Admin</title>
+        <title>{productData?.nama_produk || "Detail Produk"} - Divus Admin</title>
       </Head>
 
       {/* TOP BAR */}
@@ -115,123 +136,107 @@ const ProductDetail = () => {
             <div className="text-gray-500 font-medium">Produk tidak ditemukan</div>
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             {/* Header Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                    {productData.product_name}
-                  </h1>
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={16} />
-                      <span>Tahun: <strong>{productData.tahun || "-"}</strong></span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Tag size={16} />
-                      <span>Kategori: <strong>{productData.category?.bidang || "-"}</strong></span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleEdit}
-                    className="p-3 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
-                    title="Edit Produk"
-                  >
-                    <Pencil size={20} />
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="p-3 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
-                    title="Hapus Produk"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-              </div>
-
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              
               {/* Product Image */}
-              {productData.product_image && (
-                <div className="relative w-full h-96 rounded-lg overflow-hidden bg-gray-100 mb-6">
-                  <img
-                    src={productData.product_image}
-                    alt={productData.product_name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Description */}
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText size={20} className="text-gray-600" />
-                  <h2 className="text-xl font-semibold text-gray-800">Deskripsi</h2>
-                </div>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {productData.description || "Tidak ada deskripsi"}
-                </p>
-              </div>
-
-              {/* Additional Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-600 mb-2">Client</h3>
-                  <p className="text-gray-800 font-medium">
-                    {productData.client?.client_name || "-"}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-600 mb-2">Status</h3>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                    productData.status === 'completed' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {productData.status === 'completed' ? 'Selesai' : 'Dalam Proses'}
-                  </span>
-                </div>
-                {productData.project_value && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Nilai Proyek</h3>
-                    <p className="text-gray-800 font-medium">
-                      Rp {Number(productData.project_value).toLocaleString('id-ID')}
-                    </p>
+              <div className="relative">
+                {productData.foto_produk && productData.foto_produk.trim() !== '' ? (
+                  <div className="relative w-full h-[500px] bg-gray-100">
+                    <img
+                      src={productData.foto_produk}
+                      alt={productData.nama_produk}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.parentElement.innerHTML = '<div class="flex items-center justify-center h-full bg-gray-100"><span class="text-gray-400 text-lg">Gambar tidak dapat dimuat</span></div>';
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="relative w-full h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-8xl text-gray-300 mb-4">📦</div>
+                      <p className="text-gray-400 text-lg">Tidak ada gambar</p>
+                    </div>
                   </div>
                 )}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-600 mb-2">Dibuat Pada</h3>
-                  <p className="text-gray-800">
-                    {new Date(productData.created_at).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
+              </div>
+
+              {/* Content Section */}
+              <div className="p-8">
+                {/* Title & Actions */}
+                <div className="flex justify-between items-start mb-6 pb-6 border-b border-gray-200">
+                  <div className="flex-1">
+                    <h1 className="text-3xl font-bold text-gray-800 mb-3">
+                      {productData.nama_produk}
+                    </h1>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar size={16} />
+                        <span>Tahun: <strong className="text-gray-800">{productData.tahun ? productData.tahun.toString() : "-"}</strong></span>
+                      </div>
+                      {clientData && (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <User size={16} />
+                          <span>Client: <strong className="text-gray-800">{clientData.client_name}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDelete}
+                      className="p-3 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                      title="Hapus Produk"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText size={20} className="text-gray-600" />
+                    <h2 className="text-xl font-semibold text-gray-800">Deskripsi</h2>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-base">
+                    {productData.deskripsi || "Tidak ada deskripsi"}
                   </p>
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-5">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Client</h3>
+                    <p className="text-gray-800 font-medium text-lg">
+                      {clientData ? clientData.client_name : "-"}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-5">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Status</h3>
+                    <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+                      Selesai
+                    </span>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-5">
+                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Dibuat Pada</h3>
+                    <p className="text-gray-800 font-medium">
+                      {productData.created_at ? new Date(productData.created_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      }) : "-"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Additional Sections (Gallery, Documents, etc.) */}
-            {productData.gallery && productData.gallery.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Galeri</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {productData.gallery.map((image, index) => (
-                    <div key={index} className="relative h-40 rounded-lg overflow-hidden bg-gray-100">
-                      <img
-                        src={image.url}
-                        alt={`Gallery ${index + 1}`}
-                        className="w-full h-full object-cover hover:scale-110 transition-transform cursor-pointer"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

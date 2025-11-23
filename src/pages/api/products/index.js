@@ -2,43 +2,52 @@ import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 
 export default async function handler(req, res) {
+  
+  // === GET: AMBIL DATA (TANPA CLIENT) ===
   if (req.method === 'GET') {
-    const products = await prisma.product.findMany({ 
-      orderBy: { created_at: 'desc' } 
-    });
-    return res.status(200).json(serialize(products));
+    try {
+      const products = await prisma.product.findMany({ 
+        orderBy: { created_at: 'desc' }
+        // Kita HAPUS "include: { client: true }" karena tabelnya tidak terhubung
+      });
+
+      // Pengaman BigInt (mengubah ID dan Tahun jadi string)
+      const safeProducts = JSON.parse(JSON.stringify(products, (key, value) =>
+        typeof value === 'bigint'
+          ? value.toString() 
+          : value
+      ));
+
+      return res.status(200).json(safeProducts);
+    } catch (error) {
+      console.error("GET Error:", error);
+      return res.status(500).json({ error: "Gagal mengambil data produk" });
+    }
   }
 
+  // === POST: TAMBAH DATA (TANPA CLIENT) ===
   if (req.method === 'POST') {
+    // Kita hapus client_id dari sini
     const { nama_produk, foto_produk, tahun, deskripsi } = req.body;
-    
-    // Log untuk debugging
-    console.log('Received data:', { nama_produk, foto_produk, tahun, deskripsi });
-    
-    // Validasi
-    if (!nama_produk || !nama_produk.trim()) {
-      return res.status(400).json({ error: 'Nama produk wajib diisi' });
-    }
 
     try {
       const newProduct = await prisma.product.create({
         data: {
-          nama_produk: nama_produk.trim(),
-          foto_produk: foto_produk || '',
+          nama_produk,
+          foto_produk: foto_produk || '', // Jika kosong, isi string kosong
           deskripsi: deskripsi || '',
-          tahun: tahun ? BigInt(tahun) : BigInt(new Date().getFullYear()) // FIX: Pastikan ada default value
+          tahun: BigInt(tahun) // Pastikan tahun diubah jadi BigInt
+          // client_id SUDAH DIHAPUS
         }
       });
       
-      console.log('Product created successfully:', newProduct.id);
-      
+      // Serialize respon agar aman
       return res.status(201).json(serialize(newProduct));
     } catch (error) {
-      console.error('Database error:', error);
+      console.error("POST Error:", error);
       return res.status(500).json({ error: error.message });
     }
   }
 
-  // Method not allowed
   return res.status(405).json({ error: 'Method not allowed' });
 }

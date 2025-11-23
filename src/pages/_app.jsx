@@ -8,6 +8,8 @@ import Navbar from '../components/navbar';
 import Footer from '../components/Footer';
 import Footer2 from '../components/Footer2';
 import '../global.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 
 const AuthCheck = ({ children }) => {
   const dispatch = useDispatch();

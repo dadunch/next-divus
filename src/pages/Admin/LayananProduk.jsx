@@ -1,368 +1,622 @@
-import React, { useState } from "react";
-import { Assets } from '../../assets';
-import FormTambahProduk from "../../components/Forms/FormTambahProduk";
-import FormEditProduk from "../../components/Forms/FormEditProduk";
-import FormEditLayanan from "../../components/Forms/FormEditLayanan";
-import PopupHapus from "../../components/Forms/PopupHapus";
-import PopupBD from "../../components/Forms/PopupBD";
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import React, { useState, useRef, useEffect } from "react";
+import Head from "next/head";
+import { useSelector } from "react-redux";
+import { Upload, Save, Calendar as CalendarIcon } from "lucide-react";
+import Swal from "sweetalert2";
+import "react-datepicker/dist/react-datepicker.css";
 
-const LayananProduk = () => {
-    const [activeTab, setActiveTab] = useState("Layanan");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [showTambahProduk, setShowTambahProduk] = useState(false);
-    const [showEditProduk, setShowEditProduk] = useState(false);
-    const [showEditLayanan, setShowEditLayanan] = useState(false);
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [showHapus, setShowHapus] = useState(false);
-    const [showBerhasil, setShowBerhasil] = useState(false);
-    const [selectedName, setSelectedName] = useState("");
+const TambahLayananPage = () => {
+  const { user } = useSelector((state) => state.auth || {});
+  const fileInputRef = useRef(null);
 
-    // FILTER TAB PRODUK
-    const [selectedFilters, setSelectedFilters] = useState([]);
+  // Form state
+  const [foto, setFoto] = useState(null);
+  const [fotoFile, setFotoFile] = useState(null);
+  const [previewFoto, setPreviewFoto] = useState(null);
 
-    const filterOptions = [
-        "Semua Produk",
-        "Research & Survey",
-        "Corporate ID",
-        "Product & Services Knowledge",
-        "Report & Journal",
-    ];
+  // Crop modal state
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-    const data = {
-        Layanan: [
-            {
-                title: "Management Consulting",
-                points: [
-                    "Business Feasibility & Consultation",
-                    "Marketing Plans & Communication",
-                    "Strategic Planning",
-                ],
-                icon: Assets.Icon1,
-            },
-            {
-                title: "Research & Survey",
-                points: ["Market Studies", "Customer Satisfaction", "Trend Monitoring"],
-                icon: Assets.Icon2,
-            },
-            {
-                title: "Corporate",
-                points: ["Media", "Agencies", "Partners", "Enterprises"],
-                icon: Assets.Icon3,
-            },
-            {
-                title: "Product & Service Knowledge",
-                points: ["B2C/B2B", "Service Details", "User Insights"],
-                icon: Assets.Icon4,
-            },
-            {
-                title: "Reports & Journals",
-                points: ["Annual Report", "Business Plan", "Monthly Summary"],
-                icon: Assets.Icon5,
-            },
-        ],
+  const [namaLayanan, setNamaLayanan] = useState(null);
+  const [layananDitawarkan, setLayananDitawarkan] = useState([]);
+  const [inputLayanan, setInputLayanan] = useState("");
 
-        Produk: [
-            {
-                nama: "Aplikasi Analisis Data",
-                mitra: "PT DataTech Indonesia",
-                tahun: "2024",
-                kategori: "Research & Survey",
-                deskripsi:
-                    "Aplikasi berbasis web untuk membantu perusahaan menganalisis data penjualan dan performa bisnis secara interaktif.",
-                gambar: Assets.Produk1,
-            },
-            {
-                nama: "Smart Marketing Tools",
-                mitra: "CV DigitalMedia",
-                tahun: "2023",
-                kategori: "Product & Services Knowledge",
-                deskripsi:
-                    "Platform digital untuk membantu tim marketing mengelola kampanye, analisis audiens, dan pelacakan performa iklan.",
-                gambar: Assets.Produk2,
-            },
-            {
-                nama: "Sistem Pelayanan Publik",
-                mitra: "Dinas Kominfo",
-                tahun: "2025",
-                kategori: "Corporate ID",
-                deskripsi:
-                    "Sistem manajemen layanan publik berbasis web yang mempermudah masyarakat dalam mengakses layanan pemerintahan.",
-                gambar: Assets.Produk3,
-            },
-        ],
+  const [deskripsiSingkat, setDeskripsiSingkat] = useState("");
+  const [deskripsi, setDeskripsi] = useState("");
+
+  // Icon picker (grid modal)
+  const [showIconModal, setShowIconModal] = useState(false);
+  const [iconSearch, setIconSearch] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState(""); // e.g. "fa-solid fa-user"
+
+  // basic icon list (solid) — kamu bisa tambahkan lagi
+  const iconList = [
+    "fa-solid fa-user",
+    "fa-solid fa-users",
+    "fa-solid fa-gear",
+    "fa-solid fa-cogs",
+    "fa-solid fa-chart-line",
+    "fa-solid fa-chart-bar",
+    "fa-solid fa-chart-pie",
+    "fa-solid fa-handshake",
+    "fa-solid fa-building",
+    "fa-solid fa-briefcase",
+    "fa-solid fa-lightbulb",
+    "fa-solid fa-brain",
+    "fa-solid fa-bullseye",
+    "fa-solid fa-calendar",
+    "fa-solid fa-check",
+    "fa-solid fa-circle-info",
+    "fa-solid fa-database",
+    "fa-solid fa-file-lines",
+    "fa-solid fa-folder",
+    "fa-solid fa-phone",
+    "fa-solid fa-envelope",
+    "fa-solid fa-laptop-code",
+    "fa-solid fa-globe",
+    "fa-solid fa-shield-halved",
+    "fa-solid fa-building-columns",
+  ];
+
+  useEffect(() => {
+    // cleanup preview URL on unmount
+    return () => {
+      if (previewFoto) URL.revokeObjectURL(previewFoto);
     };
+  }, [previewFoto]);
 
-    // ✅ FIX FILTER: hanya 1 filteredData
-    const filteredData = data[activeTab].filter((item) => {
-        const matchSearch = (item.title || item.nama)?.toLowerCase().includes(searchQuery.toLowerCase());
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire("Error", "Ukuran file maksimal 2MB", "error");
+      return;
+    }
+    
+    // Read file and show crop modal
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+  };
 
-        if (activeTab === "Produk" && selectedFilters.length > 0 && !selectedFilters.includes("Semua Produk")) {
-            return matchSearch && selectedFilters.includes(item.kategori);
-        }
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
 
-        return matchSearch;
+  const createCroppedImage = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return;
+
+    const image = new Image();
+    image.src = imageToCrop;
+    
+    await new Promise((resolve) => {
+      image.onload = resolve;
     });
 
-    return (
-        <div className="min-h-screen bg-[#F5F7FB] px-10 py-8 font-medium font-['Poppins']">
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
-            {/* Header */}
-            <div className="flex justify-between items-center mb-9">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                        Layanan Dan Produk
-                    </h1>
-                    <p className="text-gray-600 font-medium">
-                        Kelola produk dan layanan yang ditawarkan
-                    </p>
-                </div>
+    canvas.width = croppedAreaPixels.width;
+    canvas.height = croppedAreaPixels.height;
 
-                <div className="flex items-center gap-4">
-                    {/* Search */}
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Cari produk/layanan..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2.5 h-10 border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
-                        />
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
-                    </div>
-
-                    {/* User */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-700">Hi, Admin</span>
-                        <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white font-bold">
-                            A
-                        </div>
-                    </div>
-
-                    <button className="px-6 py-2 bg-[#27D14C] text-white font-semibold rounded-lg hover:bg-[#20b93f] transition shadow-md">
-                        Register Admin
-                    </button>
-                </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex justify-between items-center mb-2">
-                <div className="flex gap-3">
-                    {["Layanan", "Produk"].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => {
-                                setActiveTab(tab);
-                                setSelectedFilters([]); // reset filter saat pindah tab
-                            }}
-                            className={`px-6 py-2 rounded-full font-semibold shadow-sm transition ${activeTab === tab
-                                ? "bg-[#27D14C] text-white"
-                                : "bg-white text-gray-600 border hover:bg-gray-50"
-                                }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex justify-end mb-8 mt-2">
-                    <button
-                        onClick={() => setShowTambahProduk(true)}
-                        className="flex items-center gap-2 px-3 py-2 bg-[#1E293B] text-white rounded-lg hover:bg-[#111827] transition"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Produk
-                    </button>
-                </div>
-            </div>
-
-            {/* ✅ FILTER Kategori hanya muncul saat TAB PRODUK */}
-            {activeTab === "Produk" && (
-                <div className="flex flex-wrap gap-3 mb-6">
-                    {filterOptions.map((filter) => {
-                        const isActive = selectedFilters.includes(filter);
-                        return (
-                            <button
-                                key={filter}
-                                onClick={() => {
-                                    if (filter === "Semua Produk") {
-                                        setSelectedFilters(["Semua Produk"]);
-                                    } else {
-                                        setSelectedFilters((prev) =>
-                                            prev.includes(filter)
-                                                ? prev.filter((f) => f !== filter)
-                                                : [...prev.filter((f) => f !== "Semua Produk"), filter]
-                                        );
-                                    }
-                                }}
-                                className={`px-6 py-2 rounded-full font-semibold border transition ${isActive
-                                    ? "bg-[#27D14C] text-white shadow"
-                                    : "bg-white text-gray-600 hover:bg-gray-50"
-                                    }`}
-                            >
-                                {filter}
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                {/* Layanan */}
-                {activeTab === "Layanan" &&
-                    filteredData.map((item, idx) => (
-                        <div key={idx} className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition">
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="w-20 h-20 flex items-center justify-center bg-[#E7F4D4] rounded-tr-3xl rounded-bl-3xl">
-                                    <img src={item.icon} alt={item.title} className="w-10 h-10 object-contain" />
-                                </div>
-                                <div className="flex gap-2 text-gray-400">
-                                    <button className="text-[#27D14C] hover:text-green-600" onClick={() => setShowEditLayanan(true)}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z" />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        className="text-red-500 hover:text-red-600 transition"
-                                        onClick={() => {
-                                            setSelectedName(item.title);
-                                            setShowHapus(true);
-                                        }}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3">{item.title}</h3>
-                            <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
-                                {item.points.map((point, i) => (
-                                    <li key={i}>{point}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-
-                {/* Produk */}
-                {activeTab === "Produk" &&
-                    filteredData.map((item, idx) => (
-                        <div key={idx} className="bg-white rounded-xl p-5 shadow hover:shadow-lg transition relative">
-                            <div className="absolute top-6 right-6 flex gap-2 text-gray-400">
-                                <button
-                                    className="text-[#27D14C] hover:text-green-600"
-                                    onClick={() => {
-                                        setSelectedItem(item);
-                                        setShowEditProduk(true);
-                                    }}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z" />
-                                    </svg>
-                                </button>
-                                <button
-                                    className="text-red-500 hover:text-red-600 transition"
-                                    onClick={() => {
-                                        setSelectedName(item.nama);
-                                        setShowHapus(true);
-                                    }}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            {/* Kategori badge di bagian atas */}
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="inline-block bg-[#27D14C]/10 text-[#27D14C] text-xs font-semibold px-3 py-1 rounded-full">
-                                    {item.kategori}
-                                </span>
-                            </div>
-
-                            {/* Gambar produk */}
-                            <img
-                                src={item.gambar || "https://via.placeholder.com/400x200?text=No+Image"}
-                                alt="gambar produk"
-                                className="w-full h-40 object-cover rounded-lg mb-4"
-                            />
-
-                            {/* Detail produk */}
-                            <h3 className="text-lg font-semibold text-gray-800 mb-1">{item.nama}</h3>
-                            <p className="text-sm text-gray-500 mb-1"><strong>Mitra:</strong> {item.mitra}</p>
-                            <p className="text-sm text-gray-500 mb-2"><strong>Tahun:</strong> {item.tahun}</p>
-                            <p className="text-gray-600 text-sm">{item.deskripsi}</p>
-
-                        </div>
-                    ))}
-            </div>
-
-            {/* Popup Edit Layanan */}
-            {showEditLayanan && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <FormEditLayanan onClose={() => setShowEditLayanan(false)} />
-                </div>
-            )}
-
-            {/* Popup Tambah Produk */}
-            {showTambahProduk && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl shadow-lg p-6 w-[500px] relative">
-                        <FormTambahProduk onClose={() => setShowTambahProduk(false)} />
-                    </div>
-                </div>
-            )}
-
-            {/* Popup Edit Produk */}
-            {showEditProduk && selectedItem && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                    <FormEditProduk
-                        onClose={() => {
-                            setShowEditProduk(false);
-                            setSelectedItem(null);
-                        }}
-                        item={selectedItem}
-                    />
-                </div>
-            )}
-
-            {/* Pop-up Hapus */}
-            {showHapus && (
-                <PopupHapus
-                    onClose={() => setShowHapus(false)}
-                    onConfirm={() => {
-                        setShowHapus(false);
-                        setShowBerhasil(true);
-                    }}
-                />
-            )}
-
-            {/* Pop-up Berhasil */}
-            {showBerhasil && (
-                <PopupBD
-                    namaProduk={selectedName}
-                    onClose={() => setShowBerhasil(false)}
-                />
-            )}
-        </div>
+    ctx.drawImage(
+      image,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height
     );
+
+    // Apply rounded corners
+    const roundedCanvas = document.createElement('canvas');
+    const roundedCtx = roundedCanvas.getContext('2d');
+    const radius = 16; // rounded-lg equivalent (1rem = 16px)
+
+    roundedCanvas.width = canvas.width;
+    roundedCanvas.height = canvas.height;
+
+    // Create rounded rectangle path
+    roundedCtx.beginPath();
+    roundedCtx.moveTo(radius, 0);
+    roundedCtx.lineTo(canvas.width - radius, 0);
+    roundedCtx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
+    roundedCtx.lineTo(canvas.width, canvas.height - radius);
+    roundedCtx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
+    roundedCtx.lineTo(radius, canvas.height);
+    roundedCtx.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
+    roundedCtx.lineTo(0, radius);
+    roundedCtx.quadraticCurveTo(0, 0, radius, 0);
+    roundedCtx.closePath();
+    roundedCtx.clip();
+
+    // Draw the cropped image with rounded corners
+    roundedCtx.drawImage(canvas, 0, 0);
+
+    return new Promise((resolve) => {
+      roundedCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        resolve({ url, blob });
+      }, 'image/png', 0.95); // PNG to preserve transparency in corners
+    });
+  };
+
+  const handleCropSave = async () => {
+    try {
+      const { url, blob } = await createCroppedImage();
+      setPreviewFoto(url);
+      setFoto(url);
+      
+      // Convert blob to file
+      const file = new File([blob], 'cropped-image.png', { type: 'image/png' });
+      setFotoFile(file);
+      
+      setShowCropModal(false);
+      setImageToCrop(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    } catch (error) {
+      console.error('Error cropping image:', error);
+      Swal.fire("Error", "Gagal memotong gambar", "error");
+    }
+  };
+
+  const tambahLayanan = () => {
+    if (!inputLayanan.trim()) return;
+    setLayananDitawarkan((prev) => [...prev, inputLayanan.trim()]);
+    setInputLayanan("");
+  };
+
+  const hapusLayanan = (index) => {
+    setLayananDitawarkan((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const pilihIcon = (icon) => {
+    setSelectedIcon(icon);
+    setShowIconModal(false);
+    setIconSearch("");
+  };
+
+  const handleSave = async () => {
+    // contoh validasi sederhana
+    if (!namaLayanan.trim()) {
+      Swal.fire("Error", "Nama layanan wajib diisi", "error");
+      return;
+    }
+
+    // contoh convert ke base64 bila perlu
+    const toBase64 = (file) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+      });
+
+    let fotoData = foto;
+    if (fotoFile) {
+      try {
+        fotoData = await toBase64(fotoFile);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    const payload = {
+      namaLayanan,
+      layananDitawarkan,
+      deskripsiSingkat,
+      deskripsi,
+      icon: selectedIcon,
+      foto: fotoData,
+      updatedBy: user?.id || null,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // contoh simpan: kamu bisa panggil API di sini
+    console.log("payload", payload);
+
+    Swal.fire({
+      icon: "success",
+      title: "Berhasil",
+      text: "Data layanan berhasil disimpan (contoh).",
+      confirmButtonColor: "#1E293B",
+    });
+  };
+
+  // filter icons for grid by search
+  const filteredIcons = iconList.filter((ic) =>
+    ic.toLowerCase().includes(iconSearch.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
+      <Head>
+        <title>Kelola Layanan - Admin</title>
+        {/* FontAwesome CDN (solid icons) */}
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        />
+      </Head>
+
+      {/* TOP BAR (sama style dengan PerusahaanPage) */}
+      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+        <div className="relative w-1/3">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm"
+            placeholder="Search.."
+          />
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-medium text-white">
+              Hi, {user?.username || "Admin"}
+            </p>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
+            {user?.username ? user.username.charAt(0) : "A"}
+          </div>
+        </div>
+      </header>
+
+      {/* CONTENT */}
+      <div className="px-8 pt-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">
+            Layanan Management Consulting
+          </h1>
+          <p className="text-gray-500 italic font-medium">
+            Kelola Layanan Management Consulting
+          </p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-base font-semibold text-gray-800 mb-5 pb-4 border-b border-gray-200">
+            Tambah / Edit Layanan
+          </h2>
+
+          {/* Upload Foto & Icon */}
+          <div className="flex flex-col gap-6 mb-6">
+            {/* Foto Landscape 16:9 - Smaller Preview */}
+            <div className="w-full max-w-lg">
+              <div className="relative w-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden group" style={{ aspectRatio: '16/9' }}>
+                {previewFoto ? (
+                  <img
+                    src={previewFoto}
+                    alt="preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-gray-400 text-sm">No Image (16:9)</span>
+                  </div>
+                )}
+
+                <div
+                  className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center transition-all cursor-pointer"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  <span className="text-white text-sm">Ganti Foto</span>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFotoChange}
+                />
+                <div className="flex gap-3 items-center">
+                  <button
+                    onClick={() => fileInputRef.current.click()}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                  >
+                    <Upload size={16} />
+                    Upload Foto
+                  </button>
+
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG hingga 2MB • Ukuran disarankan 16:9 (landscape)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Icon Picker Section */}
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-800">Icon:</label>
+              <div
+                className="flex items-center gap-3 bg-gray-100 border border-gray-300 rounded-md px-4 py-2 cursor-pointer hover:bg-gray-200 transition-colors"
+                onClick={() => setShowIconModal(true)}
+              >
+                {selectedIcon ? (
+                  <i className={`${selectedIcon} text-xl text-gray-700`}></i>
+                ) : (
+                  <span className="text-gray-500 text-sm">Pilih Icon</span>
+                )}
+              </div>
+
+              {selectedIcon && (
+                <button
+                  onClick={() => setSelectedIcon("")}
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* FORM FIELDS */}
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Nama Layanan
+              </label>
+              <input
+                type="text"
+                placeholder="Masukkan Nama Layanan..."
+                value={namaLayanan}
+                onChange={(e) => setNamaLayanan(e.target.value)}
+                className="w-full bg-gray-100 border border-gray-100 focus:bg-white focus:border-gray-300 focus:ring-0 rounded-md px-4 py-2.5 text-gray-800 text-sm transition-colors placeholder:text-gray-400"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-800">
+                  Nama Layanan Yang Di tawarkan
+                </label>
+                <button
+                  onClick={tambahLayanan}
+                  className="bg-[#1E293B] hover:bg-[#0F172A] text-white px-4 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5"
+                >
+                  <span className="text-sm">+</span>
+                  Tambah Layanan
+                </button>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Masukkan Nama Layanan..."
+                value={inputLayanan}
+                onChange={(e) => setInputLayanan(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    tambahLayanan();
+                  }
+                }}
+                className="w-full px-4 py-2.5 bg-gray-100 border border-gray-100 rounded-md text-sm outline-none placeholder:text-gray-400 mb-3"
+              />
+
+              <div className="space-y-2">
+                {layananDitawarkan.map((l, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between bg-gray-50 p-3 rounded-md border border-gray-100"
+                  >
+                    <span className="text-gray-700 text-sm">{l}</span>
+                    <button
+                      onClick={() => hapusLayanan(i)}
+                      className="text-red-600 hover:text-red-700 text-sm font-medium"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Deskripsi singkat
+              </label>
+              <textarea
+                value={deskripsiSingkat}
+                onChange={(e) => setDeskripsiSingkat(e.target.value)}
+                rows={4}
+                className="w-full bg-gray-100 border border-gray-100 focus:bg-white focus:border-gray-300 focus:ring-0 rounded-md px-4 py-2.5 text-gray-800 text-sm transition-colors resize-none placeholder:text-gray-400"
+                placeholder="Masukkan Deskripsi Singkat..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">
+                Deskripsi
+              </label>
+              <textarea
+                value={deskripsi}
+                onChange={(e) => setDeskripsi(e.target.value)}
+                rows={6}
+                className="w-full bg-gray-100 border border-gray-100 focus:bg-white focus:border-gray-300 focus:ring-0 rounded-md px-4 py-2.5 text-gray-800 text-sm transition-colors resize-none placeholder:text-gray-400"
+                placeholder="Masukkan Deskripsi..."
+              />
+            </div>
+          </div>
+
+          {/* SAVE BUTTON */}
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 bg-[#1E293B] hover:bg-[#0F172A] text-white px-6 py-2.5 rounded-md font-medium text-sm transition-all shadow-sm"
+            >
+              <Save size={16} />
+              Simpan Perubahan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* CROP MODAL */}
+      {showCropModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold">Crop Image (16:9)</h3>
+              <button
+                onClick={() => {
+                  setShowCropModal(false);
+                  setImageToCrop(null);
+                }}
+                className="text-gray-500 hover:text-black text-xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="relative w-full bg-gray-900 overflow-hidden" style={{ height: '500px' }}>
+              {imageToCrop && (
+                <>
+                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={imageToCrop}
+                      alt="crop"
+                      style={{
+                        transform: `scale(${zoom})`,
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        transformOrigin: 'center center',
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Crop overlay - 16:9 box */}
+                  <div 
+                    className="absolute border-2 border-white shadow-lg pointer-events-none"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '80%',
+                      aspectRatio: '16/9',
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)',
+                    }}
+                  />
+                </>
+              )}
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Zoom: {zoom.toFixed(2)}x
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={zoom}
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setImageToCrop(null);
+                  }}
+                  className="px-6 py-2.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleCropSave}
+                  className="px-6 py-2.5 bg-[#1E293B] hover:bg-[#0F172A] text-white rounded-md text-sm font-medium transition-colors"
+                >
+                  Potong & Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ICON PICKER MODAL (Grid) */}
+      {showIconModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Pilih Icon</h3>
+              <button
+                onClick={() => {
+                  setShowIconModal(false);
+                  setIconSearch("");
+                }}
+                className="text-gray-500 hover:text-black text-xl"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Cari icon..."
+                value={iconSearch}
+                onChange={(e) => setIconSearch(e.target.value)}
+                className="w-full border px-3 py-2 rounded-lg bg-gray-100 focus:bg-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-6 gap-3 max-h-72 overflow-y-auto">
+              {filteredIcons.length === 0 ? (
+                <div className="col-span-6 text-center text-gray-500 py-8">
+                  Tidak ada icon
+                </div>
+              ) : (
+                filteredIcons.map((ic) => (
+                  <button
+                    key={ic}
+                    onClick={() => pilihIcon(ic)}
+                    className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-300"
+                  >
+                    <i className={`${ic} text-2xl text-gray-700`}></i>
+                    <span className="text-xs text-gray-500 mt-2">{ic.replace("fa-solid ", "")}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default LayananProduk;
+export default TambahLayananPage;

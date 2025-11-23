@@ -1,160 +1,309 @@
-import React, { useState } from "react";
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect, useRef } from "react";
+import Head from 'next/head';
+import { useSelector } from 'react-redux';
+import { Upload, Save, Calendar as CalendarIcon } from 'lucide-react';
+import Swal from 'sweetalert2';
+import AdminLayouts from '../../layouts/AdminLayouts';
 
-const Perusahaan = () => {
-    const [logo, setLogo] = useState(null);
-    const [form, setForm] = useState({
-        nama: "PT Divus Global Mediacommm",
-        email: "divusgrm@gmail.com",
-        telepon: "+62-8522-0203-453",
-        alamat:
-            "Jl. Terusan Kapten Halim, Kampung Sukamulya, Kel. Salammulya, Kec. Pondoksalam, Kab. Purwakarta, Prov. Jawa Barat 41115",
-        deskripsi:
-            "PT Divus Global Mediacommm Adalah Perusahaan Konsultan Yang Bergerak Di Bidang Manajemen, Komunikasi Korporat, Dan Desain Grafis. Kami Menyediakan Layanan Mulai Dari Studi Kelayakan, Perencanaan Strategis, Riset Pasar, Hingga Identitas Korporasi Dan Media Promosi. Dengan Pengalaman Beragam Proyek, Divus Berkomitmen Menjadi Mitra Terpercaya Dalam Menghadirkan Solusi Profesional Dan Inovatif.",
-    });
+// --- DATEPICKER IMPORTS ---
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { id } from 'date-fns/locale'; // Import locale Indonesia
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+const PerusahaanPage = () => {
+  const { user } = useSelector((state) => state.auth);
+  const fileInputRef = useRef(null);
+
+  // State Form
+  const [logo, setLogo] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // State khusus untuk DatePicker (Format Date Object)
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const [form, setForm] = useState({
+    id: "",
+    company_name: "",
+    email: "",
+    phone: "",
+    address: "",
+    description: "",
+    business_field: "",
+    // established_date akan dihandle oleh selectedDate
+  });
+
+  // 1. Fetch Data
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const res = await fetch('/api/company');
+        const data = await res.json();
+        if (res.ok && data) {
+          setForm({
+            id: data.id,
+            company_name: data.company_name || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            address: data.address || "",
+            description: data.description || "",
+            business_field: data.business_field || "",
+          });
+          
+          // Set Date untuk DatePicker
+          if (data.established_date) {
+            setSelectedDate(new Date(data.established_date));
+          }
+          
+          setLogo(data.logo_url || null);
+        }
+      } catch (error) {
+        console.error("Gagal load data perusahaan", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
+    fetchCompany();
+  }, []);
 
-    const handleLogoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) setLogo(URL.createObjectURL(file));
-    };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
 
-    return (
-        <div className="min-h-screen bg-[#F5F7FB] px-10 py-8 font-['Poppins']">
-            <div className="flex justify-between items-center mb-9">
-                {/* Kiri: Judul */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">Perusahaan</h1>
-                    <p className="text-gray-600 font-medium">Kelola Informasi Perusahaan</p>
-                </div>
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        Swal.fire('Error', 'Ukuran file maksimal 2MB', 'error');
+        return;
+      }
+      setLogoFile(file);
+      setLogo(URL.createObjectURL(file));
+    }
+  };
 
-                {/* Kanan: Profil + Tombol */}
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-700 font-medium  ">Hi, Admin</span>
-                        <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white font-bold">
-                            A
-                        </div>
-                    </div>
+  const toBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
 
-                    <button className="px-6 py-2 bg-[#27D14C] text-white font-semibold font-['Poppins'] rounded-lg hover:bg-[#20b93f] transition shadow-md">
-                        Register Admin
-                    </button>
-                </div>
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+      let logoData = logo;
+      if (logoFile) {
+        logoData = await toBase64(logoFile);
+      }
+
+      const payload = {
+        ...form,
+        // Masukkan tanggal dari DatePicker ke payload
+        established_date: selectedDate ? selectedDate.toISOString() : null,
+        logo_url: logoData,
+        userId: user?.id
+      };
+
+      const res = await fetch('/api/company', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Berhasil Disimpan!',
+          text: 'Informasi perusahaan telah diperbarui.',
+          confirmButtonColor: '#1E293B'
+        });
+      } else {
+        throw new Error("Gagal menyimpan");
+      }
+    } catch (error) {
+      Swal.fire('Error', 'Terjadi kesalahan saat menyimpan data.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) return <div className="p-10 text-center">Memuat Data...</div>;
+
+  return (
+      <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
+        <Head>
+          <title>Informasi Perusahaan - Divus Admin</title>
+        </Head>
+
+        {/* --- CUSTOM CSS UNTUK DATEPICKER --- */}
+        <style jsx global>{`
+          .react-datepicker-wrapper {
+            width: 100%;
+          }
+          .react-datepicker {
+            font-family: 'Poppins', sans-serif;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+          }
+          .react-datepicker__header {
+            background-color: white;
+            border-bottom: 1px solid #f3f4f6;
+          }
+          .react-datepicker__current-month {
+            color: #374151;
+            font-weight: 600;
+          }
+          .react-datepicker__day-name {
+            color: #9ca3af;
+          }
+          /* Warna Hijau Utama */
+          .react-datepicker__day--selected, 
+          .react-datepicker__day--keyboard-selected {
+            background-color: #27D14C !important;
+            color: white !important;
+            border-radius: 0.5rem;
+          }
+          .react-datepicker__day:hover {
+            background-color: #ecfdf5;
+            color: #27D14C;
+            border-radius: 0.5rem;
+          }
+          .react-datepicker__navigation-icon::before {
+            border-color: #6b7280;
+          }
+        `}</style>
+
+        {/* TOP BAR */}
+        <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+            <div className="relative w-1/3">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+              </div>
+              <input type="text" className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm" placeholder="Search.." />
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden md:block">
+                  <p className="text-sm font-medium text-white">Hi, {user?.username || "Admin"}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
+                  {user?.username ? user.username.charAt(0) : "A"}
+              </div>
+            </div>
+        </header>
+
+        <div className="px-8 pt-8">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">Informasi Perusahaan</h1>
+                <p className="text-gray-500 italic font-medium">Kelola Informasi Perusahaan</p>
             </div>
 
-
-            {/* Form Container */}
-            <div className="bg-white shadow-md rounded-xl p-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-1">
-                    Informasi Perusahaan
-                </h2>
-                <p className="text-gray-500 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                <h2 className="text-lg font-medium text-gray-700 mb-6 border-b pb-4">
                     Perbarui detail perusahaan dan informasi kontak
-                </p>
+                </h2>
 
-                {/* Upload Logo */}
-                <div className="flex flex-col items-center border border-dashed border-gray-300 rounded-lg p-6 mb-6 w-60">
-                    {logo ? (
-                        <img
-                            src={logo}
-                            alt="Logo Preview"
-                            className="w-24 h-24 object-contain mb-3"
-                        />
-                    ) : (
-                        <div className="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-md mb-3">
-                            <span className="text-gray-400 text-sm">Logo</span>
+                {/* Upload Logo Section */}
+                <div className="flex flex-col md:flex-row gap-8 mb-8 items-start">
+                    <div className="w-40 h-40 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative group shrink-0">
+                         {logo ? (
+                             <img src={logo} alt="Company Logo" className="w-full h-full object-contain p-2" />
+                         ) : (
+                             <span className="text-gray-400 text-xs">No Logo</span>
+                         )}
+                         <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center transition-all cursor-pointer" onClick={() => fileInputRef.current.click()}>
+                            <span className="text-white text-xs">Ganti</span>
+                         </div>
+                    </div>
+                    
+                    <div>
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleLogoChange} />
+                        <button 
+                            onClick={() => fileInputRef.current.click()}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                        >
+                            <Upload size={16} />
+                            Upload Logo
+                        </button>
+                        <p className="text-xs text-gray-400 mt-2">PNG, JPG hingga 2MB <br/> *Ukuran disarankan persegi (1:1)</p>
+                    </div>
+                </div>
+
+                {/* Form Inputs */}
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nama Perusahaan</label>
+                        <input type="text" name="company_name" value={form.company_name} onChange={handleChange} className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Bidang Usaha</label>
+                        <input type="text" name="business_field" value={form.business_field} onChange={handleChange} className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors" placeholder="Contoh: Jasa Konsultasi" />
+                    </div>
+
+                    {/* --- CUSTOM DATE PICKER --- */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Berdiri Sejak</label>
+                        <div className="relative w-full">
+                          <DatePicker
+                            selected={selectedDate}
+                            onChange={(date) => setSelectedDate(date)}
+                            dateFormat="dd MMMM yyyy" // Format Indonesia (23 November 2025)
+                            locale={id} // Bahasa Indonesia
+                            placeholderText="Pilih tanggal berdiri"
+                            showYearDropdown
+                            scrollableYearDropdown
+                            yearDropdownItemNumber={50}
+                            className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors cursor-pointer"
+                          />
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <CalendarIcon size={18} />
+                          </div>
                         </div>
-                    )}
-                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-                        Upload Logo
-                        <input
-                            type="file"
-                            accept="image/png, image/jpeg"
-                            onChange={handleLogoChange}
-                            className="hidden"
-                        />
-                    </label>
-                    <p className="text-xs text-gray-400 mt-2">PNG, JPG hingga 2MB</p>
-                    <p className="text-xs text-gray-400 mt-2">*Ukuran 50 x 50 pxl</p>
-                </div>
-
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 gap-4">
-                    <div>
-                        <label className="text-gray-700 font-medium text-sm">
-                            Nama Perusahaan
-                        </label>
-                        <input
-                            type="text"
-                            name="nama"
-                            value={form.nama}
-                            onChange={handleChange}
-                            className="w-full mt-1 border rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
-                        />
                     </div>
 
                     <div>
-                        <label className="text-gray-700 font-medium text-sm">Email</label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            className="w-full mt-1 border rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" value={form.email} onChange={handleChange} className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors" />
                     </div>
 
                     <div>
-                        <label className="text-gray-700 font-medium text-sm">Telepon</label>
-                        <input
-                            type="text"
-                            name="telepon"
-                            value={form.telepon}
-                            onChange={handleChange}
-                            className="w-full mt-1 border rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Telepon</label>
+                        <input type="text" name="phone" value={form.phone} onChange={handleChange} className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors" />
                     </div>
 
                     <div>
-                        <label className="text-gray-700 font-medium text-sm">Alamat</label>
-                        <textarea
-                            name="alamat"
-                            value={form.alamat}
-                            onChange={handleChange}
-                            rows="2"
-                            className="w-full mt-1 border rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
+                        <textarea name="address" value={form.address} onChange={handleChange} rows={3} className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors resize-none"></textarea>
                     </div>
 
                     <div>
-                        <label className="text-gray-700 font-medium text-sm">
-                            Deskripsi
-                        </label>
-                        <textarea
-                            name="deskripsi"
-                            value={form.deskripsi}
-                            onChange={handleChange}
-                            rows="4"
-                            className="w-full mt-1 border rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
+                        <textarea name="description" value={form.description} onChange={handleChange} rows={5} className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors resize-none"></textarea>
                     </div>
                 </div>
 
-                {/* Button Simpan */}
-                <div className="flex justify-end mt-6">
-                    <button className="px-6 py-2 bg-[#1E293B] text-white rounded-lg hover:bg-[#111827] transition">
-                        Simpan Perubahan
+                {/* Tombol Simpan */}
+                <div className="mt-10 flex justify-end">
+                    <button 
+                        onClick={handleSubmit}
+                        disabled={isSaving}
+                        className="flex items-center gap-2 bg-[#1E293B] hover:bg-black text-white px-8 py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                    >
+                        <Save size={18} />
+                        {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                     </button>
                 </div>
             </div>
         </div>
-    );
+      </div>
+  );
 };
 
-export default Perusahaan;
+export default PerusahaanPage;

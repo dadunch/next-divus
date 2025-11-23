@@ -397,7 +397,7 @@ export default function Home() {
 				</section>
 
 				{/* CTA SECTION */}
-				<section className="w-full px-4 md:px-10 py-10 mb-3">
+				<section className="w-full px-4 md:px-20 py-4 mb-6">
 					<div className="max-w-[1440px] mx-auto">
 						<div
 							className="relative w-full rounded-xl overflow-hidden shadow-xl bg-gradient-to-b from-green-500 to-lime-500 px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6"
@@ -407,11 +407,14 @@ export default function Home() {
 								className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
 								style={{
 									backgroundImage: `url(${Assets.Banner1})`,
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
 								}}
 							></div>
 
 							{/* Judul */}
-							<h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10">
+							<h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">
 								PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
 								terpercaya untuk bisnis Anda!
 							</h2>

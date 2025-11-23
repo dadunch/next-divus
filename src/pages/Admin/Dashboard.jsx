@@ -7,8 +7,8 @@ import {
 import AdminLayouts from '../../layouts/AdminLayouts';
 
 const DashboardAdmin = () => {
-  // ambil user dari redux (sesuaikan selector kalau store-mu beda)
-  const user = useSelector((state) => state.user?.userData);
+  // ambil user dari redux 
+  const { user } = useSelector((state) => state.auth);
 
   // --- STATE DATA ---
   const [dashboardData, setDashboardData] = useState(null);

@@ -107,10 +107,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     fetchMenus();
   }, [user]);
 
-  // --- SECURITY CHECK ---
+  // --- 3. SECURITY CHECK (UPDATED) ---
   useEffect(() => {
     if (!isLoading && menuItems.length > 0) {
-      const currentPath = router.pathname;
+      // Gunakan asPath agar mendapatkan URL asli (misal: .../Client/1) bukan .../Client/[id]
+      // Kita split('?')[0] untuk membuang query params jika ada
+      const currentPath = router.asPath.split('?')[0];
+      
       let allowedPaths = [];
       menuItems.forEach(item => {
         allowedPaths.push(item.path);
@@ -119,8 +122,22 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         }
       });
 
-      const isAllowed = allowedPaths.includes(currentPath);
+      // LOGIKA BARU: Cek Exact Match ATAU Parent Match
+      const isAllowed = allowedPaths.some(allowedPath => {
+        // 1. Jika URL sama persis
+        if (currentPath === allowedPath) return true;
+
+        // 2. Jika URL adalah sub-halaman (Detail Page)
+        // Contoh: allowedPath="/Admin/Proyek/Client", currentPath="/Admin/Proyek/Client/1"
+        // Syarat: allowedPath tidak boleh '#' dan currentPath harus diawali allowedPath + '/'
+        if (allowedPath !== '#' && currentPath.startsWith(allowedPath + '/')) {
+            return true;
+        }
+
+        return false;
+      });
       
+      // Pengecualian halaman umum
       if (!isAllowed && currentPath !== '/Admin/Dashboard' && currentPath !== '/404') {
         Swal.fire({
           icon: 'error',
@@ -133,7 +150,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         });
       }
     }
-  }, [router.pathname, menuItems, isLoading]);
+  }, [router.asPath, menuItems, isLoading]);
 
 
   // --- UI HELPERS ---

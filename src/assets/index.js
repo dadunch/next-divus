@@ -6,6 +6,7 @@ export const Assets = {
     Hero1: '/assets/1.png',
     Hero2: '/assets/2.png',
     Hero3: '/assets/3.png',
+    Hero4: '/assets/4.png',
 
     // Banners
     Banner1: '/assets/Banner.png',

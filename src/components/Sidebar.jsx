@@ -197,11 +197,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             <button
               onClick={() => toggleMenu(item.name)}
               className={`w-full flex items-center justify-between px-6 py-3.5 rounded-xl font-['Poppins'] font-medium transition-all duration-200 
-                ${isActiveParent ? 'text-gray-900 bg-gray-50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}
+                ${
+                  isActiveParent
+                    ? 'bg-gradient-to-r from-[#94E93F] to-[#39B54A] text-white shadow-lg shadow-green-200' 
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }
               `}
             >
+
               <div className="flex items-center gap-4">
-                <span className={isActiveParent ? 'text-gray-700' : 'text-gray-400'}>{item.icon}</span>
+                <span className={isActiveParent ? 'text-white' : 'text-gray-400'}>
+                  {item.icon}
+                </span>
                 <span className="text-[15px]">{item.name}</span>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

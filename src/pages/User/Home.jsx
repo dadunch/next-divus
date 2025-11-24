@@ -397,8 +397,8 @@ export default function Home() {
 				</section>
 
 				{/* CTA SECTION */}
-				<section className="w-full px-4 md:px-20 py-4 mb-6">
-					<div className="max-w-[1440px] mx-auto">
+				<section className="w-full px-4 py-4 mb-6">
+					<div className="max-w-7xl mx-auto">
 						<div
 							className="relative w-full rounded-xl overflow-hidden shadow-xl bg-gradient-to-b from-green-500 to-lime-500 px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6"
 						>

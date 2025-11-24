@@ -28,7 +28,7 @@ function Navbar() {
                     // Format data
                     const formattedServices = data.map(service => ({
                         name: service.title,
-                        path: '/User/LayananProduk' 
+                        path: '/User/Layanan' 
                     }));
                     setServicesList(formattedServices);
                 }
@@ -69,8 +69,8 @@ function Navbar() {
             path: "#", 
             isDropdown: true,
             subItems: [
-                { name: "Produk", path: "/User/Proyek" },
-                { name: "Klien", path: "/User/Proyek" },
+                { name: "Produk", path: "/User/Produk" },
+                { name: "Proyek", path: "/User/Proyek" },
             ]
         },
         { name: "Tentang Kami", path: "/User/TentangKami" },

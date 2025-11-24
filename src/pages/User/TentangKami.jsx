@@ -184,7 +184,6 @@ export default function TentangKami() {
 					</div>
 				</section>
 
-
 			{/* CTA SECTION */}
 			<section className="w-full px-4 md:px-24 py-4 mb-6">
 				<div className="max-w-[1440px] mx-auto">

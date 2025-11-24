@@ -101,10 +101,10 @@ export default function Proyek() {
 
       {/* Section utama */}
       <section className="max-w-[1440px] mx-auto px-6 md:px-20 py-16">
-        <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold font-['Poppins'] capitalize mb-6">
+        <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold  capitalize mb-6">
           Proyek dan Klien kami
         </h2>
-        <p className="text-zinc-700 text-base font-normal font-['Poppins'] leading-relaxed mb-12">
+        <p className="text-zinc-700 text-base font-normal  leading-relaxed mb-12">
           PT Divus Global Mediacomm telah berpengalaman mengerjakan berbagai proyek...
         </p>
 
@@ -117,7 +117,7 @@ export default function Proyek() {
                 setActiveFilter(category);
                 setCurrentPage(1); // Reset ke halaman 1 saat filter berubah
               }}
-              className={`px-7 py-2.5 rounded-[10px] text-xl font-medium font-['Poppins'] transition-all ${
+              className={`px-6 py-2 rounded-[10px] text-lg font-medium transition-all ${
                 activeFilter === category
                   ? 'bg-zinc-800 text-white'
                   : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'

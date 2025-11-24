@@ -3,7 +3,6 @@ import Head from "next/head";
 import { useSelector } from "react-redux";
 import { Upload, Save, Calendar as CalendarIcon } from "lucide-react";
 import Swal from "sweetalert2";
-import "react-datepicker/dist/react-datepicker.css";
 
 const TambahLayananPage = () => {
   const { user } = useSelector((state) => state.auth || {});
@@ -292,10 +291,10 @@ const TambahLayananPage = () => {
       <div className="px-8 pt-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-1">
-            Layanan Management Consulting
+            Tambah Layanan Baru
           </h1>
-          <p className="text-gray-500 italic font-medium">
-            Kelola Layanan Management Consulting
+          <p className="text-gray-500 font-medium">
+            Kelola Layanan
           </p>
         </div>
 

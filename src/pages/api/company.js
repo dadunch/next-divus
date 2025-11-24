@@ -1,19 +1,30 @@
 import prisma from '../../lib/prisma';
 import { serialize } from '../../lib/utils';
-import { createLog } from '../../lib/logger'; // Pastikan path ini benar ke helper logger Anda
+import { createLog } from '../../lib/logger';
+
+// --- KONFIGURASI LIMIT UKURAN DATA ---
+// Tambahkan ini agar bisa upload gambar Base64 yang besar (hingga 10MB)
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', 
+    },
+  },
+};
 
 export default async function handler(req, res) {
   // --- 1. GET: Ambil Data Profile ---
   if (req.method === 'GET') {
     try {
       const profile = await prisma.company_profile.findFirst();
-      return res.status(200).json(serialize(profile));
+      // Return object kosong jika belum ada data, biar frontend tidak error null
+      return res.status(200).json(serialize(profile) || {});
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
   }
 
-  // --- 2. PUT: Update Data Profile (DENGAN LOG) ---
+  // --- 2. PUT: Update/Create Data Profile ---
   if (req.method === 'PUT') {
     const { 
       id, 
@@ -25,48 +36,55 @@ export default async function handler(req, res) {
       business_field, 
       established_date, 
       logo_url,
-      userId // <--- Tangkap User ID dari Frontend
+      userId 
     } = req.body;
 
     try {
-      // Gunakan Transaction untuk Update + Catat Log sekaligus
       const result = await prisma.$transaction(async (tx) => {
         
-        // A. Cari ID Profile yang mau diupdate
-        let targetId = id ? BigInt(id) : undefined;
+        // A. Cek apakah data sudah ada?
+        const existingData = await tx.company_profile.findFirst();
         
-        // Jika tidak ada ID dikirim, cari data pertama (fallback)
-        if (!targetId) {
-            const existing = await tx.company_profile.findFirst();
-            if (existing) targetId = existing.id;
+        let updatedProfile;
+
+        if (existingData) {
+            // JIKA ADA -> UPDATE
+            updatedProfile = await tx.company_profile.update({
+                where: { id: existingData.id },
+                data: {
+                    company_name,
+                    description,
+                    address,
+                    email,
+                    phone,
+                    business_field,
+                    established_date: established_date ? new Date(established_date) : undefined,
+                    logo_url
+                }
+            });
+        } else {
+            // JIKA KOSONG -> CREATE BARU
+            updatedProfile = await tx.company_profile.create({
+                data: {
+                    company_name: company_name || "Nama Perusahaan",
+                    description: description || "",
+                    address: address || "",
+                    email: email || "",
+                    phone: phone || "",
+                    business_field: business_field || "",
+                    established_date: established_date ? new Date(established_date) : new Date(),
+                    logo_url: logo_url || ""
+                }
+            });
         }
 
-        if (!targetId) {
-            throw new Error("Data profile belum ada di database");
-        }
-
-        // B. Lakukan Update
-        const updatedProfile = await tx.company_profile.update({
-          where: { id: targetId },
-          data: {
-            company_name,
-            description,
-            address,
-            email,
-            phone,
-            business_field,
-            established_date: established_date ? new Date(established_date) : undefined,
-            logo_url
-          }
-        });
-
-        // C. Catat Log Aktivitas
+        // B. Catat Log Aktivitas
         if (userId) {
             await createLog(
                 tx, 
                 userId, 
                 "Edit Perusahaan", 
-                `Memperbarui informasi profil perusahaan: ${company_name}`
+                `Memperbarui informasi profil perusahaan`
             );
         }
 
@@ -77,7 +95,7 @@ export default async function handler(req, res) {
 
     } catch (error) {
       console.error("Update Company Error:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Gagal menyimpan data. Pastikan input valid." });
     }
   }
 }

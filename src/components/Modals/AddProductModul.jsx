@@ -1,222 +1,147 @@
 import React, { useState } from 'react';
-import { X, Image as ImageIcon } from 'lucide-react'; // Hapus import yang tidak perlu
+import { useSelector } from 'react-redux'; // Import Redux
+import { X, Image as ImageIcon, Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
-  // Hapus semua state 'clients' dan 'clientId'
+  // Ambil user login
+  const { user } = useSelector((state) => state.auth);
+
   const [formData, setFormData] = useState({
     nama_produk: '',
     deskripsi: '',
     tahun: new Date().getFullYear()
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]); 
+  const [previews, setPreviews] = useState([]);     
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form saat modal dibuka
   React.useEffect(() => {
-    if (isOpen) {
-      resetForm();
-    }
+    if (isOpen) resetForm();
   }, [isOpen]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+    if (imageFiles.length + files.length > 5) {
+      Swal.fire('Batas Maksimal', 'Maksimal upload 5 foto saja.', 'warning');
+      return;
     }
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setImageFiles(prev => [...prev, ...files]);
+    setPreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removeImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.nama_produk.trim()) {
-      Swal.fire('Peringatan', 'Nama produk wajib diisi!', 'warning');
-      return;
-    }
+    if (!formData.nama_produk.trim()) return Swal.fire('Error', 'Nama wajib diisi', 'error');
 
     setIsSubmitting(true);
 
     try {
-      // 1. Upload Gambar (Jika ada)
-      let imageUrl = '';
+      let uploadedUrls = [];
       
-      if (imageFile) {
-        try {
-          const imageFormData = new FormData();
-          imageFormData.append('file', imageFile);
-          
-          const uploadRes = await fetch('/api/upload', {
-            method: 'POST',
-            body: imageFormData
-          });
-          
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            imageUrl = uploadData.url;
-            console.log('Image uploaded:', imageUrl);
-          }
-        } catch (uploadError) {
-          console.warn('Upload error:', uploadError);
-        }
+      // 1. Upload Gambar
+      if (imageFiles.length > 0) {
+        const imageFormData = new FormData();
+        imageFiles.forEach(file => {
+          imageFormData.append('file', file);
+        });
+
+        // Path API upload
+        const uploadRes = await fetch('/api/products/upload', { 
+          method: 'POST',
+          body: imageFormData
+        });
+
+        if (!uploadRes.ok) throw new Error('Gagal mengupload gambar.');
+        const result = await uploadRes.json();
+        uploadedUrls = result.urls; 
       }
 
-      // 2. Siapkan Data Produk (TANPA CLIENT)
+      // 2. Simpan Data ke DB
+      const currentUserId = user?.id || 1; // Ambil ID User
+      
       const productData = {
-        nama_produk: formData.nama_produk.trim(),
-        deskripsi: formData.deskripsi?.trim() || '',
-        foto_produk: imageUrl,
-        tahun: formData.tahun || new Date().getFullYear()
+        nama_produk: formData.nama_produk,
+        deskripsi: formData.deskripsi,
+        tahun: formData.tahun,
+        foto_produk: JSON.stringify(uploadedUrls),
+        userId: currentUserId // Kirim ID User ke Backend
       };
 
-      console.log('Sending product data:', productData);
-
-      // 3. Kirim ke Database
       const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productData)
       });
 
-      const responseData = await res.json();
-
       if (res.ok) {
-        await Swal.fire('Berhasil!', 'Produk berhasil ditambahkan', 'success');
-        resetForm();
-        onClose();
+        Swal.fire('Sukses', 'Produk berhasil ditambahkan', 'success');
         onSuccess();
       } else {
-        throw new Error(responseData.error || 'Gagal menambahkan produk');
+        throw new Error('Gagal menyimpan ke database');
       }
     } catch (error) {
-      console.error("Submit Error:", error);
-      Swal.fire('Gagal', error.message || 'Terjadi kesalahan', 'error');
+      Swal.fire('Gagal', error.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      nama_produk: '',
-      deskripsi: '',
-      tahun: new Date().getFullYear()
-    });
-    setImageFile(null);
-    setImagePreview(null);
+    setFormData({ nama_produk: '', deskripsi: '', tahun: new Date().getFullYear() });
+    setImageFiles([]);
+    setPreviews([]);
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
-          <h2 className="text-2xl font-bold text-gray-800">Tambah Produk Baru</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X size={24} className="text-gray-600" />
-          </button>
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+          <h2 className="text-xl font-bold text-gray-800">Tambah Produk</h2>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full"><X /></button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          
-          {/* Image Upload */}
+          {/* Form Upload & Input... (sama seperti sebelumnya) */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Gambar Produk</label>
-            <div className="relative">
-              {imagePreview ? (
-                <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-gray-200">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => { setImageFile(null); setImagePreview(null); }}
-                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                  >
-                    <X size={16} />
+            <label className="block font-semibold mb-2 text-gray-700">Foto Produk (Max 5)</label>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-2">
+              {previews.map((src, idx) => (
+                <div key={idx} className="relative aspect-square border rounded-lg overflow-hidden group shadow-sm">
+                  <img src={src} className="w-full h-full object-cover" alt="Preview" />
+                  <button type="button" onClick={() => removeImage(idx)} className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-200">
+                    <Trash2 size={18} />
                   </button>
                 </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors bg-gray-50">
-                  <ImageIcon size={48} className="text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Klik untuk upload gambar</span>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              ))}
+              {imageFiles.length < 5 && (
+                <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition-all">
+                  <ImageIcon className="text-gray-400 mb-1" />
+                  <span className="text-xs text-gray-500 font-medium">+ Upload</span>
+                  <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
                 </label>
               )}
             </div>
           </div>
-
-          {/* Nama Produk */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nama Produk <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="nama_produk"
-              value={formData.nama_produk}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Masukkan nama produk..."
-              required
-            />
-          </div>
-
-          {/* Deskripsi */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi</label>
-            <textarea
-              name="deskripsi"
-              value={formData.deskripsi}
-              onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
-              placeholder="Masukkan deskripsi produk..."
-            />
-          </div>
-
-          {/* Tahun */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun</label>
-            <input
-              type="number"
-              name="tahun"
-              value={formData.tahun}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="2025"
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-[#2D2D39] text-white rounded-lg font-medium hover:bg-black transition-colors"
-            >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Produk'}
+          <input name="nama_produk" value={formData.nama_produk} onChange={handleChange} placeholder="Nama Produk" className="w-full border border-gray-300 px-4 py-2 rounded-lg" required />
+          <textarea name="deskripsi" value={formData.deskripsi} onChange={handleChange} placeholder="Deskripsi" className="w-full border border-gray-300 px-4 py-2 rounded-lg" rows={3} />
+          <input name="tahun" type="number" value={formData.tahun} onChange={handleChange} className="w-full border border-gray-300 px-4 py-2 rounded-lg" />
+          <div className="pt-2">
+            <button type="submit" disabled={isSubmitting} className="w-full bg-[#2D2D39] text-white py-3 rounded-lg font-medium hover:bg-black transition-colors disabled:opacity-50">
+                {isSubmitting ? 'Sedang Menyimpan...' : 'Simpan Produk'}
             </button>
           </div>
         </form>
@@ -224,5 +149,4 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     </div>
   );
 };
-
 export default AddProductModal;

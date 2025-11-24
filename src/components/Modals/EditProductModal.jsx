@@ -67,7 +67,7 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
           const imageFormData = new FormData();
           imageFormData.append('file', imageFile);
           
-          const uploadRes = await fetch('/api/upload', {
+          const uploadRes = await fetch('/api/product/upload', {
             method: 'POST',
             body: imageFormData
           });

@@ -1,53 +1,49 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
+import { createLog } from '../../../lib/logger'; // Pastikan path logger benar
+
+const safeSerialize = (data) => {
+  return JSON.parse(JSON.stringify(data, (key, value) =>
+    typeof value === 'bigint' ? value.toString() : value
+  ));
+};
 
 export default async function handler(req, res) {
-  
-  // === GET: AMBIL DATA (TANPA CLIENT) ===
+  // GET
   if (req.method === 'GET') {
     try {
-      const products = await prisma.product.findMany({ 
-        orderBy: { created_at: 'desc' }
-        // Kita HAPUS "include: { client: true }" karena tabelnya tidak terhubung
-      });
-
-      // Pengaman BigInt (mengubah ID dan Tahun jadi string)
-      const safeProducts = JSON.parse(JSON.stringify(products, (key, value) =>
-        typeof value === 'bigint'
-          ? value.toString() 
-          : value
-      ));
-
-      return res.status(200).json(safeProducts);
+      const products = await prisma.product.findMany({ orderBy: { created_at: 'desc' } });
+      return res.status(200).json(safeSerialize(products));
     } catch (error) {
-      console.error("GET Error:", error);
-      return res.status(500).json({ error: "Gagal mengambil data produk" });
-    }
-  }
-
-  // === POST: TAMBAH DATA (TANPA CLIENT) ===
-  if (req.method === 'POST') {
-    // Kita hapus client_id dari sini
-    const { nama_produk, foto_produk, tahun, deskripsi } = req.body;
-
-    try {
-      const newProduct = await prisma.product.create({
-        data: {
-          nama_produk,
-          foto_produk: foto_produk || '', // Jika kosong, isi string kosong
-          deskripsi: deskripsi || '',
-          tahun: BigInt(tahun) // Pastikan tahun diubah jadi BigInt
-          // client_id SUDAH DIHAPUS
-        }
-      });
-      
-      // Serialize respon agar aman
-      return res.status(201).json(serialize(newProduct));
-    } catch (error) {
-      console.error("POST Error:", error);
       return res.status(500).json({ error: error.message });
     }
   }
 
+  // POST
+  if (req.method === 'POST') {
+    // Terima userId dari body
+    const { nama_produk, deskripsi, tahun, foto_produk, userId } = req.body;
+    const currentUserId = userId || 1; 
+
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const newProduct = await tx.product.create({
+          data: {
+            nama_produk: nama_produk.trim(),
+            deskripsi: deskripsi || '',
+            tahun: BigInt(tahun),
+            foto_produk: foto_produk || '[]',
+            created_at: new Date()
+          }
+        });
+
+        await createLog(tx, currentUserId, "Tambah Produk", `Menambahkan produk: ${newProduct.nama_produk}`);
+        return newProduct;
+      });
+      return res.status(201).json(safeSerialize(result));
+    } catch (error) {
+      return res.status(500).json({ error: "Gagal menambahkan produk" });
+    }
+  }
   return res.status(405).json({ error: 'Method not allowed' });
 }

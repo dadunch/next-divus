@@ -8,10 +8,10 @@ import AdminLayouts from '../../layouts/AdminLayouts';
 // --- DATEPICKER IMPORTS ---
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { id } from 'date-fns/locale'; // Import locale Indonesia
+import { id } from 'date-fns/locale'; 
 
 const PerusahaanPage = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth); // 1. Ambil User Login
   const fileInputRef = useRef(null);
 
   // State Form
@@ -20,7 +20,6 @@ const PerusahaanPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
-  // State khusus untuk DatePicker (Format Date Object)
   const [selectedDate, setSelectedDate] = useState(null);
 
   const [form, setForm] = useState({
@@ -31,7 +30,6 @@ const PerusahaanPage = () => {
     address: "",
     description: "",
     business_field: "",
-    // established_date akan dihandle oleh selectedDate
   });
 
   // 1. Fetch Data
@@ -51,7 +49,6 @@ const PerusahaanPage = () => {
             business_field: data.business_field || "",
           });
           
-          // Set Date untuk DatePicker
           if (data.established_date) {
             setSelectedDate(new Date(data.established_date));
           }
@@ -76,7 +73,13 @@ const PerusahaanPage = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        Swal.fire('Error', 'Ukuran file maksimal 2MB', 'error');
+        Swal.fire({
+             icon: 'warning',
+             title: 'File Terlalu Besar',
+             text: 'Ukuran file maksimal 2MB',
+             confirmButtonColor: '#F59E0B',
+             customClass: { popup: 'font-["Poppins"] rounded-xl' }
+        });
         return;
       }
       setLogoFile(file);
@@ -101,10 +104,9 @@ const PerusahaanPage = () => {
 
       const payload = {
         ...form,
-        // Masukkan tanggal dari DatePicker ke payload
         established_date: selectedDate ? selectedDate.toISOString() : null,
         logo_url: logoData,
-        userId: user?.id
+        userId: user?.id // <--- 2. PASTIKAN INI DIKIRIM (User ID Login)
       };
 
       const res = await fetch('/api/company', {
@@ -118,19 +120,27 @@ const PerusahaanPage = () => {
           icon: 'success',
           title: 'Berhasil Disimpan!',
           text: 'Informasi perusahaan telah diperbarui.',
-          confirmButtonColor: '#1E293B'
+          confirmButtonColor: '#27D14C',
+          customClass: { popup: 'font-["Poppins"] rounded-xl' }
         });
       } else {
         throw new Error("Gagal menyimpan");
       }
     } catch (error) {
-      Swal.fire('Error', 'Terjadi kesalahan saat menyimpan data.', 'error');
+      console.error(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: 'Terjadi kesalahan saat menyimpan data.',
+        confirmButtonColor: '#EF4444',
+        customClass: { popup: 'font-["Poppins"] rounded-xl' }
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center">Memuat Data...</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-['Poppins']">Memuat Data...</div>;
 
   return (
       <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
@@ -140,42 +150,20 @@ const PerusahaanPage = () => {
 
         {/* --- CUSTOM CSS UNTUK DATEPICKER --- */}
         <style jsx global>{`
-          .react-datepicker-wrapper {
-            width: 100%;
-          }
+          .react-datepicker-wrapper { width: 100%; }
           .react-datepicker {
             font-family: 'Poppins', sans-serif;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            border: 1px solid #e5e7eb; border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow: hidden;
           }
-          .react-datepicker__header {
-            background-color: white;
-            border-bottom: 1px solid #f3f4f6;
+          .react-datepicker__header { background-color: white; border-bottom: 1px solid #f3f4f6; }
+          .react-datepicker__current-month { color: #374151; font-weight: 600; }
+          .react-datepicker__day-name { color: #9ca3af; }
+          .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected {
+            background-color: #27D14C !important; color: white !important; border-radius: 0.5rem;
           }
-          .react-datepicker__current-month {
-            color: #374151;
-            font-weight: 600;
-          }
-          .react-datepicker__day-name {
-            color: #9ca3af;
-          }
-          /* Warna Hijau Utama */
-          .react-datepicker__day--selected, 
-          .react-datepicker__day--keyboard-selected {
-            background-color: #27D14C !important;
-            color: white !important;
-            border-radius: 0.5rem;
-          }
-          .react-datepicker__day:hover {
-            background-color: #ecfdf5;
-            color: #27D14C;
-            border-radius: 0.5rem;
-          }
-          .react-datepicker__navigation-icon::before {
-            border-color: #6b7280;
-          }
+          .react-datepicker__day:hover { background-color: #ecfdf5; color: #27D14C; border-radius: 0.5rem; }
+          .react-datepicker__navigation-icon::before { border-color: #6b7280; }
         `}</style>
 
         {/* TOP BAR */}
@@ -254,8 +242,8 @@ const PerusahaanPage = () => {
                           <DatePicker
                             selected={selectedDate}
                             onChange={(date) => setSelectedDate(date)}
-                            dateFormat="dd MMMM yyyy" // Format Indonesia (23 November 2025)
-                            locale={id} // Bahasa Indonesia
+                            dateFormat="dd MMMM yyyy"
+                            locale={id} 
                             placeholderText="Pilih tanggal berdiri"
                             showYearDropdown
                             scrollableYearDropdown

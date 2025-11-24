@@ -27,7 +27,7 @@ export default function TentangKami() {
 							<img
 								src={Assets.Hero3}
 								alt="Logo Divus"
-								className="w-80 h-80 object-contain "
+								className="w-100 h-100 object-contain "
 							/>
 						</div>
 

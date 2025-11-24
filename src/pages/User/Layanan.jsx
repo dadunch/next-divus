@@ -33,14 +33,14 @@ const reasons = [
 // Small responsive highlights row (used under the hero text)
 const ServiceHighlights = ({ items }) => (
 	<div className="w-full mt-6">
-		<div className="max-w-4xl mx-auto">
-			<div className="flex flex-wrap gap-6 py-2 justify-center">
+		<div className="max-w-6xl mx-auto">
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-2 justify-center">
 					{items.map((text, idx) => (
 						<div
 							key={idx}
-							className="px-16 py-6 bg-white rounded-2xl shadow-md outline outline-black p-4 md:p-6 flex items-center"
+							className="w-full h-full min-h-[60px] bg-white rounded-2xl shadow-md outline outline-black p-4 flex justify-center items-center transition-transform hover:-translate-y-1"
 						>
-								<div className=" text-black text-base md:text-lg font-normal text-center capitalize leading-tight whitespace-nowrap truncate" title={text}>
+								<div className=" text-black text-base md:text-lg font-normal text-center capitalize leading-tight whitespace-nowrap" title={text}>
 									{text}
 								</div>
 						</div>
@@ -76,10 +76,27 @@ export default function LayananProduk() {
 				{/* Breadcrumb */}
 				<div className="w-full bg-zinc-300 py-3 px-6 md:px-20 mb-4">
 					<p className="text-zinc-800 text-base">
-						<Link href="/User/Home" className="hover:underline">
-							Beranda
-						</Link>
-						<span className="text-red-600"> {' > '} Managemen Consulting</span>
+						{/* Level 1: Beranda */}
+        <Link href="/User/Home" className="hover:underline hover:text-green-600 transition-colors">
+            Beranda
+        </Link>
+
+        {/* Separator */}
+        <span className="mx-2 text-zinc-500">{'>'}</span>
+
+        {/* Level 2: Kategori (Misal: Layanan) */}
+        {/* Arahkan href ke halaman induk layanan jika ada, atau biarkan '#' jika hanya label */}
+        <Link href="/User/Layanan" className="hover:underline hover:text-green-600 transition-colors">
+            Layanan
+        </Link>
+
+        {/* Separator */}
+        <span className="mx-2 text-zinc-500">{'>'}</span>
+
+        {/* Level 3: Halaman Aktif (Merah) */}
+        <span className="text-red-600 font-medium">
+            Report & Journal
+        </span>
 					</p>
 				</div>
 			</header>
@@ -139,8 +156,11 @@ export default function LayananProduk() {
 
             {/* MENGAPA PILIH KAMI SECTION */}
 				<section className="px-6 md:px-20 py-20 bg-white">
+					<p className='text-lime-500 text-lg md:text-xl text-center font-medium leading-tight mb-4'>
+						Alasan Anda Menggunakan Layanan Kami
+					</p>
 					<h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-10">
-						Mengapa Memilih PT Divus Global Mediacomm?
+						Kenapa harus Kami?
 					</h2>
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
@@ -154,7 +174,7 @@ export default function LayananProduk() {
 										{item.number}
 									</span>
 								</div>
-                                <span className="inline-block ml-3 w-32 md:w-48 h-0.5 bg-zinc-300 rounded-full"></span>
+                                
 								<h3 className="text-xl font-semibold text-zinc-800">
 									{item.title}
 								</h3>

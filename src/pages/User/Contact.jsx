@@ -8,36 +8,40 @@ export default function Contact() {
     return (
         <div className="relative w-full bg-white overflow-hidden">
             <header className="relative w-full">
-                {/* Banner image*/}
-                <div className="relative w-full h-[470px] mt-[90px]">
-                    <img
-                        src={Assets.Banner4}
-                        alt="Latar Belakang Kontak"
-                        className="absolute inset-0 w-full h-full object-cover z-0"
-                    />
-                    {/* Overlay */}
-                    <div className="absolute inset-0 bg-zinc-800/50 z-10"></div>
+        {/* Hero Banner */}
+        <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
+          <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <img
+                src={Assets.Hero3}
+                alt="Logo Divus"
+                className="w-100 h-100 object-contain"
+              />
+            </div>
 
-                    {/* Header*/}
-                    <div className="relative z-20 max-w-[1440px] mx-auto px-6 md:px-20 pt-32 pb-16 text-white h-full flex flex-col justify-end">
-                        <p className="text-xl md:text-3xl font-bold text-lime-500 mb-2">
-                            PT Divus Global Mediacomm
-                        </p>
-                        <h1 className="text-5xl md:text-7xl font-bold capitalize">
-                            Kontak
-                        </h1>
-                    </div>
-                </div>
+            {/* Text Content */}
+            <div className="flex flex-col justify-center">
+              <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
+                PT Divus Global Mediacomm
+              </h1>
+              <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
+                - Tentang Kami
+              </p>
+            </div>
+          </div>
+        </section>
 
-                <div className="w-full bg-zinc-300 py-3 px-6 md:px-20">
-                    <p className="text-zinc-800 text-base">
-                        <Link href="/User/Home" className="hover:underline ml-1">
-                            Beranda
-                        </Link>
-                        <span className="text-red-600"> {' > '} Kontak</span>
-                    </p>
-                </div>
-            </header>
+        {/* Breadcrumb */}
+        <div className="w-full bg-zinc-300 py-3 px-6 md:px-20 mb-4">
+          <p className="text-zinc-800 text-base">
+            <Link href="/User/Home" className="hover:underline">
+              Beranda
+            </Link>
+            <span className="text-red-600"> {' > '} Kontak</span>
+          </p>
+        </div>
+      </header>
 
             <section className="max-w-[1440px] mx-auto px-6 md:px-20 py-16 flex flex-col lg:flex-row gap-12 items-start">
                 {/* Detail Kontak */}
@@ -48,7 +52,7 @@ export default function Contact() {
 
                     <div className="flex flex-col gap-6">
                         {/* Alamat */}
-                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-sm border-b-4 border-r-4 p-5">
+                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
                             <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <MapPin className="text-white w-6 h-6 "/>
                             </div>
@@ -64,7 +68,7 @@ export default function Contact() {
                         </div>
 
                         {/* Telepon */}
-                        <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-b-4 border-r-4 p-5">
+                        <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
                             <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <Phone className="text-white w-6 h-6" />
                             </div>
@@ -82,7 +86,7 @@ export default function Contact() {
                         </div>
 
                         {/* Email */}
-                        <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm  border-b-4 border-r-4 p-5">
+                        <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
                             <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <Mail className="text-white w-6 h-6" />
                             </div>

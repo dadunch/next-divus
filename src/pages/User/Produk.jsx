@@ -18,7 +18,7 @@ const Produk = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    // --- 1. FETCH DATA DARI DATABASE (API) ---
+    // --- 1. FETCH DATA ---
     useEffect(() => {
         const fetchProducts = async () => {
             try {
@@ -35,7 +35,7 @@ const Produk = () => {
         fetchProducts();
     }, []);
 
-    // --- 2. HELPER: PARSE GAMBAR DARI JSON ---
+    // --- 2. HELPER PARSE GAMBAR ---
     const getImages = (fotoString) => {
         if (!fotoString) return [];
         try {
@@ -82,30 +82,27 @@ const Produk = () => {
             <Navbar />
 
             <main className="pt-24 pb-16">
-                {/* Header Section Sesuai Permintaan */}
+                {/* --- HEADER SECTION --- */}
                 <header className="relative w-full">
                     <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
-					<div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
-						{/* Logo */}
-						<div className="flex-shrink-0">
-							<img
-								src={Assets.Hero3}
-								alt="Logo Divus"
-								className="w-100 h-100 object-contain "
-							/>
-						</div>
-
-						{/* Text Content */}
-						<div className="flex flex-col justify-center">
-							<h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
-								PT Divus Global Mediacomm
-							</h1>
-							<p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
-								- Kontak
-							</p>
-						</div>
-					</div>
-				</section>
+                        <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
+                            <div className="flex-shrink-0">
+                                <img
+                                    src={Assets.Hero3}
+                                    alt="Logo Divus"
+                                    className="w-24 h-24 object-contain"
+                                />
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
+                                    PT Divus Global Mediacomm
+                                </h1>
+                                <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
+                                    - Portofolio Produk
+                                </p>
+                            </div>
+                        </div>
+                    </section>
 
                     <div className="w-full bg-zinc-300 py-3 px-6 md:px-20 mb-4">
                         <p className="text-zinc-800 text-base">
@@ -117,7 +114,7 @@ const Produk = () => {
                     </div>
                 </header>
 
-                {/* Profil Perusahaan Section */}
+                {/* --- PROFIL SECTION --- */}
                 <section className="max-w-[1440px] mx-auto px-6 md:px-20 py-8">
                     <div className="flex flex-col lg:flex-row gap-12 items-start">
                         <div className="w-full">
@@ -131,7 +128,7 @@ const Produk = () => {
                     </div>
                 </section>
 
-                {/* Product Grid Section */}
+                {/* --- PRODUCT GRID SECTION --- */}
                 <div className="max-w-7xl mx-auto px-6 md:px-12 mb-20 mt-10">
                     {isLoading ? (
                         <div className="flex justify-center py-20">
@@ -155,11 +152,12 @@ const Produk = () => {
                                         onClick={() => openModal(item)}
                                     >
                                         <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
+                                            {/* GAMBAR UTAMA */}
                                             {coverImage ? (
                                                 <img 
                                                     src={coverImage} 
                                                     alt={item.nama_produk}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
                                                     onError={(e) => e.target.src = "https://placehold.co/400x600?text=No+Image"}
                                                 />
                                             ) : (
@@ -168,14 +166,16 @@ const Produk = () => {
                                                 </div>
                                             )}
                                             
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                                                <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-gray-800 px-4 py-2 rounded-full text-sm font-semibold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                                            {/* OVERLAY HOVER GRID */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-center justify-center">
+                                                <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-zinc-900 px-5 py-2 rounded-full text-sm font-bold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl tracking-wide">
                                                     Lihat Foto
                                                 </span>
                                             </div>
 
+                                            {/* INDIKATOR JUMLAH FOTO */}
                                             {images.length > 1 && (
-                                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md">
+                                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md border border-white/10">
                                                     +{images.length - 1}
                                                 </div>
                                             )}
@@ -194,7 +194,7 @@ const Produk = () => {
                     )}
                 </div>
 
-                {/* CTA Section */}
+                {/* --- CTA SECTION --- */}
                 <section className="w-full px-4 md:px-20 py-4 mb-6">
                     <div className="max-w-[1440px] mx-auto">
                         <div className="relative w-full rounded-xl overflow-hidden shadow-xl bg-gradient-to-b from-green-500 to-lime-500 px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
@@ -233,23 +233,26 @@ const Produk = () => {
                 </section>
             </main>
 
-            {/* Modal Popup Slider */}
+            {/* --- MODAL POPUP SLIDER (TRANSPARANT FIX) --- */}
             <AnimatePresence>
                 {isModalOpen && selectedProduct && (
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-4"
+                        // PERBAIKAN 1: Backdrop lebih terang (bg-black/80) agar transparan modal terlihat
+                        className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-4"
                         onClick={closeModal}
                     >
                         <motion.div 
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="relative w-full max-w-6xl h-full md:h-[85vh] bg-white md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
+                            // PERBAIKAN 2: bg-transparent (Bukan White/Solid), shadow-2xl tetap
+                            className="relative w-full max-w-6xl h-full md:h-[85vh] bg-transparent md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
                             onClick={(e) => e.stopPropagation()} 
                         >
+                            {/* Tombol Close */}
                             <button 
                                 onClick={closeModal}
                                 className="absolute top-4 right-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition backdrop-blur-sm"
@@ -257,7 +260,8 @@ const Produk = () => {
                                 <X size={24} />
                             </button>
 
-                            <div className="w-full md:w-3/4 bg-zinc-900 relative flex items-center justify-center h-[50vh] md:h-full overflow-hidden group">
+                            {/* === KIRI: SLIDER GAMBAR (TRANSPARAN/KACA) === */}
+                            <div className="w-full md:w-3/4 bg-black/40 backdrop-blur-md relative flex items-center justify-center h-[50vh] md:h-full overflow-hidden group">
                                 {(() => {
                                     const images = getImages(selectedProduct.foto_produk);
                                     return (
@@ -276,6 +280,7 @@ const Produk = () => {
                                                 />
                                             </AnimatePresence>
 
+                                            {/* Navigasi Slider */}
                                             {images.length > 1 && (
                                                 <>
                                                     <button 
@@ -291,6 +296,7 @@ const Produk = () => {
                                                         <ChevronRight size={28} />
                                                     </button>
 
+                                                    {/* Dots */}
                                                     <div className="absolute bottom-6 flex gap-2 justify-center w-full">
                                                         {images.map((_, idx) => (
                                                             <div 
@@ -311,6 +317,7 @@ const Produk = () => {
                                 })()}
                             </div>
 
+                            {/* === KANAN: DETAIL (PUTIH SOLID) === */}
                             <div className="w-full md:w-1/4 bg-white flex flex-col h-[50vh] md:h-full border-l border-gray-100">
                                 <div className="p-6 md:p-8 overflow-y-auto flex-1">
                                     <div className="mb-6">
@@ -349,11 +356,12 @@ const Produk = () => {
                 )}
             </AnimatePresence>
 
+            {/* Floating WA */}
             <a
                 href="https://wa.me/6285220203453"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-40 hover:bg-green-600 transition-colors"
+                className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-40 hover:bg-green-600 transition-colors animate-bounce"
             >
                 <FaWhatsapp size={32} className="text-white" />
             </a>

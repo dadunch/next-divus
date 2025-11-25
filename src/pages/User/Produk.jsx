@@ -82,17 +82,18 @@ const Produk = () => {
             <Navbar />
 
             <main className="pt-24 pb-16">
-                {/* --- HEADER SECTION --- */}
-                <header className="relative w-full">
-                    <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
-                        <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
-                            <div className="flex-shrink-0">
-                                <img
-                                    src={Assets.Hero3}
-                                    alt="Logo Divus"
-                                    className="w-24 h-24 object-contain"
-                                />
-                            </div>
+							{/* Header Section Sesuai Permintaan */}
+							<header className="relative w-full">
+								<section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
+								<div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
+									{/* Logo */}
+									<div className="flex-shrink-0">
+										<img
+											src={Assets.Hero3}
+											alt="Logo Divus"
+											className="w-100 h-100 object-contain "
+										/>
+									</div>
                             <div className="flex flex-col justify-center">
                                 <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
                                     PT Divus Global Mediacomm
@@ -180,13 +181,6 @@ const Produk = () => {
                                                 </div>
                                             )}
                                         </div>
-
-                                        <div className="p-4 border-t border-gray-50">
-                                            <h3 className="font-bold text-gray-800 text-sm line-clamp-1 group-hover:text-green-600 transition-colors">
-                                                {item.nama_produk}
-                                            </h3>
-                                            <p className="text-xs text-gray-500 mt-1">{item.tahun}</p>
-                                        </div>
                                     </motion.div>
                                 );
                             })}
@@ -232,15 +226,12 @@ const Produk = () => {
                     </div>
                 </section>
             </main>
-
-            {/* --- MODAL POPUP SLIDER (TRANSPARANT FIX) --- */}
             <AnimatePresence>
                 {isModalOpen && selectedProduct && (
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        // PERBAIKAN 1: Backdrop lebih terang (bg-black/80) agar transparan modal terlihat
                         className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-4"
                         onClick={closeModal}
                     >
@@ -248,11 +239,9 @@ const Produk = () => {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            // PERBAIKAN 2: bg-transparent (Bukan White/Solid), shadow-2xl tetap
                             className="relative w-full max-w-6xl h-full md:h-[85vh] bg-transparent md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
                             onClick={(e) => e.stopPropagation()} 
                         >
-                            {/* Tombol Close */}
                             <button 
                                 onClick={closeModal}
                                 className="absolute top-4 right-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition backdrop-blur-sm"
@@ -260,7 +249,6 @@ const Produk = () => {
                                 <X size={24} />
                             </button>
 
-                            {/* === KIRI: SLIDER GAMBAR (TRANSPARAN/KACA) === */}
                             <div className="w-full md:w-3/4 bg-black/40 backdrop-blur-md relative flex items-center justify-center h-[50vh] md:h-full overflow-hidden group">
                                 {(() => {
                                     const images = getImages(selectedProduct.foto_produk);
@@ -271,7 +259,7 @@ const Produk = () => {
                                                     key={currentImageIndex}
                                                     src={images[currentImageIndex]}
                                                     alt={`Slide ${currentImageIndex}`}
-                                                    initial={{ opacity: 0, x: 50 }}
+                                                    initial={{ opacity: 0, x: 20 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     exit={{ opacity: 0, x: -50 }}
                                                     transition={{ duration: 0.3 }}
@@ -361,7 +349,7 @@ const Produk = () => {
                 href="https://wa.me/6285220203453"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-40 hover:bg-green-600 transition-colors animate-bounce"
+                className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-40 hover:bg-green-600 transition-colors"
             >
                 <FaWhatsapp size={32} className="text-white" />
             </a>

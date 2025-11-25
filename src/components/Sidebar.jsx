@@ -50,7 +50,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // --- LOGIC FETCH & TRANSFORM DATA ---
-  useEffect(() => {
+useEffect(() => {
     const fetchMenus = async () => {
       const roleId = user?.roleId || user?.role_id;
       if (!roleId) {
@@ -67,7 +67,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           const normalizedMenus = rawMenus.map(m => ({
             ...m,
             id: String(m.id),
-            parent_id: m.parent_id ? String(m.parent_id) : null
+            parent_id: m.parent_id ? String(m.parent_id) : null,
+            
+            // --- PERBAIKAN PAKSA (HARDCODE FIX) ---
+            // Jika URL dari database masih lama, kita paksa ganti di sini
+            url: m.url === '/Admin/Proyek/Produk' ? '/Admin/Produk' : m.url
+            // -------------------------------------
           }));
 
           const parents = normalizedMenus.filter(m => !m.parent_id);

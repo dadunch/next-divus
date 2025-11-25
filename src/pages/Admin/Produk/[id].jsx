@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Pencil, Trash2, Calendar, User, FileText } from 'lucide-react';
 import Swal from 'sweetalert2';
-import EditProductModal from '../../../../components/Modals/EditProductModal';
+import EditProductModal from '../../../components/Modals/EditProductModal';
 
 const ProductDetail = () => {
   const router = useRouter();

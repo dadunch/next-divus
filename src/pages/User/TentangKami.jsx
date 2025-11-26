@@ -32,13 +32,28 @@ const solutionsData = [
 ];
 
 const galleryImages = [
-  Assets.Port1,
-  Assets.Port2,
-  Assets.Port3,
-  Assets.Port4,
-  Assets.Port5,
-  Assets.Port6,
+  'https://images.pexels.com/photos/2531237/pexels-photo-2531237.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+  'https://www.koranperdjoeangan.com/wp-content/uploads/2022/08/2019_0101_18132700-01-01.jpeg',
+  'https://images.tokopedia.net/img/JFrBQq/2022/7/27/fdba873a-2079-4a58-b5c1-eeb8e7e3a3ae.jpg',
+  'https://d1hjkbq40fs2x4.cloudfront.net/2016-01-31/files/1045.jpg',
+  'https://media.istockphoto.com/id/517188688/id/foto/lanskap-gunung.jpg?s=612x612&w=0&k=20&c=vJbqv4UEOXni-tW2RjeubmeZ6y9vsW4vVGKQy2-ZCRk=',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9nm7leuRxBJshKPL8KJheIZqCL1S8vkPJOA&s',
+  'https://www.koranperdjoeangan.com/wp-content/uploads/2022/08/2019_0101_18132700-01-01.jpeg',
+  'https://images.tokopedia.net/img/JFrBQq/2022/7/27/fdba873a-2079-4a58-b5c1-eeb8e7e3a3ae.jpg',
+  'https://d1hjkbq40fs2x4.cloudfront.net/2016-01-31/files/1045.jpg',
+  'https://media.istockphoto.com/id/517188688/id/foto/lanskap-gunung.jpg?s=612x612&w=0&k=20&c=vJbqv4UEOXni-tW2RjeubmeZ6y9vsW4vVGKQy2-ZCRk=',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9nm7leuRxBJshKPL8KJheIZqCL1S8vkPJOA&s',
+  'https://www.koranperdjoeangan.com/wp-content/uploads/2022/08/2019_0101_18132700-01-01.jpeg',
+  'https://images.tokopedia.net/img/JFrBQq/2022/7/27/fdba873a-2079-4a58-b5c1-eeb8e7e3a3ae.jpg',
+  'https://d1hjkbq40fs2x4.cloudfront.net/2016-01-31/files/1045.jpg',
+  'https://media.istockphoto.com/id/517188688/id/foto/lanskap-gunung.jpg?s=612x612&w=0&k=20&c=vJbqv4UEOXni-tW2RjeubmeZ6y9vsW4vVGKQy2-ZCRk=',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9nm7leuRxBJshKPL8KJheIZqCL1S8vkPJOA&s',
 ];
+
+// const galleryImages = Array.from({ length: 6 }, () =>
+//   `https://source.unsplash.com/random?sig=${Math.random()}`
+// );
+
 
 const statsData = [
   { value: "10", label: "Pengalaman" },
@@ -141,17 +156,17 @@ export default function TentangKami() {
         <div className="max-w-5xl mx-auto">
 
           {/* GALERI GAMBAR */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-20">
-            {galleryImages.map((imgSrc, index) => (
-              <div key={index} className="w-full h-72 rounded-2xl overflow-hidden shadow-sm group">
-                <img
-                  src={imgSrc}
-                  alt={`Gallery ${index + 1}`}
-                  className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-                />
-              </div>
-            ))}
-          </div>
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-6 mb-20">
+  {galleryImages.map((img, index) => (
+    <div key={index} className="mb-4 md:mb-6 break-inside-avoid rounded-2xl overflow-hidden shadow-sm group">
+      <img
+        src={img}
+        alt={`Gallery ${index + 1}`}
+        className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-110"
+      />
+    </div>
+  ))}
+</div>
 
           {/* STATISTIK */}
           <div className="flex flex-wrap justify-center items-center gap-10 md:gap-24">

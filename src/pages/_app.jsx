@@ -8,7 +8,10 @@ import Navbar from '../components/navbar';
 import Footer from '../components/Footer';
 import Footer2 from '../components/Footer2';
 import '../global.css';
-import "@fortawesome/fontawesome-free/css/all.min.css";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+
+config.autoAddCss = false;
 
 
 const AuthCheck = ({ children }) => {

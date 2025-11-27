@@ -101,7 +101,7 @@ export default function TentangKami() {
       </header>
 
       {/* PROFIL PERUSAHAAN SECTION */}
-      <section className="max-w-7xl mx-auto px-6 md:px-20 py-16">
+      <section className="max-w-7xl mx-auto px-5 py-16">
         <div className="flex flex-col lg:flex-row justify-center items-start">
           <div className="w-full lg:w-1/2 relative">
             <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">
@@ -152,8 +152,8 @@ export default function TentangKami() {
       </section>
 
       {/* PORTFOLIO GRID & STATS SECTION */}
-      <section className="w-full py-20 px-6 md:px-20 bg-white">
-        <div className="max-w-5xl mx-auto">
+      <section className="w-full py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
 
           {/* GALERI GAMBAR */}
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-6 mb-20">

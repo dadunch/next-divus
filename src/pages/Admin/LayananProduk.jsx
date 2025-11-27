@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import Head from "next/head";
 import { useSelector } from "react-redux";
-import { Upload, Save, Plus, Trash2, Image as ImageIcon, X } from "lucide-react";
+import { Upload, Search, Save, Plus, Trash2, Image as ImageIcon, X } from "lucide-react";
 import Swal from "sweetalert2";
 import { useRouter } from 'next/router';
 import Cropper from "react-easy-crop";

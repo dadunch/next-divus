@@ -116,7 +116,7 @@ const Foto = () => {
           <h1 className="text-3xl font-bold text-black mb-1">
             Foto Perusahaan
           </h1>
-          <p className="text-gray-600 text-lg italic">
+          <p className="text-gray-500 italic font-medium">
             Masukkan Foto Perusahaan
           </p>
           </div>

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { useSelector } from 'react-redux';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
-import Swal from 'sweetalert2';
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import Swal from "sweetalert2";
 
 // Layout
-import AdminLayouts from '../../layouts/AdminLayouts';
+import AdminLayouts from "../../layouts/AdminLayouts";
 
 // Modals
-import AddAdminModal from '../../components/Modals/AddAdminModal';
-import EditAdminModal from '../../components/Modals/EditAdminModal';
+import AddAdminModal from "../../components/Modals/AddAdminModal";
+import EditAdminModal from "../../components/Modals/EditAdminModal";
 
 const AdminManage = () => {
   const router = useRouter();
@@ -22,13 +22,14 @@ const AdminManage = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
-  // Fetch Data Admin
+  // Fetch Admin Data
   const fetchAdmins = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin');
+      const res = await fetch("/api/admin");
       const data = await res.json();
 
       if (res.ok) {
@@ -47,7 +48,7 @@ const AdminManage = () => {
     fetchAdmins();
   }, []);
 
-  const filteredAdmins = admins.filter(item =>
+  const filteredAdmins = admins.filter((item) =>
     item.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -58,29 +59,29 @@ const AdminManage = () => {
 
   const handleDelete = (id) => {
     Swal.fire({
-      title: 'Hapus Admin?',
+      title: "Hapus Admin?",
       text: "Akun admin akan dihapus permanen!",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#9CA3AF',
-      confirmButtonText: 'Ya, Hapus',
-      cancelButtonText: 'Batal',
-      customClass: { popup: 'font-["Poppins"] rounded-xl' }
+      confirmButtonColor: "#EF4444",
+      cancelButtonColor: "#9CA3AF",
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+      customClass: { popup: 'font-["Poppins"] rounded-xl' },
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           const res = await fetch(`/api/admin/${id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
           });
 
           if (res.ok) {
-            setAdmins(prev => prev.filter(a => a.id !== id));
-            Swal.fire('Terhapus!', 'Akun berhasil dihapus.', 'success');
+            setAdmins((prev) => prev.filter((a) => a.id !== id));
+            Swal.fire("Terhapus!", "Akun berhasil dihapus.", "success");
           }
         } catch (error) {
-          Swal.fire('Gagal', 'Terjadi kesalahan server.', 'error');
+          Swal.fire("Gagal", "Terjadi kesalahan server.", "error");
         }
       }
     });
@@ -92,24 +93,45 @@ const AdminManage = () => {
         <title>Kelola Admin - Divus Admin</title>
       </Head>
 
-      {/* SEARCH BAR */}
-      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+      {/* 🔥 TOPBAR — DISESUAIKAN DENGAN HALAMAN PRODUK */}
+       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+
+        {/* SEARCH BAR */}
         <div className="relative w-1/3">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
           </div>
+
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white"
+            className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm"
             placeholder="Cari username admin.."
           />
         </div>
 
+        {/* USER INFO */}
         <div className="flex items-center gap-4">
-          <p className="text-sm text-white hidden md:block">Hi, {user?.username}</p>
-          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold uppercase">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-medium text-white">
+              Hi, {user?.username || "Admin"}
+            </p>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold uppercase border-2 border-gray-400">
             {user?.username ? user.username.charAt(0) : "A"}
           </div>
         </div>
@@ -117,14 +139,19 @@ const AdminManage = () => {
 
       {/* CONTENT */}
       <div className="px-8 pt-8">
+        {/* 🔥 TITLE + BUTTON — DISESUAIKAN */}
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-1">Pegawai / Admin</h1>
-            <p className="text-gray-600 text-lg italic">Kelola Data admin & Role</p>
+            <h1 className="text-3xl font-bold text-black mb-1">
+              Pegawai / Admin
+            </h1>
+            <p className="text-gray-500 italic font-medium">
+              Kelola Data Admin & Role
+            </p>
           </div>
 
           <button
-            className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2"
+            className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
             onClick={() => setIsAddModalOpen(true)}
           >
             <Plus size={20} />
@@ -184,7 +211,6 @@ const AdminManage = () => {
                 ))
               )}
             </tbody>
-
           </table>
         </div>
       </div>

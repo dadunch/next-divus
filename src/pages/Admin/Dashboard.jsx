@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import AdminLayouts from '../../layouts/AdminLayouts';
+// import AdminLayouts from '../../layouts/AdminLayouts'; // Uncomment jika perlu
 
 const DashboardAdmin = () => {
   // ambil user dari redux 
@@ -20,6 +20,10 @@ const DashboardAdmin = () => {
   const [selectedChart, setSelectedChart] = useState("proyek");
   const [timeFilter, setTimeFilter] = useState("Keseluruhan"); 
   
+  // --- STATE PAGINATION (BARU) ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Batas maksimal 10 baris
+
   // --- STATE DROPDOWN UI ---
   const [openActionDropdown, setOpenActionDropdown] = useState(false);
   const [openChartDropdown, setOpenChartDropdown] = useState(false);
@@ -30,7 +34,7 @@ const DashboardAdmin = () => {
   const actionDropdownRef = useRef(null);
 
   // -----------------------
-  // Chart configuration (pindah ke atas agar aman untuk fungsi lain)
+  // Chart configuration
   // -----------------------
   const chartConfig = {
     proyek: { label: "Grafik Proyek", title: "Statistik Proyek", color: "#8884d8", gradientId: "colorProyek" },
@@ -47,7 +51,6 @@ const DashboardAdmin = () => {
         const data = await res.json();
         if (res.ok) setDashboardData(data);
         else {
-          // jika API mengembalikan error, set data kosong agar UI tetap stabil
           setDashboardData(null);
           console.error("Fetch dashboard failed:", data);
         }
@@ -61,6 +64,12 @@ const DashboardAdmin = () => {
     fetchDashboardData();
   }, [timeFilter]);
 
+  // --- 2. LOGIC RESET PAGINATION ---
+  // Jika user mencari atau ganti filter aksi, kembali ke halaman 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, actionFilter]);
+
   // --- FORMATTING ---
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -71,7 +80,7 @@ const DashboardAdmin = () => {
     });
   };
 
-  // Generate Judul Dinamis (Bulan/Tahun)
+  // Generate Judul Dinamis
   const getDynamicTitle = () => {
     const date = new Date();
     const monthName = date.toLocaleDateString('id-ID', { month: 'long' });
@@ -93,46 +102,37 @@ const DashboardAdmin = () => {
     { value: dashboardData?.stats?.layanan ?? 0, label: "Total Layanan" },
   ];
 
-  // Ambil data grafik yang sesuai dari API response
   const currentData = dashboardData?.charts?.[selectedChart] || [];
   const currentConfig = chartConfig[selectedChart] || { label: "-", title: "-", color: "#888", gradientId: "g" };
 
-  // Helper: normalisasi teks (lowercase & trim)
   const norm = (s) => (s || "").toString().toLowerCase().trim();
 
-  // Helper: cek kecocokan aksi (mendukung kata Indonesia & beberapa sinonim EN)
   const actionMatches = (actionText, filterOption) => {
     const a = norm(actionText);
     const filter = norm(filterOption);
 
     if (!filter || filter === "semua aksi" || filter === "semua" || filter === "all") return true;
 
-    // mapping kemungkinan sinonim (bisa diperluas jika API pakai bahasa EN)
     const synonyms = {
       "tambah": ["tambah", "create", "added", "created"],
       "edit": ["edit", "update", "updated", "ubah"],
       "hapus": ["hapus", "delete", "deleted", "remove", "removed"]
     };
 
-    // coba cocokan dengan nilai filter langsung
     if (a.includes(filter)) return true;
 
-    // cek pada synonyms
     for (const key of Object.keys(synonyms)) {
       if (filter.includes(key) || key.includes(filter)) {
-        // bila filter mengacu ke key, cek apakah actionText mengandung salah satu sinonim
         if (synonyms[key].some(syn => a.includes(syn))) return true;
       }
-      // jika filter itself is one of synonyms (misal "delete"), cek juga
       if (synonyms[key].some(syn => filter.includes(syn)) && synonyms[key].some(syn => a.includes(syn))) {
         return true;
       }
     }
-
     return false;
   };
 
-  // Filter Log
+  // --- FILTER LOGIC ---
   const filteredLogs = (dashboardData?.logs || []).filter((log) => {
     const searchLower = norm(searchQuery);
     const userName = log?.users?.username || log?.user || "Unknown";
@@ -144,7 +144,6 @@ const DashboardAdmin = () => {
       norm(detailsText).includes(searchLower) ||
       norm(userName).includes(searchLower) ||
       norm(actionText).includes(searchLower) ||
-      // juga perbolehkan pencarian berdasarkan tanggal string
       norm(log.tanggal || log.created_at || "").includes(searchLower);
 
     const matchesAction = actionMatches(actionText, actionFilter);
@@ -152,7 +151,15 @@ const DashboardAdmin = () => {
     return matchesSearch && matchesAction;
   });
 
-  // Click Outside Listener (untuk menutup dropdown)
+  // --- PAGINATION CALCULATION (BARU) ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Click Outside Listener
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (chartDropdownRef.current && !chartDropdownRef.current.contains(event.target)) setOpenChartDropdown(false);
@@ -190,7 +197,7 @@ const DashboardAdmin = () => {
             <p className="text-sm font-medium text-white">Hi, {user?.username || "SuperAdmin"}</p>
           </div>
           <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold">
-            {user?.username ? user.username.charAt(0) : <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0h-3v-1a4 4 0 10-8 0v1H3z" clipRule="evenodd" /></svg>}
+            {user?.username ? user.username.charAt(0) : "A"}
           </div>
         </div>
       </header>
@@ -239,7 +246,6 @@ const DashboardAdmin = () => {
               </p>
             </div>
 
-            {/* FILTER JENIS GRAFIK */}
             <div className="relative mt-4 sm:mt-0" ref={chartDropdownRef}>
               <button 
                 onClick={() => setOpenChartDropdown(!openChartDropdown)}
@@ -332,8 +338,8 @@ const DashboardAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredLogs.length > 0 ? (
-                  filteredLogs.map((log, index) => {
+                {currentLogs.length > 0 ? (
+                  currentLogs.map((log, index) => {
                     const actionText = (log.action || log.aksi || "").toString();
                     const actionTextLC = norm(actionText);
                     const badgeClass = actionTextLC.includes("hapus") || actionTextLC.includes("delete") ? 'bg-red-100 text-red-600'
@@ -360,6 +366,83 @@ const DashboardAdmin = () => {
                 )}
               </tbody>
             </table>
+            {/* --- MULAI KODE PAGINATION --- */}
+            
+            {/* Tampilkan pagination hanya jika data lebih dari 0 */}
+            {filteredLogs.length > 0 && (
+              <div className="flex flex-col md:flex-row justify-between items-center pt-6 mt-4 border-t border-gray-100">
+                
+                {/* Info Kiri: Menampilkan 1-10 dari 50 data */}
+                <span className="text-sm text-gray-500 mb-4 md:mb-0">
+                  Menampilkan <span className="font-bold text-gray-900">{indexOfFirstItem + 1}</span> - <span className="font-bold text-gray-900">{Math.min(indexOfLastItem, filteredLogs.length)}</span> dari <span className="font-bold text-gray-900">{filteredLogs.length}</span> data
+                </span>
+                
+                {/* Tombol Kanan */}
+                <div className="flex items-center gap-2">
+                  
+                  {/* Tombol PREV */}
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`p-2.5 rounded-xl border transition-all duration-200 flex items-center justify-center
+                      ${currentPage === 1 
+                        ? 'border-gray-100 text-gray-300 cursor-not-allowed bg-gray-50' 
+                        : 'border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50'
+                      }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Angka Halaman */}
+                  <div className="flex gap-1.5">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      // Logika agar angka halaman bergeser jika halaman > 5
+                      let pNum = i + 1;
+                      if (totalPages > 5) {
+                        if (currentPage > 3) pNum = currentPage - 2 + i;
+                        // Cegah angka melebihi total pages
+                        if (pNum > totalPages) pNum = totalPages - 4 + i;
+                        // Cegah angka kurang dari 1
+                        if (pNum < 1) pNum = i + 1; 
+                      }
+
+                      return (
+                        <button
+                          key={pNum}
+                          onClick={() => paginate(pNum)}
+                          className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-200
+                            ${currentPage === pNum 
+                              ? 'bg-[#27D14C] text-white shadow-lg shadow-green-200 scale-105' 
+                              : 'text-gray-500 hover:bg-gray-50 hover:text-[#27D14C]'
+                            }`}
+                        >
+                          {pNum}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Tombol NEXT */}
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className={`p-2.5 rounded-xl border transition-all duration-200 flex items-center justify-center
+                      ${currentPage === totalPages || totalPages === 0
+                        ? 'border-gray-100 text-gray-300 cursor-not-allowed bg-gray-50' 
+                        : 'border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50'
+                      }`}
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* --- SELESAI KODE PAGINATION --- */}
           </div>
         </div>
       </div>

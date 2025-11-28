@@ -22,7 +22,6 @@ export default async function handler(req, res) {
     // "Keseluruhan" tidak perlu whereClause (ambil semua)
 
     // 2. Fetch Data (Parallel)
-    // Kita ambil data 'created_at' untuk Project, Client (Mitra), dan Product agar grafiknya beda-beda
     const [
       countMitra, countProduk, countProyek, countLayanan,
       companyProfile,
@@ -39,7 +38,6 @@ export default async function handler(req, res) {
       prisma.company_profile.findFirst(),
       prisma.activity_logs.findMany({
         where: whereClause,
-        take: 10,
         orderBy: { created_at: 'desc' },
         include: { users: { select: { username: true } } }
       }),

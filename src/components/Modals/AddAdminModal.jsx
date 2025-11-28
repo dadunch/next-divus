@@ -200,7 +200,7 @@ const AddAdminModal = ({ isOpen, onClose, onSuccess }) => {
 
             {/* Dropdown Menu Items */}
             {isRoleDropdownOpen && (
-              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-60 overflow-y-auto">
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100  rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-30 overflow-y-auto">
                 {rolesList.length > 0 ? (
                   rolesList.map((r) => (
                     <button

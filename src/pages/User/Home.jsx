@@ -397,22 +397,24 @@ export default function Home() {
 				</section>
 
 				{/* CTA SECTION */}
-				<section className="w-full px-4 py-4 mb-6">
-					<div className="max-w-7xl mx-auto">
-						<div
-							className="relative w-full rounded-xl overflow-hidden shadow-xl bg-gradient-to-b from-green-500 to-lime-500 px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6"
-						>
-							{/* Background Pattern */}
+				<section className="px-4 md:px-20 py-20 bg-white">
+					<div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
+						{/* Background layer for gradient and image */}
+						<div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
+							{/* Background image 1 with low opacity */}
 							<div
-								className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
+								className="absolute inset-0 opacity-10 pointer-events-none"
 								style={{
 									backgroundImage: `url(${Assets.Banner1})`,
-                                    backgroundRepeat: 'no-repeat',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
+									backgroundRepeat: 'no-repeat',
+									backgroundSize: 'cover',
+									backgroundPosition: 'center',
 								}}
 							></div>
+						</div>
 
+						{/* Content layer */}
+						<div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
 							{/* Judul */}
 							<h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">
 								PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
@@ -425,10 +427,7 @@ export default function Home() {
 							</p>
 
 							{/* Tombol CTA */}
-							<a
-								href="https://wa.me/62812345678"
-								className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group"
-							>
+							<a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
 								<FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
 								<span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">
 									Konsultasi Sekarang

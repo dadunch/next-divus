@@ -6,7 +6,6 @@ import { login } from '../store/slices/authSlice';
 import AdminLayout from '../layouts/AdminLayouts';
 import Navbar from '../components/navbar';
 import Footer from '../components/Footer';
-import Footer2 from '../components/Footer2';
 import '../global.css';
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
@@ -23,7 +22,7 @@ const AuthCheck = ({ children }) => {
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
-        dispatch(login(userData)); 
+        dispatch(login(userData));
       } catch (error) {
         console.error("Gagal memulihkan sesi:", error);
         localStorage.removeItem('adminUser');
@@ -54,11 +53,11 @@ function MyApp({ Component, pageProps }) {
           <>
             <Navbar />
             <Component {...pageProps} />
-            {['/User/Contact', '/User/TentangKami', '/User/Proyek', '/User/LayananProduk'].includes(path) ? <Footer2 /> : <Footer />}
+            <Footer />
           </>
         )}
       </AuthCheck>
-    </Provider>
+    </Provider >
   );
 }
 

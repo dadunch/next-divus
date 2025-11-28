@@ -90,18 +90,20 @@ export default function TentangKami() {
         </section>
 
         {/* Breadcrumb */}
-        <div className="w-full bg-zinc-300 py-3 px-6 md:px-20 mb-4">
-          <p className="text-zinc-800 text-base">
-            <Link href="/User/Home" className="hover:underline">
-              Beranda
-            </Link>
-            <span className="text-red-600"> {' > '} Tentang Kami</span>
-          </p>
+        <div className="w-full bg-zinc-300 py-3 mb-4">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-zinc-800 text-base">
+              <Link href="/User/Home" className="hover:underline">
+                Beranda
+              </Link>
+              <span className="text-red-600"> {' > '} Tentang Kami</span>
+            </p>
+          </div>
         </div>
       </header>
 
       {/* PROFIL PERUSAHAAN SECTION */}
-      <section className="max-w-7xl mx-auto px-5 py-16">
+      <section className="max-w-8xl mx-auto px-6 md:px-28 py-16">
         <div className="flex flex-col lg:flex-row justify-center items-start">
           <div className="w-full lg:w-1/2 relative">
             <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">
@@ -110,15 +112,18 @@ export default function TentangKami() {
             <p className='text-zinc-800 text-xl md:text-2xl font-sm leading-tight mt-4'>
               PT Divus Global Mediacomm
             </p>
-            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4'>
+            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
               Nama Perusahaan : PT Divus Global Mediacomm
             </p>
-            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4'>
+            <div className="w-[498px] h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
               Bidang Usaha : Jasa Konsultasi
             </p>
-            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4'>
+            <div className="w-[498px] h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+            <p className='inline-block text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
               Berdiri Sejak : 10 November 2010
             </p>
+            <div className="w-[498px] h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
           </div>
 
           <div className="w-full lg:w-5/12">
@@ -145,28 +150,29 @@ export default function TentangKami() {
       </a>
 
       {/* PORTFOLIO GALLERY TITLE SECTION */}
-      <section className="w-full py-16 px-6 md:px-20 bg-white">
+      <section className="w-full py-6 px-6 md:px-20 bg-white">
+        <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10"></div>
         <h2 className='text-zinc-800 text-lg md:text-xl font-semibold text-center leading-tight z-10 relative'>
           We are happy to help solve your business problems.
         </h2>
       </section>
 
       {/* PORTFOLIO GRID & STATS SECTION */}
-      <section className="w-full py-20 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
+      <section className="w-full py-6 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
 
           {/* GALERI GAMBAR */}
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-6 mb-20">
-  {galleryImages.map((img, index) => (
-    <div key={index} className="mb-4 md:mb-6 break-inside-avoid rounded-2xl overflow-hidden shadow-sm group">
-      <img
-        src={img}
-        alt={`Gallery ${index + 1}`}
-        className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-110"
-      />
-    </div>
-  ))}
-</div>
+            {galleryImages.map((img, index) => (
+              <div key={index} className="mb-4 md:mb-6 break-inside-avoid rounded-2xl overflow-hidden shadow-sm group">
+                <img
+                  src={img}
+                  alt={`Gallery ${index + 1}`}
+                  className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-110"
+                />
+              </div>
+            ))}
+          </div>
 
           {/* STATISTIK */}
           <div className="flex flex-wrap justify-center items-center gap-10 md:gap-24">
@@ -186,12 +192,13 @@ export default function TentangKami() {
       </section>
 
       {/* KEAHLIAN KAMI SECTION */}
-      <section className="px-6 md:px-10 py-16 md:py-20 overflow-hidden">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-10">
+      <section className="w-full px-6 md:px-20 py-16 md:py-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex flex-col lg:flex-row justify-center items-start gap-10 mb-16">
-            <div className="w-full lg:w-1/2 relative">
-              <p className='text-lime-500 text-lg md:text-xl text-center font-normal leading-tight mt-4'>
+            <div className="w-full relative">
+              <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10"></div>
+              <p className='text-lime-500 text-lg md:text-xl text-center font-normal whitespace-nowrap leading-tight mt-4'>
                 Experienced, able to maintain quality and professionalism
               </p>
               <h2 className="text-zinc-800 text-2xl md:text-3xl text-center font-semibold leading-tight z-10 relative mt-6">
@@ -234,40 +241,44 @@ export default function TentangKami() {
       </section>
 
       {/* CTA SECTION */}
-      <section className="w-full px-4 md:px-24 py-4 mb-6">
-        <div className="max-w-[1440px] mx-auto">
-          <div className="relative w-full rounded-xl overflow-hidden shadow-xl bg-gradient-to-b from-green-500 to-lime-500 px-4 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-            {/* Background Pattern */}
-            <div
-              className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
-              style={{
-                backgroundImage: `url(${Assets.Banner1})`,
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            ></div>
+      <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
+            {/* Background layer for gradient and image */}
+            <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
+              {/* Background image 1 with low opacity */}
+              <div
+                className="absolute inset-0 opacity-10 pointer-events-none"
+                style={{
+                  backgroundImage: `url(${Assets.Banner1})`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              ></div>
+            </div>
 
-            {/* Judul */}
-            <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10">
-              Ingin Mengenal jauh Tentang Kami?
-            </h2>
+            {/* Content layer */}
+            <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
+              {/* Judul */}
+              <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">
+                PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
+                terpercaya untuk bisnis Anda!
+              </h2>
 
-            {/* Subjudul */}
-            <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">
-              Download Company Profile 
-            </p>
+              {/* Subjudul */}
+              <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">
+                Hubungi kami dan dapatkan panduan dari konsultan berpengalaman
+              </p>
 
-            {/* Tombol CTA */}
-            <a
-              href="https://wa.me/62812345678"
-              className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group"
-            >
-              <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-              <span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">
-               Download
-              </span>
-            </a>
+              {/* Tombol CTA */}
+              <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+                <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">
+                  Konsultasi Sekarang
+                </span>
+              </a>
+            </div>
           </div>
         </div>
       </section>

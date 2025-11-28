@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
 import { X, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../components/navbar';
 import Footer from '../../components/Footer';
 import { Assets } from '../../assets';
 
@@ -12,7 +12,7 @@ const Produk = () => {
     // --- STATE ---
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     // State untuk Modal & Slider
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,38 +82,62 @@ const Produk = () => {
             <Navbar />
 
             <main className="pt-24 pb-16">
-							{/* Header Section Sesuai Permintaan */}
-							<header className="relative w-full">
-								<section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
-								<div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
-									{/* Logo */}
-									<div className="flex-shrink-0">
-										<img
-											src={Assets.Hero3}
-											alt="Logo Divus"
-											className="w-100 h-100 object-contain "
-										/>
-									</div>
+                {/* Header Section Sesuai Permintaan */}
+                <header className="relative w-full">
+                    {/* Hero Banner */}
+                    <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
+                        <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
+                            {/* Logo */}
+                            <div className="flex-shrink-0">
+                                <img
+                                    src={Assets.Hero3}
+                                    alt="Logo Divus"
+                                    className="w-100 h-100 object-contain"
+                                />
+                            </div>
+
+                            {/* Text Content */}
                             <div className="flex flex-col justify-center">
                                 <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
                                     PT Divus Global Mediacomm
                                 </h1>
                                 <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
-                                    - Portofolio Produk
+                                    - Produk
                                 </p>
                             </div>
                         </div>
                     </section>
 
-                    <div className="w-full bg-zinc-300 py-3 px-6 md:px-20 mb-4">
-                        <p className="text-zinc-800 text-base">
-                            <Link href="/User/Home" className="hover:underline">
-                                Beranda
-                            </Link>
-                            <span className="text-red-600"> {' > '} Portofolio Produk</span>
-                        </p>
+
+                    {/* Breadcrumb */}
+                    <div className="w-full bg-zinc-300 py-3 mb-4">
+                        <div className="max-w-7xl mx-auto">
+                            <p className="text-zinc-800 text-base">
+                                {/* Level 1: Beranda */}
+                                <Link href="/User/Home" className="hover:underline hover:text-green-600 transition-colors">
+                                    Beranda
+                                </Link>
+
+                                {/* Separator */}
+                                <span className="mx-2 text-zinc-500">{'>'}</span>
+
+                                {/* Level 2: Kategori (Misal: Layanan) */}
+                                <Link href="/User/Portofolio" className="hover:underline hover:text-green-600 transition-colors">
+                                    Portofolio
+                                </Link>
+
+                                {/* Separator */}
+                                <span className="mx-2 text-zinc-500">{'>'}</span>
+
+                                {/* Level 3: Halaman Aktif (Merah) */}
+                                <span className="text-red-600 font-medium">
+                                    Produk
+                                </span>
+                            </p>
+                        </div>
                     </div>
                 </header>
+
 
                 {/* --- PROFIL SECTION --- */}
                 <section className="max-w-[1440px] mx-auto px-6 md:px-20 py-8">
@@ -130,7 +154,7 @@ const Produk = () => {
                 </section>
 
                 {/* --- PRODUCT GRID SECTION --- */}
-                <div className="max-w-7xl mx-auto px-6 md:px-12 mb-20 mt-10">
+                <div className="max-w-6xl mx-auto px-6 md:px-12 mb-20 mt-10">
                     {isLoading ? (
                         <div className="flex justify-center py-20">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
@@ -146,7 +170,7 @@ const Produk = () => {
                                 const coverImage = images.length > 0 ? images[0] : null;
 
                                 return (
-                                    <motion.div 
+                                    <motion.div
                                         key={item.id}
                                         whileHover={{ y: -5 }}
                                         className="group cursor-pointer relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
@@ -155,8 +179,8 @@ const Produk = () => {
                                         <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
                                             {/* GAMBAR UTAMA */}
                                             {coverImage ? (
-                                                <img 
-                                                    src={coverImage} 
+                                                <img
+                                                    src={coverImage}
                                                     alt={item.nama_produk}
                                                     className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
                                                     onError={(e) => e.target.src = "https://placehold.co/400x600?text=No+Image"}
@@ -166,7 +190,7 @@ const Produk = () => {
                                                     <span>No Image</span>
                                                 </div>
                                             )}
-                                            
+
                                             {/* OVERLAY HOVER GRID */}
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-center justify-center">
                                                 <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-zinc-900 px-5 py-2 rounded-full text-sm font-bold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl tracking-wide">
@@ -228,21 +252,21 @@ const Produk = () => {
             </main>
             <AnimatePresence>
                 {isModalOpen && selectedProduct && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-4"
                         onClick={closeModal}
                     >
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
                             className="relative w-full max-w-6xl h-full md:h-[85vh] bg-transparent md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
-                            onClick={(e) => e.stopPropagation()} 
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            <button 
+                            <button
                                 onClick={closeModal}
                                 className="absolute top-4 right-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-red-500 transition backdrop-blur-sm"
                             >
@@ -255,7 +279,7 @@ const Produk = () => {
                                     return (
                                         <>
                                             <AnimatePresence mode="wait">
-                                                <motion.img 
+                                                <motion.img
                                                     key={currentImageIndex}
                                                     src={images[currentImageIndex]}
                                                     alt={`Slide ${currentImageIndex}`}
@@ -271,13 +295,13 @@ const Produk = () => {
                                             {/* Navigasi Slider */}
                                             {images.length > 1 && (
                                                 <>
-                                                    <button 
+                                                    <button
                                                         onClick={prevSlide}
                                                         className="absolute left-4 p-3 bg-white/10 text-white rounded-full hover:bg-white/30 transition backdrop-blur-md border border-white/20"
                                                     >
                                                         <ChevronLeft size={28} />
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={nextSlide}
                                                         className="absolute right-4 p-3 bg-white/10 text-white rounded-full hover:bg-white/30 transition backdrop-blur-md border border-white/20"
                                                     >
@@ -287,14 +311,13 @@ const Produk = () => {
                                                     {/* Dots */}
                                                     <div className="absolute bottom-6 flex gap-2 justify-center w-full">
                                                         {images.map((_, idx) => (
-                                                            <div 
+                                                            <div
                                                                 key={idx}
                                                                 onClick={() => setCurrentImageIndex(idx)}
-                                                                className={`cursor-pointer rounded-full transition-all shadow-sm ${
-                                                                    idx === currentImageIndex 
-                                                                    ? 'bg-white w-8 h-2' 
+                                                                className={`cursor-pointer rounded-full transition-all shadow-sm ${idx === currentImageIndex
+                                                                    ? 'bg-white w-8 h-2'
                                                                     : 'bg-white/40 w-2 h-2 hover:bg-white/80'
-                                                                }`}
+                                                                    }`}
                                                             />
                                                         ))}
                                                     </div>
@@ -318,7 +341,7 @@ const Produk = () => {
                                     </div>
 
                                     <div className="w-full h-px bg-gray-200 mb-6"></div>
-                                    
+
                                     <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-3">
                                         Deskripsi Produk
                                     </h3>
@@ -328,8 +351,8 @@ const Produk = () => {
                                 </div>
 
                                 <div className="p-6 border-t border-gray-100 bg-gray-50">
-                                    <a 
-                                        href="https://wa.me/62812345678" 
+                                    <a
+                                        href="https://wa.me/62812345678"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-200"

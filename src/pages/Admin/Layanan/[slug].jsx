@@ -32,151 +32,142 @@ const EditLayananPage = () => {
 
   // State List Layanan
   const [inputLayanan, setInputLayanan] = useState("");
-  const [layananDitawarkan, setLayananDitawarkan] = useState([]);
+  const [layananDitawarkan, setLayananDitawarkan] = useState([]); 
+  const [originalLayanan, setOriginalLayanan] = useState([]); // Untuk tracking data awal
 
   // Icon State
   const [showIconModal, setShowIconModal] = useState(false);
-  const [iconSearch, setIconSearch] = useState("");
   const [selectedIcon, setSelectedIcon] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const iconList = [
-    "fa-solid fa-user",
-    "fa-solid fa-users",
-    "fa-solid fa-gear",
-    "fa-solid fa-cogs",
-    "fa-solid fa-chart-line",
-    "fa-solid fa-chart-bar",
-    "fa-solid fa-handshake",
-    "fa-solid fa-building",
-    "fa-solid fa-briefcase",
-    "fa-solid fa-lightbulb",
-    "fa-solid fa-bullseye",
-    "fa-solid fa-calendar",
-    "fa-solid fa-check",
-    "fa-solid fa-circle-info",
-    "fa-solid fa-database",
-    "fa-solid fa-folder",
-    "fa-solid fa-phone",
-    "fa-solid fa-envelope",
-    "fa-solid fa-globe",
-    "fa-solid fa-shield-halved",
-    "fa-solid fa-building-columns",
-    "fa-solid fa-truck",
-    "fa-solid fa-shop",
-    "fa-solid fa-cart-shopping",
-  ];
+  // Font Awesome Search State
+  const [faIcons, setFaIcons] = useState([]);
+  const [faSearch, setFaSearch] = useState("");
+  const [faLoading, setFaLoading] = useState(false);
+  const [faError, setFaError] = useState("");
 
-  // --- 1. FETCH & PARSE DATA ---
-  // --- 1. FETCH & PARSE DATA (LOGIKA LEBIH PINTAR) ---
+  // Fetch Font Awesome Icons from CDN metadata
+  const fetchFontAwesomeIcons = async (searchQuery = "") => {
+    setFaLoading(true);
+    setFaError("");
+    
+    try {
+      const response = await fetch('https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/metadata/icons.json');
+      const data = await response.json();
+      
+      const iconsArray = Object.entries(data).map(([key, value]) => ({
+        name: key,
+        label: value.label || key,
+        styles: value.styles || ['solid'],
+        search: value.search?.terms || []
+      }));
+
+      let filtered = iconsArray;
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filtered = iconsArray.filter(icon => 
+          icon.name.includes(query) || 
+          icon.label.toLowerCase().includes(query) ||
+          icon.search.some(term => term.includes(query))
+        );
+      }
+
+      setFaIcons(filtered.slice(0, 100));
+      setFaLoading(false);
+    } catch (error) {
+      console.error("Error fetching FA icons:", error);
+      setFaError("Gagal memuat icon dari Font Awesome");
+      setFaLoading(false);
+      
+      // Fallback ke icon list default
+      const defaultIcons = [
+        { name: "user", styles: ["solid"] },
+        { name: "users", styles: ["solid"] },
+        { name: "gear", styles: ["solid"] },
+        { name: "cogs", styles: ["solid"] },
+        { name: "chart-line", styles: ["solid"] },
+        { name: "chart-bar", styles: ["solid"] },
+        { name: "handshake", styles: ["solid"] },
+        { name: "building", styles: ["solid"] },
+        { name: "briefcase", styles: ["solid"] },
+        { name: "lightbulb", styles: ["solid"] },
+      ];
+      setFaIcons(defaultIcons);
+    }
+  };
+
+  // Load icons saat modal dibuka
   useEffect(() => {
+    if (showIconModal) {
+      fetchFontAwesomeIcons(faSearch);
+    }
+  }, [showIconModal]);
+
+  // Search dengan debounce
+  useEffect(() => {
+    if (!showIconModal) return;
+    
+    const delayDebounce = setTimeout(() => {
+      fetchFontAwesomeIcons(faSearch);
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [faSearch]);
+
+  // --- FETCH & PARSE DATA ---
+  const fetchData = async () => {
     if (!slug) return;
+    
+    try {
+      const resDetail = await fetch(`/api/services/${slug}`);
+      const detail = await resDetail.json();
+      
+      const resSubLayanan = await fetch(`/api/sub_services/by_services/${slug}`);
+      const Subdetail = await resSubLayanan.json();
+      
+      if (resDetail.ok) {
+        setServiceId(detail.id);
+        setNamaLayanan(detail.title);
+        setDeskripsi(detail.description || "");
+        setDeskripsiSingkat(detail.short_description || "");
+        
+        // Simpan dengan struktur yang konsisten
+        const formattedSubLayanan = Subdetail.map(item => ({
+          id: item.id,
+          sub_services: item.sub_services,
+          isNew: false
+        }));
+        
+        setLayananDitawarkan(formattedSubLayanan);
+        setOriginalLayanan(formattedSubLayanan);
 
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/services");
-        const data = await res.json();
-
-        if (res.ok) {
-          const found = data.find((item) => item.slug === slug);
-
-          if (found) {
-            setServiceId(found.id);
-            setNamaLayanan(found.title);
-
-            // --- MULAI PARSING DESKRIPSI ---
-            let fullDesc = found.description || "";
-
-            // Marker/Penanda yang kita gunakan saat menyimpan
-            const markerSummary = "**Ringkasan:**";
-            const markerList = "**Layanan yang ditawarkan:**";
-
-            // Cek apakah data ini menggunakan format baru?
-            const isFormatted =
-              fullDesc.includes(markerSummary) || fullDesc.includes(markerList);
-
-            if (!isFormatted) {
-              // KASUS A: DATA LAMA (Belum ada marker)
-              // Masukkan semua teks ke Deskripsi Lengkap agar tidak hilang
-              setDeskripsi(fullDesc);
-              setDeskripsiSingkat("");
-              setLayananDitawarkan([]);
-            } else {
-              // KASUS B: DATA BARU (Sudah terformat)
-              let parsedMain = fullDesc;
-
-              // 1. Ambil List Layanan (biasanya di bawah)
-              if (parsedMain.includes(markerList)) {
-                const parts = parsedMain.split(markerList);
-                const listContent = parts[1];
-                parsedMain = parts[0].trim(); // Sisa teks sebelum list
-
-                if (listContent) {
-                  const items = listContent
-                    .split("\n")
-                    .map((s) => s.replace(/^- /, "").replace(/^• /, "").trim())
-                    .filter((s) => s !== "");
-                  setLayananDitawarkan(items);
-                }
-              }
-
-              // 2. Ambil Ringkasan (biasanya di atas)
-              if (parsedMain.includes(markerSummary)) {
-                const parts = parsedMain.split(markerSummary);
-                // parts[0] biasanya kosong jika ringkasan di paling atas
-                // parts[1] adalah isinya + deskripsi utama
-
-                let restContent = parts[1];
-
-                // Cari pemisah paragraf ganda (\n\n) yang memisahkan ringkasan dari deskripsi utama
-                const splitIndex = restContent.indexOf("\n\n");
-
-                if (splitIndex !== -1) {
-                  setDeskripsiSingkat(
-                    restContent.substring(0, splitIndex).trim()
-                  );
-                  parsedMain = restContent.substring(splitIndex).trim();
-                } else {
-                  // Jika tidak ada enter, berarti cuma ada ringkasan
-                  setDeskripsiSingkat(restContent.trim());
-                  parsedMain = "";
-                }
-              }
-
-              setDeskripsi(parsedMain);
-            }
-            // --- SELESAI PARSING ---
-
-            // Handle Gambar & Icon
-            if (found.image_url) {
-              setFoto(found.image_url);
-              setPreviewFoto(found.image_url);
-            }
-
-            if (found.icon_url) {
-              if (found.icon_url.startsWith("fa-")) {
-                setSelectedIcon(found.icon_url);
-              } else if (
-                found.icon_url.startsWith("data:image") &&
-                !found.image_url
-              ) {
-                setFoto(found.icon_url);
-                setPreviewFoto(found.icon_url);
-              }
-            }
-          } else {
-            Swal.fire("Error", "Layanan tidak ditemukan", "error").then(() =>
-              router.push("/Admin/Dashboard")
-            );
+        // Handle Gambar & Icon
+        if (detail.image_url) {
+          setFoto(detail.image_url);
+          setPreviewFoto(detail.image_url);
+        }
+        
+        if (detail.icon_url) {
+          if (detail.icon_url.startsWith('fa-')) {
+            setSelectedIcon(detail.icon_url);
+          } else if (detail.icon_url.startsWith('data:image') && !detail.image_url) {
+            setFoto(detail.icon_url);
+            setPreviewFoto(detail.icon_url);
           }
         }
-      } catch (error) {
-        console.error("Error fetch:", error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        Swal.fire("Error", "Layanan tidak ditemukan", "error")
+          .then(() => router.push('/Admin/Dashboard'));
       }
-    };
+    } catch (error) {
+      console.error("Error fetch:", error);
+      Swal.fire("Error", "Terjadi kesalahan saat mengambil data", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [slug]);
 
@@ -197,11 +188,11 @@ const EditLayananPage = () => {
       return Swal.fire("Error", "Max 2MB", "error");
 
     setPreviewFoto(URL.createObjectURL(file));
-    try {
-      const base64String = await toBase64(file);
-      setFoto(base64String);
-    } catch (err) {
-      console.error(err);
+    try { 
+      const base64String = await toBase64(file); 
+      setFoto(base64String); 
+    } catch (err) { 
+      console.error(err); 
     }
   };
 
@@ -212,10 +203,11 @@ const EditLayananPage = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const pilihIcon = (icon) => {
-    setSelectedIcon(icon);
+  const pilihIcon = (iconName, style = "solid") => {
+    const iconClass = `fa-${style} fa-${iconName}`;
+    setSelectedIcon(iconClass);
     setShowIconModal(false);
-    setIconSearch("");
+    setFaSearch("");
   };
 
   const removeIcon = (e) => {
@@ -225,103 +217,164 @@ const EditLayananPage = () => {
 
   const tambahLayananItem = () => {
     if (!inputLayanan.trim()) return;
-    setLayananDitawarkan([...layananDitawarkan, inputLayanan]);
+    
+    setLayananDitawarkan([...layananDitawarkan, { 
+      sub_services: inputLayanan.trim(),
+      isNew: true
+    }]);
     setInputLayanan("");
   };
 
-  const hapusLayananItem = (index) => {
-    const newList = [...layananDitawarkan];
-    newList.splice(index, 1);
-    setLayananDitawarkan(newList);
+  const hapusLayananItem = (idx) => {
+    setLayananDitawarkan(layananDitawarkan.filter((_, i) => i !== idx));
   };
 
   // === UPDATE DATA ===
   const handleUpdate = async () => {
-    if (!namaLayanan.trim())
+    if (!namaLayanan.trim()) {
       return Swal.fire("Error", "Nama wajib diisi", "error");
-
+    }
+  
     setIsSubmitting(true);
+    
     try {
-      // GABUNGKAN DATA KEMBALI KE STRING
-      let finalDescription = deskripsi;
-
-      if (deskripsiSingkat) {
-        finalDescription = `**Ringkasan:** ${deskripsiSingkat}\n\n${finalDescription}`;
+      // 1. UPDATE SERVICE UTAMA dengan FormData
+      const formData = new FormData();
+      formData.append('title', namaLayanan);
+      formData.append('description', deskripsi || '');
+      formData.append('short_description', deskripsiSingkat || '');
+      formData.append('icon_url', selectedIcon || '');
+      formData.append('userId', user?.id || '');
+      
+      // Handle Image Upload
+      if (foto && foto.startsWith('data:image')) {
+        // Jika foto adalah base64 baru, convert ke file
+        const response = await fetch(foto);
+        const blob = await response.blob();
+        const fileName = `service-${Date.now()}.${blob.type.split('/')[1]}`;
+        formData.append('image', blob, fileName);
+      } else if (foto && foto.startsWith('/uploads/')) {
+        // Jika foto adalah path lama, kirim sebagai existing
+        formData.append('existingImageUrl', foto);
       }
-
-      if (layananDitawarkan.length > 0) {
-        finalDescription +=
-          `\n\n**Layanan yang ditawarkan:**\n` +
-          layananDitawarkan.map((item) => `- ${item}`).join("\n");
-      }
-
-      const payload = {
-        title: namaLayanan,
-        description: finalDescription,
-        icon_class: selectedIcon, // Kirim Icon
-        image_url: foto, // Kirim Foto
-        userId: user?.id,
-      };
-
-      const res = await fetch(`/api/services/${serviceId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+  
+      const resService = await fetch(`/api/services/${serviceId}`, {
+        method: 'PUT',
+        body: formData // Tidak perlu Content-Type header, browser akan set otomatis
       });
-
-      if (res.ok) {
-        Swal.fire("Berhasil", "Layanan berhasil diperbarui!", "success");
-      } else {
-        throw new Error("Gagal update");
+  
+      if (!resService.ok) {
+        throw new Error("Gagal update layanan utama");
       }
+  
+      // 2. HANDLE SUB LAYANAN
+      // Identifikasi item yang dihapus (ada di original tapi tidak ada di current)
+      const itemsToDelete = originalLayanan.filter(original => 
+        !layananDitawarkan.some(current => current.id === original.id)
+      );
+  
+      // Identifikasi item baru yang perlu diinsert
+      const itemsToInsert = layananDitawarkan.filter(item => item.isNew === true);
+  
+      console.log("Items to delete:", itemsToDelete);
+      console.log("Items to insert:", itemsToInsert);
+  
+      // 3. DELETE sub layanan yang dihapus
+      for (const item of itemsToDelete) {
+        if (!item.id) continue; // Skip jika tidak ada id
+        
+        try {
+          const resDelete = await fetch(`/api/sub_services/${item.id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user?.id })
+          });
+          
+          if (!resDelete.ok) {
+            console.error(`Gagal menghapus sub layanan ID ${item.id}`);
+          } else {
+            console.log(`Berhasil menghapus sub layanan ID ${item.id}`);
+          }
+        } catch (error) {
+          console.error(`Error deleting sub service ${item.id}:`, error);
+        }
+      }
+  
+      // 4. INSERT sub layanan baru
+      for (const item of itemsToInsert) {
+        try {
+          const resInsert = await fetch(`/api/sub_services`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              services_id: serviceId,
+              sub_services: item.sub_services,
+              userId: user?.id
+            })
+          });
+          
+          if (!resInsert.ok) {
+            console.error(`Gagal menambahkan sub layanan: ${item.sub_services}`);
+          } else {
+            console.log(`Berhasil menambahkan sub layanan: ${item.sub_services}`);
+          }
+        } catch (error) {
+          console.error(`Error inserting sub service:`, error);
+        }
+      }
+  
+      // 5. Refresh data dan tampilkan success
+      Swal.fire({
+        title: "Berhasil",
+        text: "Layanan dan sub layanan berhasil diperbarui!",
+        icon: "success"
+      }).then(() => {
+        // Reload data dari server
+        fetchData();
+      });
+  
     } catch (error) {
-      Swal.fire("Gagal", error.message, "error");
+      console.error('Update error:', error);
+      Swal.fire("Gagal", error.message || "Terjadi kesalahan saat menyimpan", "error");
     } finally {
+      setIsSubmitting(false);
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
     Swal.fire({
-      title: "Hapus Layanan?",
+      title: 'Hapus Layanan?',
       text: "Data tidak bisa dikembalikan!",
-      icon: "warning",
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Ya, Hapus",
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Ya, Hapus'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           const res = await fetch(`/api/services/${serviceId}`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user?.id }),
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user?.id }) 
           });
 
           if (res.ok) {
-            Swal.fire("Terhapus!", "Layanan telah dihapus.", "success").then(
-              () => router.push("/Admin/Dashboard")
-            );
-          } else {
-            throw new Error("Gagal menghapus");
+            Swal.fire("Terhapus!", "Layanan telah dihapus.", "success")
+              .then(() => router.push('/Admin/Dashboard'));
+          } else { 
+            throw new Error("Gagal menghapus"); 
           }
-        } catch (error) {
-          Swal.fire("Error", error.message, "error");
+        } catch (error) { 
+          Swal.fire("Error", error.message, "error"); 
         }
       }
     });
   };
 
-  const filteredIcons = iconList.filter((ic) =>
-    ic.toLowerCase().includes(iconSearch.toLowerCase())
-  );
-
-  if (isLoading)
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
@@ -335,15 +388,13 @@ const EditLayananPage = () => {
 
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="text-white font-bold text-lg flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="hover:bg-gray-700 p-2 rounded-full transition"
-          >
-            <ArrowLeft size={20} />
+          <button onClick={() => router.back()} className="hover:bg-gray-700 p-2 rounded-full transition">
+            <ArrowLeft size={20}/>
           </button>
           Edit Layanan
         </div>
         <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
+          {user?.username ? user.username.charAt(0) : "A"}
           {user?.username ? user.username.charAt(0) : "A"}
         </div>
       </header>
@@ -354,71 +405,38 @@ const EditLayananPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* KIRI: FOTO */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">
-                1. Foto Header
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-green-500 transition-colors">
+              <label className="text-sm font-semibold text-gray-700">1. Foto Header</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-blue-400 transition-colors">
                 {previewFoto ? (
                   <>
-                    <img
-                      src={previewFoto}
-                      className="w-full h-full object-cover"
-                      alt="Preview"
-                    />
-                    <button
-                      onClick={removeFoto}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 transition-all"
-                    >
-                      <X size={14} />
+                    <img src={previewFoto} className="w-full h-full object-cover" alt="Preview" />
+                    <button onClick={removeFoto} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 transition-all">
+                      <X size={14}/>
                     </button>
                   </>
                 ) : (
                   <div className="text-center p-4 pointer-events-none">
-                    <ImageIcon
-                      className="mx-auto text-gray-400 mb-1"
-                      size={28}
-                    />
-                    <span className="text-xs text-gray-500">
-                      Belum ada foto
-                    </span>
+                    <ImageIcon className="mx-auto text-gray-400 mb-1" size={28} />
+                    <span className="text-xs text-gray-500">Belum ada foto</span>
                   </div>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFotoChange}
-                />
-                {!previewFoto && (
-                  <div
-                    className="absolute inset-0 cursor-pointer"
-                    onClick={() => fileInputRef.current.click()}
-                  />
-                )}
+                <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleFotoChange} />
+                {!previewFoto && <div className="absolute inset-0 cursor-pointer" onClick={() => fileInputRef.current.click()} />}
               </div>
-              <button
-                onClick={() => fileInputRef.current.click()}
-                className="w-full py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition"
-              >
+              <button onClick={() => fileInputRef.current.click()} className="w-full py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition">
                 {previewFoto ? "Ganti Foto" : "Upload Foto"}
               </button>
             </div>
 
             {/* KANAN: ICON */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">
-                2. Icon Layanan
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-green-500 transition-colors">
+              <label className="text-sm font-semibold text-gray-700">2. Icon Layanan</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-blue-400 transition-colors">
                 {selectedIcon ? (
                   <>
                     <i className={`${selectedIcon} text-5xl text-blue-600`}></i>
-                    <button
-                      onClick={removeIcon}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 transition-all"
-                    >
-                      <X size={14} />
+                    <button onClick={removeIcon} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 transition-all">
+                      <X size={14}/>
                     </button>
                   </>
                 ) : (
@@ -426,22 +444,12 @@ const EditLayananPage = () => {
                     <div className="mx-auto text-gray-400 mb-1 flex justify-center">
                       <i className="fa-solid fa-icons text-2xl"></i>
                     </div>
-                    <span className="text-xs text-gray-500">
-                      Belum ada icon
-                    </span>
+                    <span className="text-xs text-gray-500">Belum ada icon</span>
                   </div>
                 )}
-                {!selectedIcon && (
-                  <div
-                    className="absolute inset-0 cursor-pointer"
-                    onClick={() => setShowIconModal(true)}
-                  />
-                )}
+                {!selectedIcon && <div className="absolute inset-0 cursor-pointer" onClick={() => setShowIconModal(true)} />}
               </div>
-              <button
-                onClick={() => setShowIconModal(true)}
-                className="w-full py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition"
-              >
+              <button onClick={() => setShowIconModal(true)} className="w-full py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition">
                 {selectedIcon ? "Ganti Icon" : "Pilih Icon"}
               </button>
             </div>
@@ -450,68 +458,51 @@ const EditLayananPage = () => {
           {/* --- FORM INPUTS --- */}
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nama Layanan
-              </label>
-              <input
-                type="text"
-                value={namaLayanan}
-                onChange={(e) => setNamaLayanan(e.target.value)}
-                className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all"
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Layanan</label>
+              <input 
+                type="text" 
+                value={namaLayanan} 
+                onChange={(e) => setNamaLayanan(e.target.value)} 
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 outline-none focus:border-blue-500" 
               />
             </div>
 
             {/* List Layanan SEJAJAR */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Poin-poin Layanan yang Ditawarkan
-              </label>
-              <div className="">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Poin-poin Layanan yang Ditawarkan</label>
+              <div>
                 <div className="flex gap-0 h-11 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Masukkan poin layanan..."
-                    value={inputLayanan}
-                    onChange={(e) => setInputLayanan(e.target.value)}
-                    className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all"
-                    onKeyPress={(e) => e.key === "Enter" && tambahLayananItem()}
+                  <input 
+                    type="text" 
+                    placeholder="Masukkan poin layanan..." 
+                    value={inputLayanan} 
+                    onChange={(e) => setInputLayanan(e.target.value)} 
+                    className="flex-grow border border-gray-300 border-r-0 rounded-l-lg px-4 text-sm focus:ring-0 outline-none"
+                    onKeyPress={(e) => e.key === 'Enter' && tambahLayananItem()}
                   />
-                  <button
-                    onClick={tambahLayananItem}
+                  <button 
+                    onClick={tambahLayananItem} 
                     className="bg-[#1E293B] text-white px-6 text-sm font-medium rounded-r-lg hover:bg-black transition flex items-center gap-2 whitespace-nowrap"
                   >
                     <Plus size={16} /> Tambah Layanan
                   </button>
                 </div>
+                
                 <div className="space-y-2">
                   {layananDitawarkan.length === 0 ? (
-                    <p className="text-xs text-gray-400 italic text-center">
-                      Belum ada Layanan.
-                    </p>
+                    <p className="text-xs text-gray-400 italic text-center">Belum ada Layanan.</p>
                   ) : (
                     layananDitawarkan.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex justify-between items-center bg-white px-4 py-2 rounded border shadow-sm"
-                      >
-                        <span className="text-sm text-gray-700">• {item}</span>
-                        <button
-                          onClick={() => hapusLayananItem(idx)}
+                      <div key={idx} className="flex justify-between items-center bg-white px-4 py-2 rounded border shadow-sm">
+                        <span className="text-sm text-gray-700">
+                          • {item.sub_services}
+                          {item.isNew && <span className="ml-2 text-xs text-green-600">(Baru)</span>}
+                        </span>
+                        <button 
+                          onClick={() => hapusLayananItem(idx)} 
                           className="text-gray-400 hover:text-red-500"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14}/>
                         </button>
                       </div>
                     ))
@@ -521,98 +512,114 @@ const EditLayananPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Deskripsi Singkat
-              </label>
-              <textarea
-                value={deskripsiSingkat}
-                onChange={(e) => setDeskripsiSingkat(e.target.value)}
-                rows={2}
-                className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all"
-                placeholder="Ringkasan layanan..."
+              <label className="block text-sm font-medium text-gray-800 mb-2">Deskripsi Singkat</label>
+              <textarea 
+                value={deskripsiSingkat} 
+                onChange={(e) => setDeskripsiSingkat(e.target.value)} 
+                rows={2} 
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 text-sm resize-none outline-none focus:border-blue-500" 
+                placeholder="Ringkasan layanan..." 
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">
-                Deskripsi Lengkap
-              </label>
-              <textarea
-                value={deskripsi}
-                onChange={(e) => setDeskripsi(e.target.value)}
-                rows={10}
-                className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all"
+              <label className="block text-sm font-medium text-gray-800 mb-2">Deskripsi Lengkap</label>
+              <textarea 
+                value={deskripsi} 
+                onChange={(e) => setDeskripsi(e.target.value)} 
+                rows={10} 
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 outline-none focus:border-blue-500" 
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-8 flex justify-between ">
-            <button
-              onClick={handleDelete}
+          <div className="mt-8 flex justify-between">
+            <button 
+              onClick={handleDelete} 
               className="flex items-center gap-2 bg-red-100 text-red-600 hover:bg-red-200 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors"
             >
-              <Trash2 size={18} /> Hapus Layanan
+              <Trash2 size={18}/> Hapus Layanan
             </button>
 
-            <button
-              onClick={handleUpdate}
-              disabled={isSubmitting}
+            <button 
+              onClick={handleUpdate} 
+              disabled={isSubmitting} 
               className="flex items-center gap-2 bg-[#1E293B] hover:bg-[#0F172A] text-white px-8 py-3 rounded-lg font-medium text-sm transition-all shadow-lg disabled:opacity-50"
             >
-              {isSubmitting ? (
-                "Menyimpan..."
-              ) : (
-                <>
-                  <Save size={18} /> Simpan Perubahan
-                </>
-              )}
+              {isSubmitting ? 'Menyimpan...' : <><Save size={18} /> Simpan Perubahan</>}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Icon Modal */}
+      {/* Font Awesome Icon Modal */}
       {showIconModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6">
-            <div className="flex justify-between mb-4">
-              <h3 className="font-bold text-lg">Pilih Icon</h3>
-              <button onClick={() => setShowIconModal(false)}>
-                <X />
+          <div className="bg-white w-full max-w-3xl rounded-xl shadow-2xl p-6 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="font-bold text-xl">Pilih Icon Font Awesome</h3>
+                <p className="text-xs text-gray-500 mt-1">Cari dari 2000+ icon gratis</p>
+              </div>
+              <button 
+                onClick={() => setShowIconModal(false)}
+                className="hover:bg-gray-100 p-2 rounded-lg transition"
+              >
+                <X size={24}/>
               </button>
             </div>
-            <input
-              type="text"
-              placeholder="Cari icon..."
-              value={iconSearch}
-              onChange={(e) => setIconSearch(e.target.value)}
-              className="w-full border px-4 py-2 mb-4 rounded-lg"
+            
+            <input 
+              type="text" 
+              placeholder="Cari icon... (contoh: user, chart, building)" 
+              value={faSearch} 
+              onChange={(e) => setFaSearch(e.target.value)} 
+              className="w-full border-2 border-gray-300 px-4 py-3 mb-4 rounded-lg focus:border-blue-500 outline-none"
+              autoFocus
             />
-            <div className="grid grid-cols-6 gap-2 max-h-64 overflow-y-auto">
-              {filteredIcons.map((ic) => (
-                <button
-                  key={ic}
-                  onClick={() => pilihIcon(ic)}
-                  className={`p-3 border rounded hover:bg-gray-50 flex justify-center ${
-                    selectedIcon === ic ? "bg-blue-50 border-blue-500" : ""
-                  }`}
-                >
-                  <i className={`${ic} text-xl`}></i>
-                </button>
-              ))}
+
+            {faError && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded-lg mb-4 text-sm">
+                {faError}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto">
+              {faLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Memuat icon...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                  {faIcons.map((icon) => (
+                    <button 
+                      key={icon.name}
+                      onClick={() => pilihIcon(icon.name, icon.styles[0])}
+                      className="p-4 border-2 border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-400 flex flex-col items-center justify-center gap-2 transition-all group"
+                      title={icon.label || icon.name}
+                    >
+                      <i className={`fa-${icon.styles[0]} fa-${icon.name} text-2xl text-gray-700 group-hover:text-blue-600 transition-colors`}></i>
+                      <span className="text-[10px] text-gray-500 text-center leading-tight truncate w-full">
+                        {icon.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!faLoading && faIcons.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <i className="fa-solid fa-search text-4xl mb-3 text-gray-300"></i>
+                  <p>Tidak ada icon yang ditemukan</p>
+                  <p className="text-sm mt-1">Coba kata kunci lain</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+              Menampilkan {faIcons.length} icon • Powered by Font Awesome 6.5
             </div>
           </div>
         </div>

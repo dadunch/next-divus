@@ -406,7 +406,7 @@ const EditLayananPage = () => {
             {/* KIRI: FOTO */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">1. Foto Header</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-blue-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-green-500 transition-colors">
                 {previewFoto ? (
                   <>
                     <img src={previewFoto} className="w-full h-full object-cover" alt="Preview" />
@@ -431,7 +431,7 @@ const EditLayananPage = () => {
             {/* KANAN: ICON */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">2. Icon Layanan</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl h-40 flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-blue-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-green-500 transition-colors">
                 {selectedIcon ? (
                   <>
                     <i className={`${selectedIcon} text-5xl text-blue-600`}></i>
@@ -463,7 +463,13 @@ const EditLayananPage = () => {
                 type="text" 
                 value={namaLayanan} 
                 onChange={(e) => setNamaLayanan(e.target.value)} 
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 outline-none focus:border-blue-500" 
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all" 
               />
             </div>
 
@@ -477,7 +483,13 @@ const EditLayananPage = () => {
                     placeholder="Masukkan poin layanan..." 
                     value={inputLayanan} 
                     onChange={(e) => setInputLayanan(e.target.value)} 
-                    className="flex-grow border border-gray-300 border-r-0 rounded-l-lg px-4 text-sm focus:ring-0 outline-none"
+                    className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
                     onKeyPress={(e) => e.key === 'Enter' && tambahLayananItem()}
                   />
                   <button 
@@ -517,7 +529,13 @@ const EditLayananPage = () => {
                 value={deskripsiSingkat} 
                 onChange={(e) => setDeskripsiSingkat(e.target.value)} 
                 rows={2} 
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 text-sm resize-none outline-none focus:border-blue-500" 
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all" 
                 placeholder="Ringkasan layanan..." 
               />
             </div>
@@ -528,7 +546,13 @@ const EditLayananPage = () => {
                 value={deskripsi} 
                 onChange={(e) => setDeskripsi(e.target.value)} 
                 rows={10} 
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 outline-none focus:border-blue-500" 
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
           </div>

@@ -5,18 +5,28 @@ import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../../assets'; 
 import { motion } from 'framer-motion';
 
-// --- HELPER: FORMAT DESKRIPSI SINGKAT ---
+// --- HELPER: FORMAT DESKRIPSI SINGKAT (DIPERBAIKI) ---
 const getSummary = (text) => {
     if (!text) return "Layanan profesional dari PT Divus.";
-    const marker = "**Ringkasan:**";
-    const index = text.indexOf(marker);
+
+    // 1. Hapus kalimat "Layanan Yang Ditawarkan: -" (Case Insensitive)
+    // Regex ini akan mencari variasi tulisan tersebut dan menghapusnya
+    let cleanText = text.replace(/Layanan\s+Yang\s+Ditawarkan\s*:\s*-?/gi, "");
+
+    // 2. Hapus karakter Markdown bintang (**)
+    cleanText = cleanText.replace(/\*\*/g, "");
+
+    // 3. Ambil ringkasan jika ada marker khusus, atau potong 100 karakter
+    const marker = "Ringkasan:";
+    const index = cleanText.indexOf(marker);
+    
     if (index !== -1) {
-        let content = text.substring(index + marker.length).trim();
-        const endOfSummary = content.indexOf('\n\n');
-        if (endOfSummary !== -1) content = content.substring(0, endOfSummary);
-        return content.replace(/\*\*/g, '').trim();
+        // Jika ada kata "Ringkasan:", ambil teks setelahnya
+        cleanText = cleanText.substring(index + marker.length);
     }
-    return text.substring(0, 100).replace(/\*\*/g, '') + "...";
+
+    // 4. Potong sisa spasi di awal/akhir dan batasi panjang karakter
+    return cleanText.trim().substring(0, 100) + (cleanText.length > 100 ? "..." : "");
 };
 
 // Data Statis
@@ -42,36 +52,36 @@ const clientLogos = [
 export default function Home() {
     // State Data
     const [services, setServices] = useState([]);
-    const [products, setProducts] = useState([]); // Data Produk
-    const [projects, setProjects] = useState([]); // Data Proyek
+    const [products, setProducts] = useState([]); 
+    const [projects, setProjects] = useState([]); 
     
     // State UI
-    const [activePorto, setActivePorto] = useState('produk'); // 'produk' atau 'proyek'
+    const [activePorto, setActivePorto] = useState('produk'); 
     const [loading, setLoading] = useState(true);
 
-    // --- FETCH DATA (Services, Products, Projects) ---
+    // --- FETCH DATA ---
     useEffect(() => {
         const fetchAllData = async () => {
             try {
-                // 1. Fetch Services (Layanan)
+                // 1. Fetch Services
                 const resService = await fetch('/api/services');
                 const dataService = await resService.json();
                 if (resService.ok && Array.isArray(dataService)) {
                     setServices(dataService); 
                 }
 
-                // 2. Fetch Products (Produk)
+                // 2. Fetch Products
                 const resProd = await fetch('/api/products'); 
                 const dataProd = await resProd.json();
                 if (resProd.ok && Array.isArray(dataProd)) {
-                    setProducts(dataProd.slice(0, 3)); // Ambil 3 terbaru
+                    setProducts(dataProd.slice(0, 3)); 
                 }
 
-                // 3. Fetch Projects (Proyek)
+                // 3. Fetch Projects
                 const resProj = await fetch('/api/projects');
                 const dataProj = await resProj.json();
                 if (resProj.ok && Array.isArray(dataProj)) {
-                    setProjects(dataProj.slice(0, 3)); // Ambil 3 terbaru
+                    setProjects(dataProj); 
                 }
 
             } catch (error) {
@@ -84,12 +94,11 @@ export default function Home() {
         fetchAllData();
     }, []);
 
-    // Helper untuk mengambil Gambar Produk (Parse JSON)
     const getProductImage = (jsonString) => {
         try {
             const parsed = JSON.parse(jsonString);
             if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
-            return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600"; // Fallback
+            return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600"; 
         } catch (e) {
             return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600";
         }
@@ -105,151 +114,98 @@ export default function Home() {
 			<div className="max-w-[1440px] mx-auto">
 				
                 {/* HERO SECTION */}
-								<section className="pt-24 pb-16 px-6 md:px-20 relative overflow-hidden bg-gray-100 md:bg-white">
-									<div className="flex flex-col md:flex-row items-center justify-between gap-11">
-										{/* Left Content */}
-										<div className="w-full md:w-1/2 flex flex-col justify-start items-start gap-8 z-10">
-											<p className="text-lime-500 text-xl font-medium font-['Poppins'] mt-20">
-												PT Divus Global Mediacomm
-											</p>
-											<h1 className="text-zinc-800 text-3xl lg:text-4xl font-semibold font-['Poppins'] leading-tight">
-												Tingkatkan Strategi dan Solusi Bisnis Anda!
-											</h1>
-											<p className="text-zinc-800 text-base font-normal font-['Poppins'] leading-6 text-justify">
-												PT Divus menyediakan layanan management consulting, riset,
-												laporan, corporate identity, serta Report dan jurnal guna
-												membantu perusahaan mencapai strategi dan tujuan bisnis secara
-												optimal.
-											</p>
-				
-											<Link
-												href="/User/Contact"
-												className="inline-flex justify-start items-center px-6 py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors"
-											>
-												<FaWhatsapp size={24} className="text-white mr-2" />
-												<span className="text-white text-base font-bold font-['Poppins'] leading-6">
-													Hubungi Kami
-												</span>
-											</Link>
-				
-											{/* Stats */}
-											<div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-8 md:gap-16 mb-10">
-												<div className="flex gap-6">
-													{statsData.map((stat, index) => (
-														<div
-															key={index}
-															className="flex flex-col items-center gap-1"
-														>
-															<span className="text-green-500 text-2xl md:text-3xl font-semibold font-['Poppins']">
-																{stat.value}
-															</span>
-															<span className="text-green-500 text-sm md:text-normal font-medium font-['Poppins']">
-																{stat.label}
-															</span>
-														</div>
-													))}
-												</div>
-											</div>
-										</div>
-				
-										{/* Right Content - Hero Images */}
-										<div className="w-full md:w-1/2 relative flex justify-center items-center">
-											<div className="relative w-[320px] sm:w-[420px] md:w-[550px] h-[380px] sm:h-[450px] md:h-[480px]">
-												<img
-													className="absolute top-[140px] sm:top-[160px] md:top-[185px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover"
-													src={Assets.Hero3}
-													alt="Gambar Latar"
-												/>
-												<img
-													className="absolute top-[30px] sm:top-[40px] md:top-[50px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover"
-													src={Assets.Hero1}
-													alt="Gambar Tengah"
-												/>
-												<img
-													className="absolute top-[120px] sm:top-[130px] md:top-[160px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover"
-													src={Assets.Hero2}
-													alt="Gambar Depan"
-												/>
-											</div>
-										</div>
-									</div>
-								</section>
-				
-								{/* STATS + CLIENT LOGO SECTION */}
-								<section className="px-6 md:px-20 py-12 md:py-16">
-									<div className="flex flex-col md:flex-row justify-between items-center gap-8">
-										<h2 className="text-zinc-500 text-xl font-semibold font-['Poppins'] leading-6 w-64 text-center md:text-left">
-											Dipercaya Oleh Mitra Internasional
-										</h2>
-				
-										<div className="flex gap-8 justify-center">
-											<img
-												className="w-28 md:w-32 h-auto"
-												src={Assets.Client12}
-												alt="Mitra A"
-											/>
-											<img
-												className="w-24 md:w-28 h-auto"
-												src={Assets.Client13}
-												alt="Mitra B"
-											/>
-										</div>
-									</div>
-				
-									<div className="mt-10 w-full relative flex justify-center">
-										<div className="w-full h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
-				
-										{/* Floating WhatsApp Button */}
-										<a
-											href="https://wa.me/62812345678"
-											target="_blank"
-											rel="noopener noreferrer"
-											className="fixed bottom-8 right-10 w-16 h-16 p-3 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors z-10"
-										>
-											<FaWhatsapp size={32} className="text-white" />
-										</a>
-									</div>
-								</section>
-				
-								{/* TENTANG KAMI SECTION */}
-								<section className="px-6 md:px-20 py-16 md:py-20 flex flex-col lg:flex-row lg:items-center gap-10">
-									<div className="w-full lg:w-1/2 flex flex-col justify-start items-start gap-8">
-										<h1 className="text-zinc-800 text-2xl lg:text-3xl font-bold font-['Poppins'] leading-tight">
-											Apa Itu PT Divus Global Mediacomm?
-										</h1>
-				
-										<p className="text-zinc-800 text-base font-normal font-['Poppins'] leading-6 text-justify">
-											PT Divus Global Mediacomm adalah perusahaan konsultan yang
-											bergerak di bidang manajemen, komunikasi korporat, dan desain
-											grafis. Kami menyediakan layanan mulai dari studi kelayakan,
-											perencanaan strategis, riset pasar, hingga identitas korporasi dan
-											media promosi. Dengan pengalaman beragam proyek, Divus berkomitmen
-											menjadi mitra terpercaya dalam menghadirkan solusi profesional dan
-											inovatif.
-										</p>
-				
-										<Link
-											href="/User/TentangKami"
-											className="inline-flex justify-start items-center px-5 py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors"
-										>
-											<span className="text-white text-base font-semibold font-['Poppins'] leading-6">
-												Tentang Kami
-											</span>
-										</Link>
-									</div>
-				
-									<div className="w-full lg:w-1/2 flex justify-center">
-										<div className="relative w-full max-w-[520px] h-[350px] sm:h-[420px] lg:h-[450px] overflow-hidden rounded-2xl">
-											<img
-												className="absolute inset-0 rounded-2xl object-cover w-full h-full"
-												src={Assets.Hero4}
-												alt="Tentang Kami"
-											/>
-										</div>
-									</div>
-								</section>
+                <section className="pt-24 pb-16 px-6 md:px-20 relative overflow-hidden bg-gray-100 md:bg-white">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-11">
+                        <div className="w-full md:w-1/2 flex flex-col justify-start items-start gap-8 z-10">
+                            <p className="text-lime-500 text-xl font-medium font-['Poppins'] mt-20">
+                                PT Divus Global Mediacomm
+                            </p>
+                            <h1 className="text-zinc-800 text-3xl lg:text-4xl font-semibold font-['Poppins'] leading-tight">
+                                Tingkatkan Strategi dan Solusi Bisnis Anda!
+                            </h1>
+                            <p className="text-zinc-800 text-base font-normal font-['Poppins'] leading-6 text-justify">
+                                PT Divus menyediakan layanan management consulting, riset,
+                                laporan, corporate identity, serta Report dan jurnal guna
+                                membantu perusahaan mencapai strategi dan tujuan bisnis secara
+                                optimal.
+                            </p>
 
-				{/* SECTION: Layanan (DINAMIS) */}
+                            <Link
+                                href="/User/Contact"
+                                className="inline-flex justify-start items-center px-6 py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors"
+                            >
+                                <FaWhatsapp size={24} className="text-white mr-2" />
+                                <span className="text-white text-base font-bold font-['Poppins'] leading-6">
+                                    Hubungi Kami
+                                </span>
+                            </Link>
+
+                            <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-8 md:gap-16 mb-10">
+                                <div className="flex gap-6">
+                                    {statsData.map((stat, index) => (
+                                        <div key={index} className="flex flex-col items-center gap-1">
+                                            <span className="text-green-500 text-2xl md:text-3xl font-semibold font-['Poppins']">
+                                                {stat.value}
+                                            </span>
+                                            <span className="text-green-500 text-sm md:text-normal font-medium font-['Poppins']">
+                                                {stat.label}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="w-full md:w-1/2 relative flex justify-center items-center">
+                            <div className="relative w-[320px] sm:w-[420px] md:w-[550px] h-[380px] sm:h-[450px] md:h-[480px]">
+                                <img className="absolute top-[140px] sm:top-[160px] md:top-[185px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover" src={Assets.Hero3} alt="Gambar Latar" />
+                                <img className="absolute top-[30px] sm:top-[40px] md:top-[50px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover" src={Assets.Hero1} alt="Gambar Tengah" />
+                                <img className="absolute top-[120px] sm:top-[130px] md:top-[160px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover" src={Assets.Hero2} alt="Gambar Depan" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* STATS + CLIENT LOGO */}
+                <section className="px-6 md:px-20 py-12 md:py-16">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                        <h2 className="text-zinc-500 text-xl font-semibold font-['Poppins'] leading-6 w-64 text-center md:text-left">
+                            Dipercaya Oleh Mitra Internasional
+                        </h2>
+                        <div className="flex gap-8 justify-center">
+                            <img className="w-28 md:w-32 h-auto" src={Assets.Client12} alt="Mitra A" />
+                            <img className="w-24 md:w-28 h-auto" src={Assets.Client13} alt="Mitra B" />
+                        </div>
+                    </div>
+                    <div className="mt-10 w-full relative flex justify-center">
+                        <div className="w-full h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
+                        <a href="https://wa.me/62812345678" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-10 w-16 h-16 p-3 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors z-10">
+                            <FaWhatsapp size={32} className="text-white" />
+                        </a>
+                    </div>
+                </section>
+
+                {/* TENTANG KAMI */}
+                <section className="px-6 md:px-20 py-16 md:py-20 flex flex-col lg:flex-row lg:items-center gap-10">
+                    <div className="w-full lg:w-1/2 flex flex-col justify-start items-start gap-8">
+                        <h1 className="text-zinc-800 text-2xl lg:text-3xl font-bold font-['Poppins'] leading-tight">
+                            Apa Itu PT Divus Global Mediacomm?
+                        </h1>
+                        <p className="text-zinc-800 text-base font-normal font-['Poppins'] leading-6 text-justify">
+                            PT Divus Global Mediacomm adalah perusahaan konsultan yang bergerak di bidang manajemen, komunikasi korporat, dan desain grafis.
+                        </p>
+                        <Link href="/User/TentangKami" className="inline-flex justify-start items-center px-5 py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
+                            <span className="text-white text-base font-semibold font-['Poppins'] leading-6">Tentang Kami</span>
+                        </Link>
+                    </div>
+                    <div className="w-full lg:w-1/2 flex justify-center">
+                        <div className="relative w-full max-w-[520px] h-[350px] sm:h-[420px] lg:h-[450px] overflow-hidden rounded-2xl">
+                            <img className="absolute inset-0 rounded-2xl object-cover w-full h-full" src={Assets.Hero4} alt="Tentang Kami" />
+                        </div>
+                    </div>
+                </section>
+
+				{/* LAYANAN (DENGAN FIX getSummary) */}
 				<section className="px-6 md:px-10 py-16 md:py-20 bg-gray-50 overflow-hidden">
 					<div className="max-w-[1440px] mx-auto px-6 md:px-10">
 						<div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
@@ -268,7 +224,6 @@ export default function Home() {
 
 						<div className="flex flex-wrap justify-center gap-13 lg:gap-15">
                             {loading && <p>Memuat layanan...</p>}
-                            
 							{!loading && services.map((item, index) => (
 								<div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start">
 									<div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md min-h-[350px]">
@@ -297,11 +252,13 @@ export default function Home() {
 					</div>
 				</section>
 
-				{/* PORTOFOLIO SECTION (DINAMIS PRODUK & PROYEK) */}
+				{/* PORTOFOLIO SECTION */}
 				<section className="px-4 md:px-20 py-20 bg-white">
 					<div className="w-full rounded-3xl overflow-hidden relative shadow-lg bg-gradient-to-b from-[#4ade80] to-[#84cc16]">
-						<div className="flex flex-col lg:flex-row items-center p-8 md:p-14 gap-10">
-							<div className="w-full lg:w-5/12 flex flex-col items-start gap-6 text-white z-10">
+						<div className="flex flex-col lg:flex-row items-center lg:items-start p-8 md:p-14 gap-10">
+							
+                            {/* TEXT & BUTTONS */}
+                            <div className="w-full lg:w-5/12 flex flex-col items-start gap-6 text-white z-10">
 								<h2 className="text-3xl md:text-4xl font-bold">Portofolio Kami</h2>
 								<p className="text-base md:text-lg font-medium leading-relaxed text-justify lg:text-left opacity-95">
 									{activePorto === 'produk' 
@@ -309,92 +266,84 @@ export default function Home() {
                                         : "Daftar proyek dan kolaborasi strategis yang telah kami selesaikan dengan berbagai mitra."
                                     }
 								</p>
-                                {/* TOMBOL SWITCHER */}
 								<div className="flex flex-wrap gap-4 mt-2">
-									<button 
-                                        onClick={() => setActivePorto('produk')}
-                                        className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${
-                                            activePorto === 'produk' 
-                                            ? 'bg-white text-green-600' 
-                                            : 'border-2 border-white text-white hover:bg-white/10'
-                                        }`}
-                                    >
+									<button onClick={() => setActivePorto('produk')} className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${activePorto === 'produk' ? 'bg-white text-green-600' : 'border-2 border-white text-white hover:bg-white/10'}`}>
                                         Lihat Produk
                                     </button>
-									<button 
-                                        onClick={() => setActivePorto('proyek')}
-                                        className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${
-                                            activePorto === 'proyek' 
-                                            ? 'bg-white text-green-600' 
-                                            : 'border-2 border-white text-white hover:bg-white/10'
-                                        }`}
-                                    >
+									<button onClick={() => setActivePorto('proyek')} className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${activePorto === 'proyek' ? 'bg-white text-green-600' : 'border-2 border-white text-white hover:bg-white/10'}`}>
                                         Lihat Proyek
                                     </button>
 								</div>
 							</div>
 
-                            {/* GRID GAMBAR (Berubah Sesuai State) */}
+                            {/* DISPLAY AREA */}
 							<div className="w-full lg:w-7/12 flex justify-center lg:justify-end items-center">
-								<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
-									
-                                    {/* JIKA PILIH PRODUK */}
-                                    {activePorto === 'produk' && products.map((item, idx) => (
-										<div key={idx} className="group relative h-64 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-2 transition-transform duration-300 bg-white">
-											<div className="w-full h-full">
-												<img 
-                                                    src={getProductImage(item.foto_produk)} 
-                                                    alt={item.nama_produk} 
-                                                    className="w-full h-full object-cover" 
-                                                />
-											</div>
-                                            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-end p-3">
-                                                <span className="text-white text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
-                                                    {item.nama_produk}
-                                                </span>
+								
+                                {/* --- PRODUK (GRID) --- */}
+                                {activePorto === 'produk' && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
+                                        {products.map((item, idx) => (
+                                            <div key={idx} className="group relative h-64 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-2 transition-transform duration-300 bg-white">
+                                                <div className="w-full h-full">
+                                                    <img src={getProductImage(item.foto_produk)} alt={item.nama_produk} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-end p-3">
+                                                    <span className="text-white text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
+                                                        {item.nama_produk}
+                                                    </span>
+                                                </div>
                                             </div>
-										</div>
-									))}
+                                        ))}
+                                    </div>
+                                )}
 
-                                    {/* JIKA PILIH PROYEK */}
-                                    {activePorto === 'proyek' && projects.map((item, idx) => (
-										<div key={idx} className="group relative h-64 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-2 transition-transform duration-300 bg-gray-100">
-											{/* Placeholder Image karena API Project belum ada image */}
-                                            <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-												<img 
-                                                    src={`https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=600&random=${idx}`} 
-                                                    alt="Project" 
-                                                    className="w-full h-full object-cover opacity-80" 
-                                                />
-											</div>
-                                            {/* Overlay Selalu Muncul untuk Proyek (Agar terbaca) */}
-                                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-all flex flex-col justify-end p-4">
-                                                <span className="text-white text-xs uppercase tracking-wider mb-1 text-lime-300">
-                                                    {item.client?.nama_client || 'Client'}
-                                                </span>
-                                                <span className="text-white text-sm font-bold leading-tight">
-                                                    {item.project_name}
-                                                </span>
-                                                <span className="text-gray-300 text-xs mt-1">{item.tahun}</span>
-                                            </div>
-										</div>
-									))}
+                                {/* --- PROYEK (TABEL FINAL) --- */}
+                                {activePorto === 'proyek' && (
+                                    <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full text-sm text-left">
+                                                <thead className="text-xs uppercase bg-[#22c55e] text-white font-bold tracking-wider">
+                                                    <tr>
+                                                        <th className="px-4 py-4 whitespace-nowrap">Customer</th>
+                                                        <th className="px-4 py-4 whitespace-nowrap">Proyek</th>
+                                                        <th className="px-4 py-4 whitespace-nowrap">Bidang</th>
+                                                        <th className="px-4 py-4 text-center whitespace-nowrap">Tahun</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-200">
+                                                    {projects.map((item, idx) => (
+                                                        <tr key={idx} className="hover:bg-green-50 transition-colors bg-white/50">
+                                                            
+                                                            <td className="px-4 py-3 font-medium text-gray-900">
+                                                                {item.client?.client_name || '-'}
+                                                            </td>
+                                                            
+                                                            <td className="px-4 py-3 text-gray-600">
+                                                                {item.project_name || '-'}
+                                                            </td>
+                                                            
+                                                            <td className="px-4 py-3 text-gray-600">
+                                                                {item.category?.bidang || '-'}
+                                                            </td>
+                                                            
+                                                            <td className="px-4 py-3 text-center text-gray-600">
+                                                                {item.tahun || '-'}
+                                                            </td>
 
-                                    {/* Handle Data Kosong */}
-                                    {activePorto === 'produk' && products.length === 0 && (
-                                        <div className="col-span-3 text-white text-center italic opacity-80">Belum ada data produk.</div>
-                                    )}
-                                     {activePorto === 'proyek' && projects.length === 0 && (
-                                        <div className="col-span-3 text-white text-center italic opacity-80">Belum ada data proyek.</div>
-                                    )}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
 
-								</div>
 							</div>
 						</div>
 					</div>
 				</section>
 
-				{/* MENGAPA PILIH KAMI (Tetap Sama) */}
+				{/* MENGAPA PILIH KAMI */}
 				<section className="px-6 md:px-20 py-20 bg-white">
 					<h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-10">
 						Mengapa Memilih PT Divus Global Mediacomm?
@@ -412,7 +361,6 @@ export default function Home() {
 					</div>
 				</section>
 
-				{/* CLIENT MARQUEE & CTA (Tetap Sama) */}
 				<section className="bg-white relative overflow-hidden border-t border-gray-100">
 					<h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-16">Klien Kami</h2>
 					<div className="relative h-48 overflow-hidden mt-10">

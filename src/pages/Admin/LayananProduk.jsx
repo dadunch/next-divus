@@ -6,7 +6,9 @@ import Swal from "sweetalert2";
 import { useRouter } from 'next/router';
 import Cropper from "react-easy-crop";
 
+// --- FUNGSI HELPER UTAMA ---
 
+// 1. Crop Image Helper
 async function getCroppedImg(imageSrc, pixelCrop) {
   const image = new Image();
   image.src = imageSrc;
@@ -32,6 +34,19 @@ async function getCroppedImg(imageSrc, pixelCrop) {
 
   return canvas.toDataURL("image/jpeg");
 }
+
+// 2. Base64 to File Helper (PENTING AGAR BISA UPLOAD FILE FISIK)
+const dataURLtoFile = (dataurl, filename) => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, {type:mime});
+};
 
 
 const TambahLayananPage = () => {
@@ -73,18 +88,6 @@ const TambahLayananPage = () => {
     "fa-solid fa-shield-halved", "fa-solid fa-building-columns"
   ];
 
-
-
-  // Helper Base64
-  const toBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
-
-
-
   // Handler Foto
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -99,7 +102,7 @@ const TambahLayananPage = () => {
     try {
       const croppedImg = await getCroppedImg(tempImage, croppedAreaPixels);
       setPreviewFoto(croppedImg);
-      setFoto(croppedImg);
+      setFoto(croppedImg); // Ini masih Base64 String
       setCropModalOpen(false);
     } catch (err) {
       console.error(err);
@@ -138,7 +141,7 @@ const TambahLayananPage = () => {
     setLayananDitawarkan(newList);
   };
 
-  // Simpan Data
+  // --- LOGIKA SIMPAN DATA (UPDATED) ---
   const handleSave = async () => {
     if (!namaLayanan.trim()) return Swal.fire("Error", "Nama layanan wajib diisi", "error");
     if (!deskripsi.trim()) return Swal.fire("Error", "Deskripsi wajib diisi", "error");
@@ -146,37 +149,75 @@ const TambahLayananPage = () => {
     setIsSubmitting(true);
 
     try {
+      // 1. Format Deskripsi
       let finalDescription = deskripsi;
       if (deskripsiSingkat) finalDescription = `**Ringkasan:** ${deskripsiSingkat}\n\n${finalDescription}`;
       if (layananDitawarkan.length > 0) {
         finalDescription += `\n\n**Layanan yang ditawarkan:**\n` + layananDitawarkan.map(item => `- ${item}`).join('\n');
       }
 
-      const payload = {
-        title: namaLayanan,
-        description: finalDescription,
-        icon_class: selectedIcon,
-        image_url: foto,
-        userId: user?.id
-      };
+      // 2. Siapkan FormData (Wajib pakai FormData untuk upload file fisik)
+      const formData = new FormData();
+      formData.append('title', namaLayanan);
+      formData.append('description', finalDescription);
+      formData.append('icon_class', selectedIcon);
+      formData.append('userId', user?.id || '');
 
+      // 3. Proses File Gambar dengan Nama Custom
+      if (foto) {
+        // Bersihkan nama layanan dari spasi/simbol untuk jadi nama file
+        const cleanName = namaLayanan.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase(); 
+        
+        // Buat Timestamp: TahunBulanTanggal-JamMenit (Contoh: 20231130-1430)
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        const timestamp = `${year}${month}${day}-${hours}${minutes}`;
+        const newFileName = `${cleanName}-${timestamp}.jpg`;
+
+        // Ubah Base64 crop menjadi File Object
+        const fileImage = dataURLtoFile(foto, newFileName);
+        
+        // Masukkan ke FormData
+        formData.append('image', fileImage);
+      }
+
+      // 4. Kirim ke API
+      // PENTING: Jangan set Content-Type header manual saat pakai FormData
       const res = await fetch('/api/services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: formData, 
       });
 
       const result = await res.json();
 
       if (res.ok) {
         Swal.fire("Berhasil", "Layanan ditambahkan!", "success").then(() => {
-          setNamaLayanan(""); setDeskripsi(""); setDeskripsiSingkat(""); setLayananDitawarkan([]);
-          setFoto(null); setPreviewFoto(null); setSelectedIcon("");
+          // Kirim sinyal refresh ke Sidebar (Sesuai kode sidebar Anda sebelumnya)
+          window.dispatchEvent(new Event('refreshSidebar')); 
+
+          // Reset Form
+          setNamaLayanan(""); 
+          setDeskripsi(""); 
+          setDeskripsiSingkat(""); 
+          setLayananDitawarkan([]);
+          setFoto(null); 
+          setPreviewFoto(null); 
+          setSelectedIcon("");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          
+          // Opsional: Redirect atau tetap di halaman
+          // router.push('/Admin/Layanan'); 
         });
       } else {
         throw new Error(result.error || "Gagal menyimpan data");
       }
     } catch (error) {
+      console.error(error);
       Swal.fire("Gagal", error.message, "error");
     } finally {
       setIsSubmitting(false);

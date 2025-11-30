@@ -128,7 +128,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               ))}
               {imageFiles.length < 5 && (
-                <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition-all">
+                <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-green-500 transition-all">
                   <ImageIcon className="text-gray-400 mb-1" />
                   <span className="text-xs text-gray-500 font-medium">+ Pilih</span>
                   <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
@@ -139,9 +139,15 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Input Nama, Deskripsi, Tahun (Sama seperti sebelumnya) */}
-          <input name="nama_produk" value={formData.nama_produk} onChange={handleChange} placeholder="Nama Produk" className="w-full border border-gray-300 px-4 py-2 rounded-lg" required />
-          <textarea name="deskripsi" value={formData.deskripsi} onChange={handleChange} placeholder="Deskripsi" className="w-full border border-gray-300 px-4 py-2 rounded-lg" rows={3} />
-          <input name="tahun" type="number" value={formData.tahun} onChange={handleChange} className="w-full border border-gray-300 px-4 py-2 rounded-lg" />
+          <input name="nama_produk" value={formData.nama_produk} onChange={handleChange} placeholder="Nama Produk" className="w-full border border-gray-300 px-4 py-2 rounded-lg outline-none
+           focus:ring-1 focus:ring-green-500
+           focus:border-green-500" required />
+          <textarea name="deskripsi" value={formData.deskripsi} onChange={handleChange} placeholder="Deskripsi" className="w-full border border-gray-300 px-4 py-2 rounded-lg outline-none
+           focus:ring-1 focus:ring-green-500
+           focus:border-green-500" rows={3} />
+          <input name="tahun" type="number" value={formData.tahun} onChange={handleChange} className="w-full border border-gray-300 px-4 py-2 rounded-lg outline-none
+           focus:ring-1 focus:ring-green-500
+           focus:border-green-500" />
           
           <div className="pt-2">
             <button type="submit" disabled={isSubmitting} className="w-full bg-[#2D2D39] text-white py-3 rounded-lg font-medium hover:bg-black transition-colors disabled:opacity-50">

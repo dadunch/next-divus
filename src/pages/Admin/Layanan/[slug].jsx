@@ -2,7 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { Upload, Save, Trash2, ArrowLeft, Plus, X, Image as ImageIcon } from "lucide-react"; 
+import {
+  Upload,
+  Save,
+  Trash2,
+  ArrowLeft,
+  Plus,
+  X,
+  Image as ImageIcon,
+} from "lucide-react";
 import Swal from "sweetalert2";
 
 const EditLayananPage = () => {
@@ -17,11 +25,11 @@ const EditLayananPage = () => {
   // --- STATE FORM ---
   const [foto, setFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
-  
+
   const [namaLayanan, setNamaLayanan] = useState("");
-  const [deskripsiSingkat, setDeskripsiSingkat] = useState(""); 
+  const [deskripsiSingkat, setDeskripsiSingkat] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
-  
+
   // State List Layanan
   const [inputLayanan, setInputLayanan] = useState("");
   const [layananDitawarkan, setLayananDitawarkan] = useState([]); 
@@ -164,19 +172,21 @@ const EditLayananPage = () => {
   }, [slug]);
 
   // Helper Base64
-  const toBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
+  const toBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
 
   // --- HANDLERS ---
   const handleFotoChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) return Swal.fire("Error", "Max 2MB", "error");
-    
+    if (file.size > 2 * 1024 * 1024)
+      return Swal.fire("Error", "Max 2MB", "error");
+
     setPreviewFoto(URL.createObjectURL(file));
     try { 
       const base64String = await toBase64(file); 
@@ -328,6 +338,7 @@ const EditLayananPage = () => {
       Swal.fire("Gagal", error.message || "Terjadi kesalahan saat menyimpan", "error");
     } finally {
       setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -369,7 +380,10 @@ const EditLayananPage = () => {
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
       <Head>
         <title>Edit Layanan - Admin</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        />
       </Head>
 
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
@@ -381,15 +395,14 @@ const EditLayananPage = () => {
         </div>
         <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
           {user?.username ? user.username.charAt(0) : "A"}
+          {user?.username ? user.username.charAt(0) : "A"}
         </div>
       </header>
 
       <div className="px-8 pt-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          
           {/* --- AREA MEDIA (GRID 2 KOLOM: FOTO & ICON) --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            
             {/* KIRI: FOTO */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">1. Foto Header</label>

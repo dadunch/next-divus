@@ -113,7 +113,7 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
                   className="w-full h-64 object-contain"
                 />
                 {/* Overlay ganti foto */}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ">
                     <p className="text-white font-medium">Klik untuk ganti</p>
                 </div>
               </>
@@ -128,12 +128,12 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
             <input
               type="file"
               accept="image/*"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer "
               onChange={handleImageChange}
             />
           </div>
 
-          <div className="text-xs text-gray-500 text-center">
+          <div className="text-xs text-gray-500 text-center ">
              *Format: JPG/PNG. Maksimal 2MB.
           </div>
 
@@ -143,7 +143,7 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
             <input
               type="text"
               placeholder="Contoh: Kegiatan Rapat Tahunan 2024"
-              className="w-full border border-gray-300 px-4 py-3 rounded-xl focus:ring-2 focus:ring-gray-800 focus:border-transparent outline-none transition-all"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-800 placeholder-gray-400"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />

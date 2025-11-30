@@ -44,6 +44,7 @@ const EditLayananPage = () => {
   ];
 
   // --- 1. FETCH & PARSE DATA ---
+ // --- 1. FETCH & PARSE DATA (LOGIKA LEBIH PINTAR) ---
   useEffect(() => {
     if (!slug) return;
 
@@ -54,53 +55,83 @@ const EditLayananPage = () => {
         
         if (res.ok) {
           const found = data.find(item => item.slug === slug);
+          
           if (found) {
             setServiceId(found.id);
             setNamaLayanan(found.title);
             
-            // --- LOGIKA PARSING DESKRIPSI ---
+            // --- MULAI PARSING DESKRIPSI ---
             let fullDesc = found.description || "";
-            let parsedShort = "";
-            let parsedList = [];
-            let parsedMain = fullDesc;
-
-            // 1. Ambil Ringkasan
-            if (parsedMain.includes("**Ringkasan:**")) {
-                const parts = parsedMain.split("\n\n"); 
-                const summaryPart = parts.find(p => p.startsWith("**Ringkasan:**"));
-                if (summaryPart) {
-                    parsedShort = summaryPart.replace("**Ringkasan:** ", "");
-                    parsedMain = parsedMain.replace(summaryPart, "").trim(); 
-                }
-            }
-
-            // 2. Ambil List Layanan
-            if (parsedMain.includes("**Layanan yang ditawarkan:**")) {
-                const parts = parsedMain.split("**Layanan yang ditawarkan:**");
-                parsedMain = parts[0].trim(); 
-                
-                const listString = parts[1];
-                if (listString) {
-                    parsedList = listString
-                        .split("\n")
-                        .map(line => line.replace("- ", "").trim())
-                        .filter(line => line !== "");
-                }
-            }
-
-            setDeskripsiSingkat(parsedShort);
-            setLayananDitawarkan(parsedList);
-            setDeskripsi(parsedMain);
             
+            // Marker/Penanda yang kita gunakan saat menyimpan
+            const markerSummary = "**Ringkasan:**";
+            const markerList = "**Layanan yang ditawarkan:**";
+
+            // Cek apakah data ini menggunakan format baru?
+            const isFormatted = fullDesc.includes(markerSummary) || fullDesc.includes(markerList);
+
+            if (!isFormatted) {
+                // KASUS A: DATA LAMA (Belum ada marker)
+                // Masukkan semua teks ke Deskripsi Lengkap agar tidak hilang
+                setDeskripsi(fullDesc);
+                setDeskripsiSingkat("");
+                setLayananDitawarkan([]);
+            } else {
+                // KASUS B: DATA BARU (Sudah terformat)
+                let parsedMain = fullDesc;
+
+                // 1. Ambil List Layanan (biasanya di bawah)
+                if (parsedMain.includes(markerList)) {
+                    const parts = parsedMain.split(markerList);
+                    const listContent = parts[1];
+                    parsedMain = parts[0].trim(); // Sisa teks sebelum list
+
+                    if (listContent) {
+                        const items = listContent.split('\n')
+                            .map(s => s.replace(/^- /, '').replace(/^• /, '').trim())
+                            .filter(s => s !== "");
+                        setLayananDitawarkan(items);
+                    }
+                }
+
+                // 2. Ambil Ringkasan (biasanya di atas)
+                if (parsedMain.includes(markerSummary)) {
+                    const parts = parsedMain.split(markerSummary);
+                    // parts[0] biasanya kosong jika ringkasan di paling atas
+                    // parts[1] adalah isinya + deskripsi utama
+                    
+                    let restContent = parts[1];
+                    
+                    // Cari pemisah paragraf ganda (\n\n) yang memisahkan ringkasan dari deskripsi utama
+                    const splitIndex = restContent.indexOf('\n\n');
+                    
+                    if (splitIndex !== -1) {
+                        setDeskripsiSingkat(restContent.substring(0, splitIndex).trim());
+                        parsedMain = restContent.substring(splitIndex).trim();
+                    } else {
+                        // Jika tidak ada enter, berarti cuma ada ringkasan
+                        setDeskripsiSingkat(restContent.trim());
+                        parsedMain = "";
+                    }
+                }
+
+                setDeskripsi(parsedMain);
+            }
+            // --- SELESAI PARSING ---
+
             // Handle Gambar & Icon
             if (found.image_url) {
                 setFoto(found.image_url);
                 setPreviewFoto(found.image_url);
             }
             
-            // Handle Icon (Cek apakah kolom icon_url berisi class fontawesome)
-            if (found.icon_url && !found.icon_url.startsWith('data:image')) {
-                setSelectedIcon(found.icon_url);
+            if (found.icon_url) {
+                if (found.icon_url.startsWith('fa-')) {
+                    setSelectedIcon(found.icon_url);
+                } else if (found.icon_url.startsWith('data:image') && !found.image_url) {
+                    setFoto(found.icon_url);
+                    setPreviewFoto(found.icon_url);
+                }
             }
             
           } else {

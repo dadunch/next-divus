@@ -17,17 +17,14 @@ model activity_logs {
   users      users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model category {
-  id       BigInt     @id @unique @default(autoincrement())
+  id       BigInt     @id @default(autoincrement())
   bidang   String     @db.VarChar
   projects projects[]
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model client {
-  id          BigInt     @id(map: "products_pkey") @default(autoincrement())
+  id          BigInt     @id @default(autoincrement())
   client_name String
   client_logo String
   created_at  DateTime?  @default(now()) @db.Timestamptz(6)
@@ -35,7 +32,6 @@ model client {
   projects    projects[]
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model company_photos {
   id         BigInt    @id @default(autoincrement())
   title      String?
@@ -43,7 +39,6 @@ model company_photos {
   created_at DateTime? @default(now()) @db.Timestamptz(6)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model company_profile {
   id               BigInt    @id @default(autoincrement())
   company_name     String
@@ -57,7 +52,6 @@ model company_profile {
   updated_at       DateTime? @default(now()) @db.Timestamptz(6)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model employee {
   id       BigInt @id @default(autoincrement())
   users_id BigInt
@@ -66,9 +60,8 @@ model employee {
   users    users  @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model menu {
-  id        BigInt      @id(map: "menu_role_pkey") @default(autoincrement())
+  id        BigInt      @id @default(autoincrement())
   nama_menu String      @db.VarChar
   url       String?     @db.VarChar
   icon      String?
@@ -77,18 +70,16 @@ model menu {
   menu_role menu_role[]
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model menu_role {
-  id      BigInt  @id(map: "menu_role_pkey1") @default(autoincrement())
+  id      BigInt @id @default(autoincrement())
   menu_id BigInt
   role_id BigInt?
-  menu    menu    @relation(fields: [menu_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role    role?   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  menu    menu   @relation(fields: [menu_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role    role?  @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model product {
-  id          BigInt   @id @unique @default(autoincrement())
+  id          BigInt   @id @default(autoincrement())
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   nama_produk String?  @db.VarChar
   foto_produk String?
@@ -96,7 +87,6 @@ model product {
   deskripsi   String?
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model projects {
   id           BigInt    @id @default(autoincrement())
   project_name String
@@ -109,26 +99,26 @@ model projects {
   client       client    @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model role {
-  id        BigInt      @id @unique @default(autoincrement())
+  id        BigInt      @id @default(autoincrement())
   role      String      @db.VarChar
   employee  employee[]
   menu_role menu_role[]
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+// --- MODEL YANG DIPERBAIKI UTAMA ---
 model services {
   id          BigInt    @id @default(autoincrement())
   title       String
   slug        String    @unique
-  description String?
+  description String?   @db.Text
   icon_url    String?
+  image_url   String?   @db.Text  // <-- INI YANG DITAMBAHKAN
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
   updated_at  DateTime? @default(now()) @db.Timestamptz(6)
 }
+// -----------------------------------
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
   id            BigInt          @id @default(autoincrement())
   username      String

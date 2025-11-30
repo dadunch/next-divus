@@ -4,7 +4,7 @@ import { createLog } from '../../../lib/logger';
 
 export default async function handler(req, res) {
   
-  // 1. GET: Ambil Semua Layanan (Wajib ada untuk Sidebar)
+  // === 1. GET: AMBIL SEMUA LAYANAN (WAJIB ADA UNTUK SIDEBAR) ===
   if (req.method === 'GET') {
     try {
       const services = await prisma.services.findMany({
@@ -13,22 +13,23 @@ export default async function handler(req, res) {
           id: true,
           title: true,
           slug: true,
-          icon_url: true // Ini kita pakai untuk menyimpan class FontAwesome
+          icon_url: true 
         }
       });
+      // serialize digunakan untuk menangani BigInt jika ada
       return res.status(200).json(serialize(services));
     } catch (error) {
+      console.error("Gagal ambil layanan:", error);
       return res.status(500).json({ error: "Gagal mengambil data layanan" });
     }
   }
 
-  // 2. POST: Tambah Layanan Baru
+  // === 2. POST: TAMBAH LAYANAN BARU ===
   if (req.method === 'POST') {
-    // Terima data lengkap dari Frontend
     const { title, description, icon_class, image_url, userId } = req.body; 
 
     try {
-      // Buat slug otomatis (contoh: "Management Consulting" -> "management-consulting-1715...")
+      // Buat slug otomatis
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
 
       const result = await prisma.$transaction(async (tx) => {
@@ -38,8 +39,8 @@ export default async function handler(req, res) {
             title, 
             slug, 
             description, 
-            icon_url: icon_class, // Simpan class icon (fa-solid...) di sini
-            image_url: image_url  // Simpan Base64 gambar di kolom baru (pastikan kolom ini sudah dibuat di DB)
+            icon_url: icon_class, 
+            image_url: image_url  
           }
         });
 
@@ -56,6 +57,5 @@ export default async function handler(req, res) {
     }
   }
 
-  // Method lain tidak diizinkan
   return res.status(405).json({ error: 'Method not allowed' });
 }

@@ -321,7 +321,7 @@ const TambahLayananPage = () => {
 
             {/* List Layanan SEJAJAR */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Poin Layanan Ditawarkan</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Poin-poin Layanan Ditawarkan</label>
               <div className="">
                 <div className="flex gap-0 h-11 mb-4">
                   <input

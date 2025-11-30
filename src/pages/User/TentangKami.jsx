@@ -1,59 +1,41 @@
-import { useRouter } from 'next/router';
+import React, { useState, useEffect } from 'react';
+import Head from 'next/head'; // WAJIB ADA AGAR ICON MUNCUL
 import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../../assets';
 
-const solutionsData = [
+// --- HELPER: FORMAT DESKRIPSI SINGKAT ---
+const getSummary = (text) => {
+    if (!text) return "Layanan profesional dari PT Divus.";
+    const marker = "**Ringkasan:**";
+    const index = text.indexOf(marker);
+    if (index !== -1) {
+        let content = text.substring(index + marker.length).trim();
+        const endOfSummary = content.indexOf('\n\n');
+        if (endOfSummary !== -1) content = content.substring(0, endOfSummary);
+        return content.replace(/\*\*/g, '').trim();
+    }
+    return text.substring(0, 100).replace(/\*\*/g, '') + "...";
+};
+
+// --- DATA STATIS (Fallback) ---
+const fallbackSolutions = [
   {
     title: 'Management Consulting',
-    desc: 'Membantu perusahaan dalam menganalisis kelayakan bisnis, menyusun strategi pemasaran, serta merancang perencanaan strategis untuk mendukung pertumbuhan berkelanjutan.',
-    icon: Assets.Icon1,
+    desc: 'Membantu perusahaan dalam menganalisis kelayakan bisnis...',
+    icon_url: 'fa-solid fa-briefcase', // Contoh format class icon
   },
   {
     title: 'Research & Survey',
-    desc: 'Menyediakan layanan riset pasar, survei kepuasan pelanggan, dan pemetaan sosial untuk memperoleh data akurat sebagai dasar pengambilan keputusan bisnis.',
-    icon: Assets.Icon2,
+    desc: 'Menyediakan layanan riset pasar dan survei kepuasan pelanggan...',
+    icon_url: 'fa-solid fa-magnifying-glass',
   },
   {
     title: 'Corporate Id',
-    desc: 'Membangun identitas perusahaan melalui pembuatan website, logo, profil perusahaan, dan media komunikasi korporasi lainnya yang profesional dan konsisten.',
-    icon: Assets.Icon3,
-  },
-  {
-    title: 'Product Service & Knowledge',
-    desc: 'Menyajikan informasi produk dan layanan secara jelas dan menarik melalui berbagai media agar pelanggan memahami nilai, fungsi, serta keunggulan yang ditawarkan perusahaan.',
-    icon: Assets.Icon4,
-  },
-  {
-    title: 'Report & Journal',
-    desc: 'Menyusun berbagai laporan dan publikasi profesional dengan data yang akurat dan struktur yang rapi untuk mendukung proses evaluasi serta pengambilan keputusan bisnis.',
-    icon: Assets.Icon5,
+    desc: 'Membangun identitas perusahaan melalui website dan logo...',
+    icon_url: 'fa-solid fa-building',
   },
 ];
-
-const galleryImages = [
-  'https://images.pexels.com/photos/2531237/pexels-photo-2531237.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-  'https://www.koranperdjoeangan.com/wp-content/uploads/2022/08/2019_0101_18132700-01-01.jpeg',
-  'https://images.tokopedia.net/img/JFrBQq/2022/7/27/fdba873a-2079-4a58-b5c1-eeb8e7e3a3ae.jpg',
-  'https://d1hjkbq40fs2x4.cloudfront.net/2016-01-31/files/1045.jpg',
-  'https://media.istockphoto.com/id/517188688/id/foto/lanskap-gunung.jpg?s=612x612&w=0&k=20&c=vJbqv4UEOXni-tW2RjeubmeZ6y9vsW4vVGKQy2-ZCRk=',
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9nm7leuRxBJshKPL8KJheIZqCL1S8vkPJOA&s',
-  'https://www.koranperdjoeangan.com/wp-content/uploads/2022/08/2019_0101_18132700-01-01.jpeg',
-  'https://images.tokopedia.net/img/JFrBQq/2022/7/27/fdba873a-2079-4a58-b5c1-eeb8e7e3a3ae.jpg',
-  'https://d1hjkbq40fs2x4.cloudfront.net/2016-01-31/files/1045.jpg',
-  'https://media.istockphoto.com/id/517188688/id/foto/lanskap-gunung.jpg?s=612x612&w=0&k=20&c=vJbqv4UEOXni-tW2RjeubmeZ6y9vsW4vVGKQy2-ZCRk=',
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9nm7leuRxBJshKPL8KJheIZqCL1S8vkPJOA&s',
-  'https://www.koranperdjoeangan.com/wp-content/uploads/2022/08/2019_0101_18132700-01-01.jpeg',
-  'https://images.tokopedia.net/img/JFrBQq/2022/7/27/fdba873a-2079-4a58-b5c1-eeb8e7e3a3ae.jpg',
-  'https://d1hjkbq40fs2x4.cloudfront.net/2016-01-31/files/1045.jpg',
-  'https://media.istockphoto.com/id/517188688/id/foto/lanskap-gunung.jpg?s=612x612&w=0&k=20&c=vJbqv4UEOXni-tW2RjeubmeZ6y9vsW4vVGKQy2-ZCRk=',
-  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9nm7leuRxBJshKPL8KJheIZqCL1S8vkPJOA&s',
-];
-
-// const galleryImages = Array.from({ length: 6 }, () =>
-//   `https://source.unsplash.com/random?sig=${Math.random()}`
-// );
-
 
 const statsData = [
   { value: "10", label: "Pengalaman" },
@@ -62,29 +44,77 @@ const statsData = [
 ];
 
 export default function TentangKami() {
+  const [company, setCompany] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [services, setServices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // 1. Fetch Company
+        const companyRes = await fetch("/api/company");
+        const companyData = await companyRes.json();
+        if (companyRes.ok) setCompany(companyData);
+        
+        // 2. Fetch Photos
+        const photosRes = await fetch("/api/photos");
+        const photosData = await photosRes.json();
+        if (photosRes.ok) setPhotos(photosData);
+
+        // 3. Fetch Services
+        const servicesRes = await fetch("/api/services");
+        const servicesData = await servicesRes.json();
+        
+        if (servicesRes.ok && Array.isArray(servicesData) && servicesData.length > 0) {
+            setServices(servicesData);
+        } else {
+            setServices(fallbackSolutions);
+        }
+
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setServices(fallbackSolutions);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const getWhatsappLink = (phone) => {
+    if (!phone) return "https://wa.me/";
+    let cleanPhone = phone.replace(/\D/g, ''); 
+    if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
+    return `https://wa.me/${cleanPhone}`;
+  };
+
   return (
-    <div className="relative w-full bg-white overflow-hidden">
+    <div className="relative w-full bg-white overflow-hidden font-['Poppins']">
+      
+      {/* --- PENTING: HEAD UNTUK LOAD ICON FONT AWESOME --- */}
+      <Head>
+          <title>Tentang Kami - PT Divus Global Mediacomm</title>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+      </Head>
+
       <header className="relative w-full">
         {/* Hero Banner */}
         <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
           <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
-            {/* Logo */}
             <div className="flex-shrink-0">
-              <img
-                src={Assets.Hero3}
-                alt="Logo Divus"
-                className="w-100 h-100 object-contain"
-              />
+              <img src={company?.logo_url || Assets.Hero3} alt="Logo Divus" className="w-100 h-100 object-contain" />
             </div>
-
-            {/* Text Content */}
             <div className="flex flex-col justify-center">
-              <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
-                PT Divus Global Mediacomm
-              </h1>
-              <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
-                - Tentang Kami
-              </p>
+              <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">{company?.company_name || "PT Divus Global Mediacomm"}</h1>
+              <p className="text-zinc-500 text-base md:text-xl font-medium italic">- Tentang Kami</p>
             </div>
           </div>
         </section>
@@ -93,111 +123,109 @@ export default function TentangKami() {
         <div className="w-full bg-zinc-300 py-3 mb-4">
           <div className="max-w-7xl mx-auto">
             <p className="text-zinc-800 text-base">
-              <Link href="/User/Home" className="hover:underline">
-                Beranda
-              </Link>
+              <Link href="/User/Home" className="hover:underline">Beranda</Link>
               <span className="text-red-600"> {' > '} Tentang Kami</span>
             </p>
           </div>
         </div>
       </header>
 
-      {/* PROFIL PERUSAHAAN SECTION */}
+      {/* PROFIL PERUSAHAAN */}
       <section className="max-w-8xl mx-auto px-6 md:px-28 py-16">
-        <div className="flex flex-col lg:flex-row justify-center items-start">
-          <div className="w-full lg:w-1/2 relative">
-            <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">
-              Profile Perusahaan
-            </h2>
-            <p className='text-zinc-800 text-xl md:text-2xl font-sm leading-tight mt-4'>
-              PT Divus Global Mediacomm
-            </p>
-            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-              Nama Perusahaan : PT Divus Global Mediacomm
-            </p>
-            <div className="w-[498px] h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
-            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-              Bidang Usaha : Jasa Konsultasi
-            </p>
-            <div className="w-[498px] h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
-            <p className='inline-block text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-              Berdiri Sejak : 10 November 2010
-            </p>
-            <div className="w-[498px] h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
-          </div>
+        {isLoading && !company ? (
+           <div className="text-center py-10">Memuat Profil...</div>
+        ) : (
+          <div className="flex flex-col lg:flex-row justify-center items-start gap-10">
+            <div className="w-full lg:w-1/2 relative">
+              <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">Profile Perusahaan</h2>
+              <p className='text-zinc-800 text-xl md:text-2xl font-sm leading-tight mt-4'>{company?.company_name || "PT Divus Global Mediacomm"}</p>
+              
+              <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
+                <span className="font-semibold">Nama Perusahaan :</span> {company?.company_name || "-"}
+              </p>
+              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+              
+              <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
+                <span className="font-semibold">Bidang Usaha :</span> {company?.business_field || "Jasa Konsultasi"}
+              </p>
+              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+              
+              <p className='inline-block text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
+                 <span className="font-semibold">Berdiri Sejak :</span> {formatDate(company?.established_date)}
+              </p>
+              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+              
+               <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
+                <span className="font-semibold">Alamat :</span> {company?.address || "-"}
+              </p>
+              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+            </div>
 
-          <div className="w-full lg:w-5/12">
-            <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">
-              Tentang Perusahaan
-            </h2>
-            <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4'>
-              PT Divus Global Mediacomm adalah perusahaan konsultan yang bergerak di bidang manajemen, komunikasi korporat, dan desain grafis.
-              Kami menyediakan layanan mulai dari studi kelayakan, perencanaan strategis, riset pasar, hingga identitas korporasi dan media promosi.
-              Dengan pengalaman beragam proyek, Divus berkomitmen menjadi mitra terpercaya dalam menghadirkan solusi profesional dan inovatif.
-            </p>
+            <div className="w-full lg:w-5/12">
+              <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">Tentang Perusahaan</h2>
+              <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 whitespace-pre-line'>
+                {company?.description || "Deskripsi perusahaan belum tersedia."}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
-      {/* Floating WhatsApp Button */}
-      <a
-        href="https://wa.me/6285220203453"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-green-600 transition-colors"
-      >
+      {/* Floating WA */}
+      <a href={getWhatsappLink(company?.phone)} target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-green-600 transition-colors">
         <FaWhatsapp size={32} className="text-white" />
       </a>
 
-      {/* PORTFOLIO GALLERY TITLE SECTION */}
-      <section className="w-full py-6 px-6 md:px-20 bg-white">
-        <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10"></div>
-        <h2 className='text-zinc-800 text-lg md:text-xl font-semibold text-center leading-tight z-10 relative'>
+      {/* GALERI & STATS SECTION */}
+      <section className="w-full py-6 px-6 bg-white">
+        <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10 hidden md:flex"></div>
+        <h2 className='text-zinc-800 text-lg md:text-xl font-semibold text-center leading-tight z-10 relative mb-10'>
           We are happy to help solve your business problems.
         </h2>
-      </section>
 
-      {/* PORTFOLIO GRID & STATS SECTION */}
-      <section className="w-full py-6 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-
-          {/* GALERI GAMBAR */}
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-6 mb-20">
-            {galleryImages.map((img, index) => (
-              <div key={index} className="mb-4 md:mb-6 break-inside-avoid rounded-2xl overflow-hidden shadow-sm group">
-                <img
-                  src={img}
-                  alt={`Gallery ${index + 1}`}
-                  className="w-full h-auto object-cover transform transition-transform duration-500 group-hover:scale-110"
-                />
-              </div>
-            ))}
-          </div>
+          
+          {/* --- GALERI GAMBAR (FIXED: CENTER LAYOUT) --- */}
+          {isLoading && photos.length === 0 ? (
+             <div className="text-center py-10">Memuat Galeri...</div>
+          ) : photos.length > 0 ? (
+            // Menggunakan Flexbox agar items berada di tengah (bukan kolom kiri)
+            <div className="flex flex-wrap justify-center gap-6 mb-20">
+              {photos.map((item) => (
+                <div key={item.id} className="w-full md:w-[calc(50%-1.5rem)] lg:w-[calc(33.333%-1.5rem)] rounded-2xl overflow-hidden shadow-sm group relative">
+                  <div className="relative pb-[75%] bg-gray-100"> {/* Aspect Ratio Box */}
+                    <img 
+                        src={item.image_url} 
+                        alt={item.title} 
+                        className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110" 
+                        onError={(e) => (e.target.src = "https://placehold.co/600x400?text=No+Image")} 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+             <div className="text-center text-gray-400 italic mb-20 py-10 border-2 border-dashed rounded-xl">Belum ada foto galeri.</div>
+          )}
 
           {/* STATISTIK */}
           <div className="flex flex-wrap justify-center items-center gap-10 md:gap-24">
             {statsData.map((stat, idx) => (
               <div key={idx} className="text-center">
-                <span className="block text-black text-2xl md:text-3xl font-semibold font-['Poppins'] leading-tight mb-2">
-                  {stat.value}
-                </span>
-                <span className="block text-black/50 text-lg md:text-xl font-normal font-['Poppins'] leading-relaxed">
-                  {stat.label}
-                </span>
+                <span className="block text-black text-2xl md:text-3xl font-semibold mb-2">{stat.value}</span>
+                <span className="block text-black/50 text-lg md:text-xl font-normal">{stat.label}</span>
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
-      {/* KEAHLIAN KAMI SECTION */}
+      {/* KEAHLIAN KAMI SECTION (ICONS FIXED) */}
       <section className="w-full px-6 md:px-20 py-16 md:py-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex flex-col lg:flex-row justify-center items-start gap-10 mb-16">
-            <div className="w-full relative">
-              <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10"></div>
+          <div className="flex flex-col lg:flex-row justify-center items-center gap-10 mb-16">
+            <div className="w-full relative text-center">
+              <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10 hidden md:flex"></div>
               <p className='text-lime-500 text-lg md:text-xl text-center font-normal whitespace-nowrap leading-tight mt-4'>
                 Experienced, able to maintain quality and professionalism
               </p>
@@ -207,30 +235,28 @@ export default function TentangKami() {
             </div>
           </div>
 
-          {/* Cards Grid */}
-          <div className="flex flex-wrap justify-center gap-13 lg:gap-15">
-            {solutionsData.map((item, index) => (
-              <div
-                key={index}
-                className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start"
-              >
-                <div className="bg-white rounded-2xl p-6 md:p-8 w-95 h-80 flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md">
+          <div className="flex flex-wrap justify-center gap-8 lg:gap-10">
+            {services.map((item, index) => (
+              <div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-center">
+                <div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full min-h-[350px] flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md border border-gray-100">
                   <div>
                     <div className="flex items-center gap-4 mb-6">
-                      {/* Icon Box */}
+                      {/* ICON BOX */}
                       <div className="w-20 h-20 flex-shrink-0 bg-lime-500/20 rounded-tr-3xl rounded-bl-3xl flex items-center justify-center p-4">
-                        <img
-                          src={item.icon}
-                          alt={item.title}
-                          className="w-full h-full object-contain"
-                        />
+                        {/* Logika Icon sama dengan Home.jsx */}
+                        {item.icon_url ? (
+                            <i className={`${item.icon_url} text-4xl text-green-600`}></i>
+                        ) : (
+                            <i className="fa-solid fa-briefcase text-4xl text-green-600"></i>
+                        )}
                       </div>
-                      <h3 className="text-zinc-800 text-xl font-semibold font-['Poppins'] leading-snug">
+                      <h3 className="text-zinc-800 text-xl font-semibold leading-snug">
                         {item.title}
                       </h3>
                     </div>
-                    <p className="text-zinc-600 text-base font-medium font-['Poppins'] capitalize leading-relaxed text-justify mb-8">
-                      {item.desc}
+                    
+                    <p className="text-zinc-600 text-base font-medium capitalize leading-relaxed text-justify mb-8 line-clamp-4">
+                       {getSummary(item.description || item.desc)}
                     </p>
                   </div>
                 </div>
@@ -244,39 +270,15 @@ export default function TentangKami() {
       <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
-            {/* Background layer for gradient and image */}
             <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
-              {/* Background image 1 with low opacity */}
-              <div
-                className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{
-                  backgroundImage: `url(${Assets.Banner1})`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              ></div>
+              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
             </div>
-
-            {/* Content layer */}
             <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-              {/* Judul */}
-              <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">
-                PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
-                terpercaya untuk bisnis Anda!
-              </h2>
-
-              {/* Subjudul */}
-              <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">
-                Hubungi kami dan dapatkan panduan dari konsultan berpengalaman
-              </p>
-
-              {/* Tombol CTA */}
-              <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+              <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">{company?.company_name || "PT Divus Global Mediacomm"} siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
+              <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
+              <a href={getWhatsappLink(company?.phone)} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                 <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-                <span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">
-                  Konsultasi Sekarang
-                </span>
+                <span className="text-black text-base md:text-lg font-semibold capitalize">Konsultasi Sekarang</span>
               </a>
             </div>
           </div>

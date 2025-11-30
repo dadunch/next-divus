@@ -240,7 +240,7 @@ const DashboardAdmin = () => {
               Hi, {user?.username || "SuperAdmin"}
             </p>
           </div>
-          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold">
+          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
             {user?.username ? user.username.charAt(0) : "A"}
           </div>
         </div>

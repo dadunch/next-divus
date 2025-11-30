@@ -208,7 +208,7 @@ const AssetKontenPage = () => {
 
           {/* RIGHT */}
           <div className="col-span-5">
-            <p className="font-semibold mb-2">Preview</p>
+            <p className="font-semibold mb-2">Preview(homepage)</p>
             <PreviewSneakPeek images={images} />
 
             {/* TOMBOL SIMPAN */}

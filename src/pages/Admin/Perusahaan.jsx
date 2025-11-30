@@ -155,6 +155,8 @@ const PerusahaanPage = () => {
         <title>Informasi Perusahaan - Divus Admin</title>
       </Head>
 
+      
+
       {/* --- CUSTOM CSS UNTUK DATEPICKER --- */}
       <style jsx global>{`
         .react-datepicker-wrapper {
@@ -215,7 +217,7 @@ const PerusahaanPage = () => {
           </div>
           <input
             type="text"
-            className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm"
+            className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
             placeholder="Search.."
           />
         </div>
@@ -298,7 +300,13 @@ const PerusahaanPage = () => {
                 name="company_name"
                 value={form.company_name}
                 onChange={handleChange}
-                className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors"
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
 
@@ -311,8 +319,13 @@ const PerusahaanPage = () => {
                 name="business_field"
                 value={form.business_field}
                 onChange={handleChange}
-                className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors"
-                placeholder="Contoh: Jasa Konsultasi"
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
 
@@ -331,7 +344,13 @@ const PerusahaanPage = () => {
                   showYearDropdown
                   scrollableYearDropdown
                   yearDropdownItemNumber={50}
-                  className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors cursor-pointer"
+                  className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   <CalendarIcon size={18} />
@@ -348,7 +367,13 @@ const PerusahaanPage = () => {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors"
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
 
@@ -361,7 +386,13 @@ const PerusahaanPage = () => {
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors"
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
 
@@ -374,7 +405,13 @@ const PerusahaanPage = () => {
                 value={form.address}
                 onChange={handleChange}
                 rows={3}
-                className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors resize-none"
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               ></textarea>
             </div>
 
@@ -387,7 +424,13 @@ const PerusahaanPage = () => {
                 value={form.description}
                 onChange={handleChange}
                 rows={5}
-                className="w-full bg-gray-100 border-transparent focus:bg-white focus:border-gray-300 focus:ring-0 rounded-lg px-4 py-3 text-gray-800 transition-colors resize-none"
+                className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
               ></textarea>
             </div>
           </div>

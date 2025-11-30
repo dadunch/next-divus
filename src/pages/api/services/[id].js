@@ -149,7 +149,7 @@ export default async function handler(req, res) {
             console.error("Error deleting image file:", err);
           }
         }
-        
+      //32323232
         // 3. Hapus Data dari Database
         await tx.services.delete({ where: { id: serviceId } });
 

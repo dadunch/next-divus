@@ -12,6 +12,8 @@ export const config = {
   },
 };
 
+// hfafdksalfjdsa
+
 export default async function handler(req, res) {
   
   // --- GET: AMBIL DATA (Logika Tetap Sama) ---

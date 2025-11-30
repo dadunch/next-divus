@@ -16,27 +16,25 @@ function Navbar() {
     const [isLoadingServices, setIsLoadingServices] = useState(true); // State Loading Khusus Layanan
     const router = useRouter();
 
-    // --- 1. FETCH DATA DENGAN HANDLING LOADING ---
     useEffect(() => {
         const fetchServices = async () => {
-            setIsLoadingServices(true); // Mulai loading
+            setIsLoadingServices(true);
             try {
                 const res = await fetch('/api/services');
                 const data = await res.json();
                 
                 if (res.ok && Array.isArray(data)) {
-                    // Format data
+                    // FORMAT DATA: Gunakan slug dari database untuk path
                     const formattedServices = data.map(service => ({
                         name: service.title,
-                        path: '/User/Layanan' 
+                        path: '/User/Layanan/' + service.id
                     }));
                     setServicesList(formattedServices);
                 }
             } catch (error) {
                 console.error("Gagal mengambil data layanan:", error);
-                // Opsional: Set servicesList ke null atau biarkan kosong
             } finally {
-                setIsLoadingServices(false); // Selesai loading (sukses ataupun gagal)
+                setIsLoadingServices(false);
             }
         };
 

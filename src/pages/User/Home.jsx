@@ -3,7 +3,8 @@ import { useRouter } from 'next/router';
 import { ChevronRight } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../../assets';
-import { motion } from 'framer-motion';
+import { motion2 } from 'framer-motion';
+import { motion } from "motion/react"
 
 const solutionsData = [
 	{
@@ -13,7 +14,6 @@ const solutionsData = [
 	},
 	{
 		title: 'Research & Survey',
-		desc: 'Menyediakan layanan riset pasar, survei kepuasan pelanggan, dan pemetaan sosial untuk memperoleh data akurat sebagai dasar pengambilan keputusan bisnis.',
 		icon: Assets.Icon2,
 	},
 	{
@@ -81,11 +81,15 @@ const clientLogos = [
 
 export default function Home() {
 	return (
-		<main className="w-full">
+		<main className="w-full min-h-screen bg-white overflow-x-hidden">
 			<div className="max-w-[1440px] mx-auto">
 				{/* HERO SECTION */}
 				<section className="pt-24 pb-16 px-6 md:px-20 relative overflow-hidden bg-gray-100 md:bg-white">
-					<div className="flex flex-col md:flex-row items-center justify-between gap-11">
+					<motion.div className="flex flex-col md:flex-row items-center justify-between gap-11"
+					initial={{ opacity: 0, x: 0 }}
+					animate={{ opacity: 1, x: 0 }}
+					transition={{ duration: 1 }}
+					>
 						{/* Left Content */}
 						<div className="w-full md:w-1/2 flex flex-col justify-start items-start gap-8 z-10">
 							<p className="text-lime-500 text-xl font-medium font-['Poppins'] mt-20">
@@ -138,11 +142,15 @@ export default function Home() {
 									className="absolute top-[140px] sm:top-[160px] md:top-[185px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover"
 									src={Assets.Hero3}
 									alt="Gambar Latar"
+									
 								/>
-								<img
+								<motion.img
 									className="absolute top-[30px] sm:top-[40px] md:top-[50px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover"
 									src={Assets.Hero1}
 									alt="Gambar Tengah"
+									initial={{ opacity: 0, x: 0 }}
+									animate={{ opacity: 1, x: 0, scale: 1.2 }}
+									transition={{ duration: 1 }}
 								/>
 								<img
 									className="absolute top-[120px] sm:top-[130px] md:top-[160px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover"
@@ -151,7 +159,7 @@ export default function Home() {
 								/>
 							</div>
 						</div>
-					</div>
+					</motion.div>
 				</section>
 
 				{/* STATS + CLIENT LOGO SECTION */}

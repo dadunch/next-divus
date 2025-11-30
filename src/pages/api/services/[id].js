@@ -6,6 +6,22 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const serviceId = BigInt(id);
 
+  // --- GET: AMBIL DATA DETAIL LAYANAN ---
+  if (req.method === 'GET') {
+    try {
+      const service = await prisma.services.findUnique({
+        where: { id: serviceId }
+      });
+      if (!service) {
+        return res.status(404).json({ error: "Layanan tidak ditemukan" });
+      }
+      return res.status(200).json(serialize(service));
+    }
+    catch (error) {
+      return res.status(500).json({ error: "Gagal mengambil data layanan" });
+    }
+  }
+
   // PUT (Edit - PERLU LOG)
   if (req.method === 'PUT') {
     const { title, description, icon_url, userId } = req.body; // Ambil userId

@@ -30,7 +30,7 @@ const PreviewSneakPeek = ({ images }) => {
           </div>
 
           {/* IMAGE 2 */}
-          <div className="absolute top-11 left-8 w-24 h-24 rounded-xl overflow-hidden shadow bg-gray-100 z-10">
+          <div className="absolute top-12.5 left-7.5 w-24 h-24 rounded-md overflow-hidden shadow bg-gray-100 z-10">
             {images.img2 ? (
               <img src={images.img2} className="w-full h-full object-cover" />
             ) : (

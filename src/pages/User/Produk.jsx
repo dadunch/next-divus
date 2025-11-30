@@ -383,8 +383,6 @@ const Produk = () => {
             >
                 <FaWhatsapp size={32} className="text-white" />
             </a>
-
-            <Footer />
         </div>
     );
 };

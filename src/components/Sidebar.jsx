@@ -131,6 +131,21 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                  { name: '+ Tambah Layanan', path: '/Admin/LayananProduk', isSpecial: true } 
                ];
             }
+             if (
+              parent.nama_menu === "Perusahaan" ||
+              parent.url === "#Perusahaan"
+            ) {
+              myChildren = [
+                {
+                  name: "Informasi Perusahaan",
+                  path: "/Admin/Perusahaan",
+                },
+                { name: "Foto Perusahaan", path: "/Admin/FotoPerusahaan" },
+                { name: "Asset Konten", path: "/Admin/AssetKonten" },
+                ...myChildren,
+              ];
+            }
+
 
             return {
               name: parent.nama_menu,

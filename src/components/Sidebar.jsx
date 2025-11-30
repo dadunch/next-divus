@@ -60,7 +60,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       if (res.ok && Array.isArray(data)) {
         const formattedServices = data.map(service => ({
           name: service.title,
-          path: `/Admin/Layanan/${service.slug}`, 
+          path: `/Admin/Layanan/${service.id}`, 
           isDynamic: true 
         }));
         setServicesMenu(formattedServices);

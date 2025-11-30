@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
-import { Assets } from '../../assets'; 
+import { Assets } from '../../assets';
 import { motion } from 'framer-motion';
 
 // --- HELPER: FORMAT DESKRIPSI SINGKAT (DIPERBAIKI) ---
@@ -19,7 +19,7 @@ const getSummary = (text) => {
     // 3. Ambil ringkasan jika ada marker khusus, atau potong 100 karakter
     const marker = "Ringkasan:";
     const index = cleanText.indexOf(marker);
-    
+
     if (index !== -1) {
         // Jika ada kata "Ringkasan:", ambil teks setelahnya
         cleanText = cleanText.substring(index + marker.length);
@@ -31,32 +31,39 @@ const getSummary = (text) => {
 
 // Data Statis
 const statsData = [
-	{ value: '10 Thn', label: 'Pengalaman' },
-	{ value: '44+', label: 'Klien Divus' },
-	{ value: '49+', label: 'Proyek Selesai' },
+    { value: '10 Thn', label: 'Pengalaman' },
+    { value: '44+', label: 'Klien Divus' },
+    { value: '49+', label: 'Proyek Selesai' },
 ];
 
 const reasons = [
-	{ number: 1, title: 'KONSULTAN BERPENGALAMAN', desc: 'PT Divus diisi oleh para profesional berpengalaman.' },
-	{ number: 2, title: 'AHLI PROFESIONAL', desc: 'Tim ahli dari berbagai bidang dengan pendekatan relevan.' },
-	{ number: 3, title: 'HASIL TERUKUR & CEPAT', desc: 'Output berkualitas tinggi berdasarkan data dan insight akurat.' },
+    { number: 1, title: 'KONSULTAN BERPENGALAMAN', desc: 'PT Divus diisi oleh para profesional berpengalaman.' },
+    { number: 2, title: 'AHLI PROFESIONAL', desc: 'Tim ahli dari berbagai bidang dengan pendekatan relevan.' },
+    { number: 3, title: 'HASIL TERUKUR & CEPAT', desc: 'Output berkualitas tinggi berdasarkan data dan insight akurat.' },
 ];
 
 const clientLogos = [
-	Assets.Client1, Assets.Client2, Assets.Client3, Assets.Client4,
-	Assets.Client5, Assets.Client6, Assets.Client7, Assets.Client8,
-	Assets.Client9, Assets.Client10, Assets.Client11, Assets.Client12,
-	Assets.Client13,
+    Assets.Client1, Assets.Client2, Assets.Client3, Assets.Client4,
+    Assets.Client5, Assets.Client6, Assets.Client7, Assets.Client8,
+    Assets.Client9, Assets.Client10, Assets.Client11, Assets.Client12,
+    Assets.Client13,
 ];
+
+const fadeInUp = {
+    initial: { opacity: 0, y: 50 },
+    whileInView: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeOut" },
+    viewport: { once: false, amount: 0.2 }
+};
 
 export default function Home() {
     // State Data
     const [services, setServices] = useState([]);
-    const [products, setProducts] = useState([]); 
-    const [projects, setProjects] = useState([]); 
-    
+    const [products, setProducts] = useState([]);
+    const [projects, setProjects] = useState([]);
+
     // State UI
-    const [activePorto, setActivePorto] = useState('produk'); 
+    const [activePorto, setActivePorto] = useState('produk');
     const [loading, setLoading] = useState(true);
 
     // --- FETCH DATA ---
@@ -67,21 +74,21 @@ export default function Home() {
                 const resService = await fetch('/api/services');
                 const dataService = await resService.json();
                 if (resService.ok && Array.isArray(dataService)) {
-                    setServices(dataService); 
+                    setServices(dataService);
                 }
 
                 // 2. Fetch Products
-                const resProd = await fetch('/api/products'); 
+                const resProd = await fetch('/api/products');
                 const dataProd = await resProd.json();
                 if (resProd.ok && Array.isArray(dataProd)) {
-                    setProducts(dataProd.slice(0, 3)); 
+                    setProducts(dataProd.slice(0, 3));
                 }
 
                 // 3. Fetch Projects
                 const resProj = await fetch('/api/projects');
                 const dataProj = await resProj.json();
                 if (resProj.ok && Array.isArray(dataProj)) {
-                    setProjects(dataProj); 
+                    setProjects(dataProj);
                 }
 
             } catch (error) {
@@ -98,25 +105,29 @@ export default function Home() {
         try {
             const parsed = JSON.parse(jsonString);
             if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
-            return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600"; 
+            return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600";
         } catch (e) {
             return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600";
         }
     };
 
-	return (
-		<main className="w-full">
+    return (
+        <main className="w-full">
             <Head>
                 <title>PT Divus Global Mediacomm</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
             </Head>
 
-			<div className="max-w-[1440px] mx-auto">
-				
+            <div className="max-w-[1440px] mx-auto">
+
                 {/* HERO SECTION */}
                 <section className="pt-24 pb-16 px-6 md:px-20 relative overflow-hidden bg-gray-100 md:bg-white">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-11">
-                        <div className="w-full md:w-1/2 flex flex-col justify-start items-start gap-4 z-10">
+                        <motion.div initial={{ opacity: 0, x: -100 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            viewport={{ once: false, amount: 0.2 }}
+                            className="w-full md:w-1/2 flex flex-col justify-start items-start gap-4 z-10">
                             <p className="text-lime-500 text-xl font-medium mt-20">
                                 PT Divus Global Mediacomm
                             </p>
@@ -154,20 +165,24 @@ export default function Home() {
                                     ))}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        <div className="w-full md:w-1/2 relative flex justify-center items-center">
+                        <motion.div initial={{ opacity: 0, x: 100 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            viewport={{ once: false, amount: 0.2 }}
+                            className="w-full md:w-1/2 relative flex justify-center items-center">
                             <div className="relative w-[320px] sm:w-[420px] md:w-[550px] h-[380px] sm:h-[450px] md:h-[480px]">
                                 <img className="absolute top-[80px] sm:top-[100px] md:top-[130px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover" src={Assets.Hero3} alt="Gambar Latar" />
                                 <img className="absolute top-[10px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover" src={Assets.Hero1} alt="Gambar Tengah" />
                                 <img className="absolute top-[80px] sm:top-[90px] md:top-[120px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover" src={Assets.Hero2} alt="Gambar Depan" />
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </section>
 
                 {/* STATS + CLIENT LOGO */}
-                <section className="px-6 md:px-20 py-12 md:py-16">
+                <motion.section {...fadeInUp} className="px-6 md:px-20 py-12 md:py-16">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                         <h2 className="text-zinc-500 text-xl font-semibold leading-6 w-64 text-center md:text-left">
                             Dipercaya Oleh Mitra Internasional
@@ -183,10 +198,10 @@ export default function Home() {
                             <FaWhatsapp size={32} className="text-white" />
                         </a>
                     </div>
-                </section>
+                </motion.section>
 
                 {/* TENTANG KAMI */}
-                <section className="px-6 md:px-20 py-16 md:py-20 flex flex-col lg:flex-row lg:items-center gap-10">
+                <motion.section {...fadeInUp} className="px-6 md:px-20 py-16 md:py-20 flex flex-col lg:flex-row lg:items-center gap-10">
                     <div className="w-full lg:w-1/2 flex flex-col justify-start items-start gap-8">
                         <h1 className="text-zinc-800 text-2xl lg:text-3xl font-bold leading-tight">
                             Apa Itu PT Divus Global Mediacomm?
@@ -203,82 +218,82 @@ export default function Home() {
                             <img className="absolute inset-0 rounded-2xl object-cover w-full h-full" src={Assets.Hero4} alt="Tentang Kami" />
                         </div>
                     </div>
-                </section>
+                </motion.section>
 
-				{/* LAYANAN (DENGAN FIX getSummary) */}
-				<section className="py-16 md:py-20 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] bg-gray-50 overflow-hidden">
-					<div className="max-w-[1440px] mx-auto px-6 md:px-10">
-						<div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
-							<div className="w-full lg:w-1/2 relative">
-								<h2 className="text-zinc-800 text-2xl md:text-3xl font-semibold leading-tight z-10 relative">
-									Solusi Tepat untuk Bisnis Anda.
-									<span className="inline-block ml-3 w-32 md:w-48 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
-								</h2>
-							</div>
+                {/* LAYANAN (DENGAN FIX getSummary) */}
+                <motion.section {...fadeInUp} className="py-16 md:py-20 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] bg-gray-50 overflow-hidden">
+                    <div className="max-w-[1440px] mx-auto px-6 md:px-10">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
+                            <div className="w-full lg:w-1/2 relative">
+                                <h2 className="text-zinc-800 text-2xl md:text-3xl font-semibold leading-tight z-10 relative">
+                                    Solusi Tepat untuk Bisnis Anda.
+                                    <span className="inline-block ml-3 w-32 md:w-48 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
+                                </h2>
+                            </div>
                             <div className="w-full lg:w-5/12">
                                 <p className="text-zinc-600 text-base md:text-lg font-normal leading-relaxed text-justify lg:text-left">
                                     Kami menyediakan layanan profesional mulai dari konsultasi hingga eksekusi strategi.
                                 </p>
                             </div>
-						</div>
+                        </div>
 
-						<div className="flex flex-wrap justify-center gap-13 lg:gap-15">
+                        <div className="flex flex-wrap justify-center gap-13 lg:gap-15">
                             {loading && <p>Memuat layanan...</p>}
-							{!loading && services.map((item, index) => (
-								<div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start">
-									<div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md min-h-[350px]">
-										<div>
-											<div className="flex items-center gap-4 mb-6">
-												<div className="w-20 h-20 flex-shrink-0 bg-lime-500/20 rounded-tr-3xl rounded-bl-3xl flex items-center justify-center p-4">
+                            {!loading && services.map((item, index) => (
+                                <div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start">
+                                    <div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md min-h-[350px]">
+                                        <div>
+                                            <div className="flex items-center gap-4 mb-6">
+                                                <div className="w-20 h-20 flex-shrink-0 bg-lime-500/20 rounded-tr-3xl rounded-bl-3xl flex items-center justify-center p-4">
                                                     {item.icon_url ? (
                                                         <i className={`${item.icon_url} text-4xl text-green-600`}></i>
                                                     ) : (
                                                         <i className="fa-solid fa-briefcase text-4xl text-green-600"></i>
                                                     )}
-												</div>
-												<h3 className="text-zinc-800 text-xl font-semibold leading-snug">{item.title}</h3>
-											</div>
-											<p className="text-zinc-600 text-base font-medium capitalize leading-relaxed text-justify mb-8 line-clamp-4">
-												{getSummary(item.description)}
-											</p>
-										</div>
-										<Link href={`/User/Layanan/${item.slug}`} className="px-6 py-3 bg-green-500 rounded-xl shadow-[0px_2px_5px_0px_rgba(0,0,0,0.14)] hover:bg-green-600 transition-colors text-white text-sm font-bold self-start">
-										Detail Layanan
-										</Link>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
-				</section>
+                                                </div>
+                                                <h3 className="text-zinc-800 text-xl font-semibold leading-snug">{item.title}</h3>
+                                            </div>
+                                            <p className="text-zinc-600 text-base font-medium capitalize leading-relaxed text-justify mb-8 line-clamp-4">
+                                                {getSummary(item.description)}
+                                            </p>
+                                        </div>
+                                        <Link href={`/User/Layanan/${item.slug}`} className="px-6 py-3 bg-green-500 rounded-xl shadow-[0px_2px_5px_0px_rgba(0,0,0,0.14)] hover:bg-green-600 transition-colors text-white text-sm font-bold self-start">
+                                            Detail Layanan
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </motion.section>
 
-				{/* PORTOFOLIO SECTION */}
-				<section className="px-4 md:px-20 py-20 bg-white">
-					<div className="w-full rounded-3xl overflow-hidden relative shadow-lg bg-gradient-to-b from-[#4ade80] to-[#84cc16]">
-						<div className="flex flex-col lg:flex-row items-center lg:items-start p-8 md:p-14 gap-10">
-							
+                {/* PORTOFOLIO SECTION */}
+                <motion.section {...fadeInUp} className="px-4 md:px-20 py-20 bg-white">
+                    <div className="w-full rounded-3xl overflow-hidden relative shadow-lg bg-gradient-to-b from-[#4ade80] to-[#84cc16]">
+                        <div className="flex flex-col lg:flex-row items-center lg:items-start p-8 md:p-14 gap-10">
+
                             {/* TEXT & BUTTONS */}
                             <div className="w-full lg:w-5/12 flex flex-col items-start gap-6 text-white z-10">
-								<h2 className="text-3xl md:text-4xl font-bold">Portofolio Kami</h2>
-								<p className="text-base md:text-lg font-medium leading-relaxed text-justify lg:text-left opacity-95">
-									{activePorto === 'produk' 
+                                <h2 className="text-3xl md:text-4xl font-bold">Portofolio Kami</h2>
+                                <p className="text-base md:text-lg font-medium leading-relaxed text-justify lg:text-left opacity-95">
+                                    {activePorto === 'produk'
                                         ? "Lihat produk-produk unggulan yang telah kami kembangkan untuk mendukung bisnis klien kami."
                                         : "Daftar proyek dan kolaborasi strategis yang telah kami selesaikan dengan berbagai mitra."
                                     }
-								</p>
-								<div className="flex flex-wrap gap-4 mt-2">
-									<button onClick={() => setActivePorto('produk')} className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${activePorto === 'produk' ? 'bg-white text-green-600' : 'border-2 border-white text-white hover:bg-white/10'}`}>
+                                </p>
+                                <div className="flex flex-wrap gap-4 mt-2">
+                                    <button onClick={() => setActivePorto('produk')} className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${activePorto === 'produk' ? 'bg-white text-green-600' : 'border-2 border-white text-white hover:bg-white/10'}`}>
                                         Lihat Produk
                                     </button>
-									<button onClick={() => setActivePorto('proyek')} className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${activePorto === 'proyek' ? 'bg-white text-green-600' : 'border-2 border-white text-white hover:bg-white/10'}`}>
+                                    <button onClick={() => setActivePorto('proyek')} className={`px-6 py-3 rounded-xl font-bold shadow-md transition-all ${activePorto === 'proyek' ? 'bg-white text-green-600' : 'border-2 border-white text-white hover:bg-white/10'}`}>
                                         Lihat Proyek
                                     </button>
-								</div>
-							</div>
+                                </div>
+                            </div>
 
                             {/* DISPLAY AREA */}
-							<div className="w-full lg:w-7/12 flex justify-center lg:justify-end items-center">
-								
+                            <div className="w-full lg:w-7/12 flex justify-center lg:justify-end items-center">
+
                                 {/* --- PRODUK (GRID) --- */}
                                 {activePorto === 'produk' && (
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
@@ -313,19 +328,19 @@ export default function Home() {
                                                 <tbody className="divide-y divide-gray-200">
                                                     {projects.map((item, idx) => (
                                                         <tr key={idx} className="hover:bg-green-50 transition-colors bg-white/50">
-                                                            
+
                                                             <td className="px-4 py-3 font-medium text-gray-900">
                                                                 {item.client?.client_name || '-'}
                                                             </td>
-                                                            
+
                                                             <td className="px-4 py-3 text-gray-600">
                                                                 {item.project_name || '-'}
                                                             </td>
-                                                            
+
                                                             <td className="px-4 py-3 text-gray-600">
                                                                 {item.category?.bidang || '-'}
                                                             </td>
-                                                            
+
                                                             <td className="px-4 py-3 text-center text-gray-600">
                                                                 {item.tahun || '-'}
                                                             </td>
@@ -338,68 +353,68 @@ export default function Home() {
                                     </div>
                                 )}
 
-							</div>
-						</div>
-					</div>
-				</section>
+                            </div>
+                        </div>
+                    </div>
+                </motion.section>
 
-				{/* MENGAPA PILIH KAMI */}
-				<section className="px-6 md:px-20 py-20 bg-white">
-					<h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-10">
-						Mengapa Memilih PT Divus Global Mediacomm?
-					</h2>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
-						{reasons.map((item) => (
-							<div key={item.number} className="flex flex-col items-center text-center gap-5">
-								<div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-									<span className="text-4xl font-bold text-green-500">{item.number}</span>
-								</div>
-								<h3 className="text-xl font-semibold text-zinc-800">{item.title}</h3>
-								<p className="text-zinc-600">{item.desc}</p>
-							</div>
-						))}
-					</div>
-				</section>
+                {/* MENGAPA PILIH KAMI */}
+                <motion.section {...fadeInUp} className="px-6 md:px-20 py-20 bg-white">
+                    <h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-10">
+                        Mengapa Memilih PT Divus Global Mediacomm?
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+                        {reasons.map((item) => (
+                            <div key={item.number} className="flex flex-col items-center text-center gap-5">
+                                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <span className="text-4xl font-bold text-green-500">{item.number}</span>
+                                </div>
+                                <h3 className="text-xl font-semibold text-zinc-800">{item.title}</h3>
+                                <p className="text-zinc-600">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </motion.section>
 
-				{/* KLIEN KAMI */}
-				<section className="bg-white relative overflow-hidden w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
-					<h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
+                {/* KLIEN KAMI */}
+                <motion.section {...fadeInUp} className="bg-white relative overflow-hidden w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
+                    <h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
                     <p className="text-center font-medium text-lg text-lime-500 mt-8">Dipercaya oleh 100+ klien dari Nasional Dan Internasional</p>
-					<div className="relative h-48 overflow-hidden mt-10 w-full">
-						<motion.div 
-							className="absolute flex items-center gap-16 w-max will-change-transform" 
-							animate={{ x: ['0%', '-50%'] }} 
-							transition={{ repeat: Infinity, duration: 45, ease: 'linear' }} 
-						>
-							{Array(2).fill(clientLogos).flat().map((ImgClnt, i) => (
-								<motion.img 
-									key={i} 
-									src={ImgClnt} 
-									alt="Client Logo" 
-									className="h-20 w-20 md:h-28 md:w-28 opacity-80 hover:opacity-100 transform hover:scale-110 transition-all duration-500 ease-in-out" 
-									loading="lazy"
-								/>
-							))}
-						</motion.div>
-					</div>
-				</section>
+                    <div className="relative h-48 overflow-hidden mt-10 w-full">
+                        <motion.div
+                            className="absolute flex items-center gap-16 w-max will-change-transform"
+                            animate={{ x: ['0%', '-50%'] }}
+                            transition={{ repeat: Infinity, duration: 45, ease: 'linear' }}
+                        >
+                            {Array(2).fill(clientLogos).flat().map((ImgClnt, i) => (
+                                <motion.img
+                                    key={i}
+                                    src={ImgClnt}
+                                    alt="Client Logo"
+                                    className="h-20 w-20 md:h-28 md:w-28 opacity-80 hover:opacity-100 transform hover:scale-110 transition-all duration-500 ease-in-out"
+                                    loading="lazy"
+                                />
+                            ))}
+                        </motion.div>
+                    </div>
+                </motion.section>
 
-				<section className="px-4 md:px-20 py-20 bg-white">
-					<div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
-						<div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
-							<div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-						</div>
-						<div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-							<h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
-							<p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
-							<a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
-								<FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-								<span className="text-black text-base md:text-lg font-semibold capitalize">Konsultasi Sekarang</span>
-							</a>
-						</div>
-					</div>
-				</section>
-			</div>
-		</main>
-	);
+                <motion.section {...fadeInUp} className="px-4 md:px-20 py-20 bg-white">
+                    <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
+                        <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
+                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                        </div>
+                        <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
+                            <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
+                            <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
+                            <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+                                <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
+                                <span className="text-black text-base md:text-lg font-semibold capitalize">Konsultasi Sekarang</span>
+                            </a>
+                        </div>
+                    </div>
+                </motion.section>
+            </div>
+        </main>
+    );
 }

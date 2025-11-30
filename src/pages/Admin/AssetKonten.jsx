@@ -127,6 +127,7 @@ const AssetKontenPage = () => {
         justify-center 
         overflow-hidden 
         cursor-pointer
+        border-gray-300
         hover:bg-gray-200
         transition
       "

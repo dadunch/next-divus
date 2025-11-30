@@ -54,7 +54,7 @@ export default function Contact() {
 
                     <div className="flex flex-col gap-6">
                         {/* Alamat */}
-                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg border-zinc-300  p-5">   {/*border-b-4 border-r-2 border-l-2  */}
                             <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <MapPin className="text-white w-6 h-6 " />
                             </div>

@@ -15,19 +15,28 @@ export const config = {
 export default async function handler(req, res) {
   
   // --- GET: AMBIL DATA (Logika Tetap Sama) ---
+  // if (req.method === 'GET') {
+  //   try {
+  //     const services = await prisma.services.findMany({
+  //       orderBy: { created_at: 'desc' }
+  //       // select: {
+  //       //   id: true,
+  //       //   title: true,
+  //       //   slug: true,
+  //       //   icon_url: true, // Pastikan nama kolom di DB sesuai (icon_url atau icon_class?)
+  //       //   image_url: true,
+  //       //   description: true
+  //       // }
+  //     });
+  //     return res.status(200).json(serialize(services));
+  //   } catch (error) {
+  //     return res.status(500).json({ error: "Gagal mengambil data layanan" });
+  //   }
+  // }
+
   if (req.method === 'GET') {
     try {
-      const services = await prisma.services.findMany({
-        orderBy: { created_at: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          icon_url: true, // Pastikan nama kolom di DB sesuai (icon_url atau icon_class?)
-          image_url: true,
-          description: true
-        }
-      });
+      const services = await prisma.services.findMany({ orderBy: { created_at: 'desc' } });
       return res.status(200).json(serialize(services));
     } catch (error) {
       return res.status(500).json({ error: "Gagal mengambil data layanan" });

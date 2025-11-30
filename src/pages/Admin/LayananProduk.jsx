@@ -237,6 +237,11 @@ const TambahLayananPage = () => {
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="text-white font-bold text-lg">Admin Panel</div>
         <div className="flex items-center gap-4">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-medium text-white">
+              Hi, {user?.username || "Admin"}
+            </p>
+          </div>
           <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold border-2 border-gray-400">
             {user?.username ? user.username.charAt(0) : "A"}
           </div>
@@ -257,7 +262,7 @@ const TambahLayananPage = () => {
             {/* KOTAK KIRI: FOTO */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">1. Foto Header</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-blue-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-green-500 transition-colors">
                 {previewFoto ? (
                   <>
                     <img src={previewFoto} className="w-full h-full object-cover" alt="Preview" />
@@ -280,11 +285,11 @@ const TambahLayananPage = () => {
             {/* KOTAK KANAN: ICON */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">2. Icon Layanan</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-blue-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl aspect-video flex items-center justify-center bg-gray-50 relative overflow-hidden group hover:border-green-500 transition-colors">
 
                 {selectedIcon ? (
                   <>
-                    <i className={`${selectedIcon} text-5xl text-blue-600`}></i>
+                    <i className={`${selectedIcon} text-5xl text-green-600`}></i>
                     <button onClick={removeIcon} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:scale-110 transition"><X size={14} /></button>
                   </>
                 ) : (
@@ -305,7 +310,13 @@ const TambahLayananPage = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Layanan</label>
-              <input type="text" value={namaLayanan} onChange={(e) => setNamaLayanan(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masukkan nama layanan..." />
+              <input type="text" value={namaLayanan} onChange={(e) => setNamaLayanan(e.target.value)} className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all" placeholder="Masukkan nama layanan..." />
             </div>
 
             {/* List Layanan SEJAJAR */}
@@ -317,7 +328,13 @@ const TambahLayananPage = () => {
                     type="text"
                     value={inputLayanan}
                     onChange={(e) => setInputLayanan(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all"
                     placeholder="Contoh: Analisis Data"
                     onKeyPress={(e) => e.key === 'Enter' && tambahLayananItem()}
                   />
@@ -340,12 +357,24 @@ const TambahLayananPage = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Singkat</label>
-              <textarea value={deskripsiSingkat} onChange={(e) => setDeskripsiSingkat(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Ringkasan..." />
+              <textarea value={deskripsiSingkat} onChange={(e) => setDeskripsiSingkat(e.target.value)} rows={2} className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all" placeholder="Ringkasan..." />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Lengkap</label>
-              <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={6} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Detail lengkap..." />
+              <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} rows={6} className="w-full bg-gray-100 
+             border border-transparent 
+             outline-none
+             focus:bg-white 
+             focus:border-green-500 
+             focus:ring-1 focus:ring-green-500
+             rounded-lg px-4 py-3 text-gray-800 transition-all" placeholder="Detail lengkap..." />
             </div>
           </div>
 
@@ -365,7 +394,7 @@ const TambahLayananPage = () => {
             <input type="text" placeholder="Cari icon..." value={iconSearch} onChange={(e) => setIconSearch(e.target.value)} className="w-full border px-4 py-2 mb-4 rounded-lg" />
             <div className="grid grid-cols-6 gap-2 max-h-64 overflow-y-auto">
               {filteredIcons.map((ic) => (
-                <button key={ic} onClick={() => pilihIcon(ic)} className={`p-3 border rounded hover:bg-gray-50 flex justify-center ${selectedIcon === ic ? 'bg-blue-50 border-blue-500' : ''}`}><i className={`${ic} text-xl`}></i></button>
+                <button key={ic} onClick={() => pilihIcon(ic)} className={`p-3 border rounded hover:bg-gray-50 flex justify-center ${selectedIcon === ic ? 'bg-green-50 border-green-500' : ''}`}><i className={`${ic} text-xl`}></i></button>
               ))}
             </div>
           </div>
@@ -409,7 +438,7 @@ const TambahLayananPage = () => {
                 Batal
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                className="px-4 py-2 bg-green-600 text-white rounded"
                 onClick={selesaiCrop}
               >
                 Selesai

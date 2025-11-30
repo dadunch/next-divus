@@ -27,8 +27,7 @@ function Navbar() {
                     // FORMAT DATA: Gunakan slug dari database untuk path
                     const formattedServices = data.map(service => ({
                         name: service.title,
-                        // PERBAIKAN DI SINI: Gunakan Backtick (`) dan ${service.slug}
-                        path: `/User/Layanan/${service.slug}` 
+                        path: '/User/Layanan/' + service.id
                     }));
                     setServicesList(formattedServices);
                 }

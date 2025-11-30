@@ -105,7 +105,7 @@ export default function Home() {
     };
 
 	return (
-		<main className="w-full font-['Poppins']">
+		<main className="w-full">
             <Head>
                 <title>PT Divus Global Mediacomm</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -116,14 +116,14 @@ export default function Home() {
                 {/* HERO SECTION */}
                 <section className="pt-24 pb-16 px-6 md:px-20 relative overflow-hidden bg-gray-100 md:bg-white">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-11">
-                        <div className="w-full md:w-1/2 flex flex-col justify-start items-start gap-8 z-10">
-                            <p className="text-lime-500 text-xl font-medium font-['Poppins'] mt-20">
+                        <div className="w-full md:w-1/2 flex flex-col justify-start items-start gap-4 z-10">
+                            <p className="text-lime-500 text-xl font-medium mt-20">
                                 PT Divus Global Mediacomm
                             </p>
-                            <h1 className="text-zinc-800 text-3xl lg:text-4xl font-semibold font-['Poppins'] leading-tight">
+                            <h1 className="text-zinc-800 text-3xl lg:text-4xl font-semibold leading-tight">
                                 Tingkatkan Strategi dan Solusi Bisnis Anda!
                             </h1>
-                            <p className="text-zinc-800 text-base font-normal font-['Poppins'] leading-6 text-justify">
+                            <p className="text-zinc-800 text-base font-normal leading-6 text-justify">
                                 PT Divus menyediakan layanan management consulting, riset,
                                 laporan, corporate identity, serta Report dan jurnal guna
                                 membantu perusahaan mencapai strategi dan tujuan bisnis secara
@@ -131,23 +131,23 @@ export default function Home() {
                             </p>
 
                             <Link
-                                href="/User/Contact"
-                                className="inline-flex justify-start items-center px-6 py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors"
+                                href="/User/TentangKami"
+                                className="inline-flex justify-start items-center px-6 py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors mt-10"
                             >
                                 <FaWhatsapp size={24} className="text-white mr-2" />
-                                <span className="text-white text-base font-bold font-['Poppins'] leading-6">
+                                <span className="text-white text-base font-bold leading-6">
                                     Hubungi Kami
                                 </span>
                             </Link>
 
-                            <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-8 md:gap-16 mb-10">
+                            <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-8 md:gap-16 mt-10">
                                 <div className="flex gap-6">
                                     {statsData.map((stat, index) => (
                                         <div key={index} className="flex flex-col items-center gap-1">
-                                            <span className="text-green-500 text-2xl md:text-3xl font-semibold font-['Poppins']">
+                                            <span className="text-green-500 text-2xl md:text-3xl font-semibold">
                                                 {stat.value}
                                             </span>
-                                            <span className="text-green-500 text-sm md:text-normal font-medium font-['Poppins']">
+                                            <span className="text-green-500 text-sm md:text-normal font-medium">
                                                 {stat.label}
                                             </span>
                                         </div>
@@ -158,9 +158,9 @@ export default function Home() {
 
                         <div className="w-full md:w-1/2 relative flex justify-center items-center">
                             <div className="relative w-[320px] sm:w-[420px] md:w-[550px] h-[380px] sm:h-[450px] md:h-[480px]">
-                                <img className="absolute top-[140px] sm:top-[160px] md:top-[185px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover" src={Assets.Hero3} alt="Gambar Latar" />
-                                <img className="absolute top-[30px] sm:top-[40px] md:top-[50px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover" src={Assets.Hero1} alt="Gambar Tengah" />
-                                <img className="absolute top-[120px] sm:top-[130px] md:top-[160px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover" src={Assets.Hero2} alt="Gambar Depan" />
+                                <img className="absolute top-[80px] sm:top-[100px] md:top-[130px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover" src={Assets.Hero3} alt="Gambar Latar" />
+                                <img className="absolute top-[10px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover" src={Assets.Hero1} alt="Gambar Tengah" />
+                                <img className="absolute top-[80px] sm:top-[90px] md:top-[120px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover" src={Assets.Hero2} alt="Gambar Depan" />
                             </div>
                         </div>
                     </div>
@@ -169,7 +169,7 @@ export default function Home() {
                 {/* STATS + CLIENT LOGO */}
                 <section className="px-6 md:px-20 py-12 md:py-16">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                        <h2 className="text-zinc-500 text-xl font-semibold font-['Poppins'] leading-6 w-64 text-center md:text-left">
+                        <h2 className="text-zinc-500 text-xl font-semibold leading-6 w-64 text-center md:text-left">
                             Dipercaya Oleh Mitra Internasional
                         </h2>
                         <div className="flex gap-8 justify-center">
@@ -188,25 +188,25 @@ export default function Home() {
                 {/* TENTANG KAMI */}
                 <section className="px-6 md:px-20 py-16 md:py-20 flex flex-col lg:flex-row lg:items-center gap-10">
                     <div className="w-full lg:w-1/2 flex flex-col justify-start items-start gap-8">
-                        <h1 className="text-zinc-800 text-2xl lg:text-3xl font-bold font-['Poppins'] leading-tight">
+                        <h1 className="text-zinc-800 text-2xl lg:text-3xl font-bold leading-tight">
                             Apa Itu PT Divus Global Mediacomm?
                         </h1>
-                        <p className="text-zinc-800 text-base font-normal font-['Poppins'] leading-6 text-justify">
+                        <p className="text-zinc-800 text-base font-normal leading-6 text-justify">
                             PT Divus Global Mediacomm adalah perusahaan konsultan yang bergerak di bidang manajemen, komunikasi korporat, dan desain grafis.
                         </p>
                         <Link href="/User/TentangKami" className="inline-flex justify-start items-center px-5 py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
-                            <span className="text-white text-base font-semibold font-['Poppins'] leading-6">Tentang Kami</span>
+                            <span className="text-white text-base font-semibold leading-6">Tentang Kami</span>
                         </Link>
                     </div>
                     <div className="w-full lg:w-1/2 flex justify-center">
-                        <div className="relative w-full max-w-[520px] h-[350px] sm:h-[420px] lg:h-[450px] overflow-hidden rounded-2xl">
+                        <div className="relative w-full md:w-[635px] h-80 md:h-96 overflow-hidden rounded-2xl">
                             <img className="absolute inset-0 rounded-2xl object-cover w-full h-full" src={Assets.Hero4} alt="Tentang Kami" />
                         </div>
                     </div>
                 </section>
 
 				{/* LAYANAN (DENGAN FIX getSummary) */}
-				<section className="px-6 md:px-10 py-16 md:py-20 bg-gray-50 overflow-hidden">
+				<section className="py-16 md:py-20 w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] bg-gray-50 overflow-hidden">
 					<div className="max-w-[1440px] mx-auto px-6 md:px-10">
 						<div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
 							<div className="w-full lg:w-1/2 relative">
@@ -361,12 +361,24 @@ export default function Home() {
 					</div>
 				</section>
 
-				<section className="bg-white relative overflow-hidden border-t border-gray-100">
-					<h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-16">Klien Kami</h2>
-					<div className="relative h-48 overflow-hidden mt-10">
-						<motion.div className="absolute flex items-center gap-16 w-max" animate={{ x: ['0%', '-50%'] }} transition={{ repeat: Infinity, duration: 45, ease: 'linear' }}>
+				{/* KLIEN KAMI */}
+				<section className="bg-white relative overflow-hidden w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
+					<h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
+                    <p className="text-center font-medium text-lg text-lime-500 mt-8">Dipercaya oleh 100+ klien dari Nasional Dan Internasional</p>
+					<div className="relative h-48 overflow-hidden mt-10 w-full">
+						<motion.div 
+							className="absolute flex items-center gap-16 w-max will-change-transform" 
+							animate={{ x: ['0%', '-50%'] }} 
+							transition={{ repeat: Infinity, duration: 45, ease: 'linear' }} 
+						>
 							{Array(2).fill(clientLogos).flat().map((ImgClnt, i) => (
-								<motion.img key={i} src={ImgClnt} alt="Client Logo" className="h-20 w-20 md:h-28 md:w-28 opacity-80 hover:opacity-100 transform hover:scale-110 transition-all duration-500 ease-in-out" />
+								<motion.img 
+									key={i} 
+									src={ImgClnt} 
+									alt="Client Logo" 
+									className="h-20 w-20 md:h-28 md:w-28 opacity-80 hover:opacity-100 transform hover:scale-110 transition-all duration-500 ease-in-out" 
+									loading="lazy"
+								/>
 							))}
 						</motion.div>
 					</div>

@@ -74,14 +74,14 @@ const Produk = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white font-['Poppins']">
+        <div className="min-h-screen bg-white">
             <Head>
                 <title>Portofolio Produk - PT Divus Global Mediacomm</title>
             </Head>
 
             <Navbar />
 
-            <main className="pt-24 pb-16">
+            <main>
                 {/* Header Section Sesuai Permintaan */}
                 <header className="relative w-full">
                     {/* Hero Banner */}
@@ -98,10 +98,10 @@ const Produk = () => {
 
                             {/* Text Content */}
                             <div className="flex flex-col justify-center">
-                                <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
+                                <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">
                                     PT Divus Global Mediacomm
                                 </h1>
-                                <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
+                                <p className="text-zinc-500 text-base md:text-xl font-medium italic">
                                     - Produk
                                 </p>
                             </div>
@@ -215,7 +215,7 @@ const Produk = () => {
 </div>
 
                 {/* CTA SECTION */}
-                <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">
+                <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
                     <div className="max-w-7xl mx-auto">
                         <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
                             {/* Background layer for gradient and image */}
@@ -248,7 +248,7 @@ const Produk = () => {
                                 {/* Tombol CTA */}
                                 <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                                     <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-                                    <span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">
+                                    <span className="text-black text-base md:text-lg font-semibold capitalize">
                                         Konsultasi Sekarang
                                     </span>
                                 </a>

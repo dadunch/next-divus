@@ -120,7 +120,7 @@ export default function TentangKami() {
         </section>
 
         {/* Breadcrumb */}
-        <div className="w-full bg-zinc-300 py-3 mb-4">
+        <div className="w-full bg-zinc-300 py-3 mb-4 ">
           <div className="max-w-7xl mx-auto">
             <p className="text-zinc-800 text-base">
               <Link href="/User/Home" className="hover:underline">Beranda</Link>
@@ -131,39 +131,49 @@ export default function TentangKami() {
       </header>
 
       {/* PROFIL PERUSAHAAN */}
-      <section className="max-w-8xl mx-auto px-6 md:px-28 py-16">
+      <section className="max-w-7xl mx-auto  py-16">
         {isLoading && !company ? (
            <div className="text-center py-10">Memuat Profil...</div>
         ) : (
-          <div className="flex flex-col lg:flex-row justify-center items-start gap-10">
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-10 lg:gap-16">
             <div className="w-full lg:w-1/2 relative">
-              <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">Profile Perusahaan</h2>
-              <p className='text-zinc-800 text-xl md:text-2xl font-sm leading-tight mt-4'>{company?.company_name || "PT Divus Global Mediacomm"}</p>
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold leading-tight z-10 relative">Profile Perusahaan</h2>
+              <p className='text-lg sm:text-xl md:text-2xl font-medium leading-tight mt-4'>{company?.company_name || "PT Divus Global Mediacomm"}</p>
               
-              <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-                <span className="font-semibold">Nama Perusahaan :</span> {company?.company_name || "-"}
-              </p>
-              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
-              
-              <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-                <span className="font-semibold">Bidang Usaha :</span> {company?.business_field || "Jasa Konsultasi"}
-              </p>
-              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
-              
-              <p className='inline-block text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-                 <span className="font-semibold">Berdiri Sejak :</span> {formatDate(company?.established_date)}
-              </p>
-              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
-              
-               <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 pb-2'>
-                <span className="font-semibold">Alamat :</span> {company?.address || "-"}
-              </p>
-              <div className="w-full h-0 outline outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+              <div className="mt-6 space-y-4">
+                <div>
+                  <p className='text-sm text-justify leading-relaxed pb-2'>
+                    <span className="font-semibold">Nama Perusahaan :</span> {company?.company_name || "-"}
+                  </p>
+                  <div className="w-full border-b border-gray-200"></div>
+                </div>
+
+                <div>
+                  <p className='text-sm text-justify leading-relaxed pb-2'>
+                    <span className="font-semibold">Bidang Usaha :</span> {company?.business_field || "Jasa Konsultasi"}
+                  </p>
+                  <div className="w-full border-b border-gray-200"></div>
+                </div>
+
+                <div>
+                  <p className='text-sm text-justify leading-relaxed pb-2'>
+                    <span className="font-semibold">Berdiri Sejak :</span> {formatDate(company?.established_date)}
+                  </p>
+                  <div className="w-full border-b border-gray-200"></div>
+                </div>
+
+                <div>
+                  <p className='text-sm text-justify leading-relaxed pb-2'>
+                    <span className="font-semibold">Alamat :</span> {company?.address || "-"}
+                  </p>
+                  <div className="w-full border-b border-gray-200"></div>
+                </div>
+              </div>
             </div>
 
             <div className="w-full lg:w-5/12">
-              <h2 className="text-zinc-800 text-lg md:text-xl font-semibold leading-tight z-10 relative">Tentang Perusahaan</h2>
-              <p className='text-zinc-800 text-sm text-justify font-sm leading-loose mt-4 whitespace-pre-line'>
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold leading-tight z-10 relative">Tentang Perusahaan</h2>
+              <p className='text-sm text-justify leading-loose mt-4 whitespace-pre-line text-gray-700'>
                 {company?.description || "Deskripsi perusahaan belum tersedia."}
               </p>
             </div>
@@ -221,7 +231,7 @@ export default function TentangKami() {
       </section>
 
       {/* KEAHLIAN KAMI SECTION (ICONS FIXED) */}
-      <section className="w-full px-6 md:px-20 py-16 md:py-6 overflow-hidden">
+      <section className="w-full md:py-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row justify-center items-center gap-10 mb-16">
             <div className="w-full relative text-center">
@@ -267,7 +277,7 @@ export default function TentangKami() {
       </section>
 
       {/* CTA SECTION */}
-      <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">
+      <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
         <div className="max-w-7xl mx-auto">
           <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
             <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">

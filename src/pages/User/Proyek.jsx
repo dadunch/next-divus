@@ -86,10 +86,10 @@ export default function Proyek() {
 
             {/* Text Content */}
             <div className="flex flex-col justify-center">
-              <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
+              <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">
                 PT Divus Global Mediacomm
               </h1>
-              <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
+              <p className="text-zinc-500 text-base md:text-xl font-medium italic">
                 - Proyek
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function Proyek() {
             onClick={() => setShowYearDropdown(!showYearDropdown)}
             className="w-36 h-10 px-4 bg-zinc-800 rounded-[10px] flex items-center justify-between gap-2 text-sm relative"
           >
-            <span className="text-white text-sm font-medium font-['Poppins'] leading-6">
+            <span className="text-white text-sm font-medium leading-6">
               {selectedYear === 'Semua' ? 'Tahun' : selectedYear}
             </span>
             <FaChevronDown className="text-white w-4 h-4" />
@@ -171,7 +171,7 @@ export default function Proyek() {
                     setShowYearDropdown(false);
                     setCurrentPage(1);
                   }}
-                  className="w-full text-left px-4 py-2 text-zinc-800 text-sm font-medium font-['Poppins'] hover:bg-zinc-100"
+                  className="w-full text-left px-4 py-2 text-zinc-800 text-sm font-medium hover:bg-zinc-100"
                 >
                   {y}
                 </button>
@@ -185,16 +185,16 @@ export default function Proyek() {
           <table className="w-full min-w-[600px]">
             <thead>
               <tr className="bg-zinc-100">
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold font-['Poppins'] border-b border-zinc-700">
+                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Customer:
                 </th>
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold font-['Poppins'] border-b border-zinc-700">
+                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Proyek:
                 </th>
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold font-['Poppins'] border-b border-zinc-700">
+                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Bidang:
                 </th>
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold font-['Poppins'] border-b border-zinc-700">
+                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Tahun:
                 </th>
               </tr>
@@ -211,18 +211,18 @@ export default function Proyek() {
               ) : (
                 paginatedProyek.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50 border-b border-zinc-200">
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal font-['Poppins']">
+                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
                       {/* Ambil Nama Client dari relasi */}
                       {item.client?.client_name || '-'}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal font-['Poppins']">
+                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
                       {item.project_name}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal font-['Poppins']">
+                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
                       {/* Ambil Bidang dari relasi category */}
                       {item.category?.bidang || '-'}
                     </td>
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal font-['Poppins']">
+                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
                       {item.tahun}
                     </td>
                   </tr>
@@ -245,9 +245,9 @@ export default function Proyek() {
 
             <div className="flex flex-col items-center gap-1">
               <div className="min-w-[90px] h-10 px-4 py-2 bg-white rounded-md border-2 border-zinc-800 flex items-center justify-center mt-6">
-                <span className="text-zinc-800 text-base font-medium font-['Poppins']">{currentPage}</span>
+                <span className="text-zinc-800 text-base font-medium">{currentPage}</span>
               </div>
-              <span className="text-zinc-600 text-sm font-medium font-['Poppins']">Dari {totalPages}</span>
+              <span className="text-zinc-600 text-sm font-medium">Dari {totalPages}</span>
             </div>
 
             <button
@@ -261,7 +261,7 @@ export default function Proyek() {
         )}
       </section>
       {/* CTA SECTION */}
-            <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">
+            <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
               <div className="max-w-7xl mx-auto">
                 <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
                   {/* Background layer for gradient and image */}
@@ -294,7 +294,7 @@ export default function Proyek() {
                     {/* Tombol CTA */}
                     <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                       <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-                      <span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">
+                      <span className="text-black text-base md:text-lg font-semibold capitalize">
                         Konsultasi Sekarang
                       </span>
                     </a>

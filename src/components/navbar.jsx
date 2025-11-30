@@ -88,7 +88,7 @@ function Navbar() {
     };
 
     return (
-        <nav className="w-full h-24 fixed top-0 left-0 z-50 bg-white shadow-sm font-['Poppins']">
+        <nav className="w-full h-24 fixed top-0 left-0 z-50 bg-white shadow-sm">
             
             <div className="max-w-[1440px] mx-auto h-full flex items-center justify-between px-6 md:px-[90px]">
                 

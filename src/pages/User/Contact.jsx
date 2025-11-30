@@ -22,10 +22,10 @@ export default function Contact() {
 
                         {/* Text Content */}
                         <div className="flex flex-col justify-center">
-                            <h1 className="text-zinc-800 text-xl md:text-3xl font-bold font-['Poppins'] leading-tight">
+                            <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">
                                 PT Divus Global Mediacomm
                             </h1>
-                            <p className="text-zinc-500 text-base md:text-xl font-medium italic font-['Poppins']">
+                            <p className="text-zinc-500 text-base md:text-xl font-medium italic">
                                 - Kontak
                             </p>
                         </div>
@@ -54,7 +54,7 @@ export default function Contact() {
 
                     <div className="flex flex-col gap-6">
                         {/* Alamat */}
-                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg border-zinc-300  p-5">   {/*border-b-4 border-r-2 border-l-2  */}
+                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
                             <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <MapPin className="text-white w-6 h-6 " />
                             </div>
@@ -107,7 +107,7 @@ export default function Contact() {
                     </div>
                 </div>
                 {/* Map */}
-                <div className="flex-1 w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 rounded-xl overflow-hidden border border-border h-[470px]">
+                <div className="flex-1 w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 rounded-xl overflow-hidden border-r-4 border-b-4 shadow-md border-zinc-300 h-[470px]">
                     <iframe
                         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3997.006528885579!2d107.68974571062172!3d-6.902019367516907!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e7799d64ea97%3A0x6354e71b8440d24e!2sDivus%20Global%20Mediacomm!5e1!3m2!1sid!2sid!4v1761939450230!5m2!1sid!2sid"
                         width="100%"

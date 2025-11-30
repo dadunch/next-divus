@@ -154,63 +154,65 @@ const Produk = () => {
                 </section>
 
                 {/* --- PRODUCT GRID SECTION --- */}
-                <div className="max-w-6xl mx-auto px-6 md:px-12 mb-20 mt-10">
-                    {isLoading ? (
-                        <div className="flex justify-center py-20">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-                        </div>
-                    ) : products.length === 0 ? (
-                        <div className="text-center py-20 bg-gray-50 rounded-xl">
-                            <p className="text-gray-400">Belum ada produk yang dipublikasikan.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {products.map((item) => {
-                                const images = getImages(item.foto_produk);
-                                const coverImage = images.length > 0 ? images[0] : null;
+<div className="max-w-6xl mx-auto px-6 md:px-12 mb-20 mt-10">
+    {isLoading ? (
+        <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+        </div>
+    ) : products.length === 0 ? (
+        <div className="text-center py-20 bg-gray-50 rounded-xl">
+            <p className="text-gray-400">Belum ada produk yang dipublikasikan.</p>
+        </div>
+    ) : (
+        // Menggunakan flex-wrap dan justify-center untuk menengahkan grid
+        <div className="flex flex-wrap justify-center gap-6">
+            {products.map((item) => {
+                const images = getImages(item.foto_produk);
+                const coverImage = images.length > 0 ? images[0] : null;
 
-                                return (
-                                    <motion.div
-                                        key={item.id}
-                                        whileHover={{ y: -5 }}
-                                        className="group cursor-pointer relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100"
-                                        onClick={() => openModal(item)}
-                                    >
-                                        <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
-                                            {/* GAMBAR UTAMA */}
-                                            {coverImage ? (
-                                                <img
-                                                    src={coverImage}
-                                                    alt={item.nama_produk}
-                                                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                                                    onError={(e) => e.target.src = "https://placehold.co/400x600?text=No+Image"}
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-sm p-4 text-center">
-                                                    <span>No Image</span>
-                                                </div>
-                                            )}
+                return (
+                    <motion.div
+                        key={item.id}
+                        whileHover={{ y: -5 }}
+                        // Mengatur lebar elemen agar responsif dan turun ke bawah jika tidak muat
+                        className="group cursor-pointer relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.33%-16px)] lg:w-[calc(25%-18px)]"
+                        onClick={() => openModal(item)}
+                    >
+                        <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
+                            {/* GAMBAR UTAMA */}
+                            {coverImage ? (
+                                <img
+                                    src={coverImage}
+                                    alt={item.nama_produk}
+                                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                                    onError={(e) => e.target.src = "https://placehold.co/400x600?text=No+Image"}
+                                />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-sm p-4 text-center">
+                                    <span>No Image</span>
+                                </div>
+                            )}
 
-                                            {/* OVERLAY HOVER GRID */}
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-center justify-center">
-                                                <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-zinc-900 px-5 py-2 rounded-full text-sm font-bold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl tracking-wide">
-                                                    Lihat Foto
-                                                </span>
-                                            </div>
+                            {/* OVERLAY HOVER GRID */}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-center justify-center">
+                                <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-zinc-900 px-5 py-2 rounded-full text-sm font-bold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl tracking-wide">
+                                    Lihat Foto
+                                </span>
+                            </div>
 
-                                            {/* INDIKATOR JUMLAH FOTO */}
-                                            {images.length > 1 && (
-                                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md border border-white/10">
-                                                    +{images.length - 1}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
+                            {/* INDIKATOR JUMLAH FOTO */}
+                            {images.length > 1 && (
+                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md border border-white/10">
+                                    +{images.length - 1}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </motion.div>
+                );
+            })}
+        </div>
+    )}
+</div>
 
                 {/* CTA SECTION */}
                 <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">

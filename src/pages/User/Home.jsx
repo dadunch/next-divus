@@ -57,11 +57,10 @@ export default function Home() {
                 const resService = await fetch('/api/services');
                 const dataService = await resService.json();
                 if (resService.ok && Array.isArray(dataService)) {
-                    setServices(dataService.slice(0, 3)); 
+                    setServices(dataService); 
                 }
 
                 // 2. Fetch Products (Produk)
-                // Asumsi endpoint api/products ada (dari konteks sebelumnya)
                 const resProd = await fetch('/api/products'); 
                 const dataProd = await resProd.json();
                 if (resProd.ok && Array.isArray(dataProd)) {

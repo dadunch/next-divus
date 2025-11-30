@@ -4,34 +4,34 @@ import { createLog } from '../../../lib/logger';
 
 export default async function handler(req, res) {
   
-  // === 1. GET: AMBIL SEMUA LAYANAN (WAJIB ADA UNTUK SIDEBAR) ===
+  // 1. GET: Ambil Semua Layanan
   if (req.method === 'GET') {
     try {
       const services = await prisma.services.findMany({
-        orderBy: { created_at: 'desc' }, // Urutkan dari yang terbaru
+        orderBy: { created_at: 'desc' },
         select: {
           id: true,
           title: true,
           slug: true,
-          icon_url: true 
+          icon_url: true,
+          image_url: true,
+          description: true
         }
       });
-      // serialize digunakan untuk menangani BigInt jika ada
       return res.status(200).json(serialize(services));
     } catch (error) {
-      console.error("Gagal ambil layanan:", error);
       return res.status(500).json({ error: "Gagal mengambil data layanan" });
     }
   }
 
-  // === 2. POST: TAMBAH LAYANAN BARU ===
+  // 2. POST: Tambah Layanan Baru
   if (req.method === 'POST') {
     const { title, description, icon_class, image_url, userId } = req.body; 
 
     try {
-      // Buat slug otomatis
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
 
+      // === PERUBAHAN DI SINI (MENAMBAHKAN TIMEOUT) ===
       const result = await prisma.$transaction(async (tx) => {
         // Simpan ke Tabel Services
         const newService = await tx.services.create({
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
             slug, 
             description, 
             icon_url: icon_class, 
-            image_url: image_url  
+            image_url: image_url 
           }
         });
 
@@ -48,7 +48,11 @@ export default async function handler(req, res) {
         await createLog(tx, userId, "Tambah Layanan", `Menambahkan layanan baru: ${title}`);
 
         return newService;
+      }, {
+        maxWait: 5000, // Waktu tunggu maksimal untuk dapat koneksi
+        timeout: 20000 // Waktu tunggu maksimal untuk proses simpan (20 Detik)
       });
+      // ================================================
 
       return res.status(201).json(serialize(result));
     } catch (error) {

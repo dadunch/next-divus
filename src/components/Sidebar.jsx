@@ -115,8 +115,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           const parents = normalizedMenus.filter(m => !m.parent_id);
           const children = normalizedMenus.filter(m => m.parent_id);
 
+// ... (kode sebelumnya tetap sama)
+
           const structuredMenu = parents.map(parent => {
             
+            // 1. Ambil anak-anak default dari database
             let myChildren = children
               .filter(child => child.parent_id === parent.id && !child.nama_menu.toLowerCase().includes('tambah layanan'))
               .map(child => ({
@@ -124,28 +127,39 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 path: child.url
               }));
 
+            // 2. Logika Khusus: LAYANAN (Tetap seperti kode asli Anda)
             if (parent.nama_menu === 'Layanan' || parent.url === '#Layanan') {
                myChildren = [
                  ...myChildren,     
-                 ...servicesMenu,   // Data terbaru dari state
+                 ...servicesMenu,
                  { name: '+ Tambah Layanan', path: '/Admin/LayananProduk', isSpecial: true } 
                ];
             }
+
+            // 3. Logika Khusus: PERUSAHAAN (Tetap seperti kode asli Anda)
              if (
               parent.nama_menu === "Perusahaan" ||
               parent.url === "#Perusahaan"
             ) {
               myChildren = [
-                {
-                  name: "Informasi Perusahaan",
-                  path: "/Admin/Perusahaan",
-                },
+                { name: "Informasi Perusahaan", path: "/Admin/Perusahaan" },
                 { name: "Foto Perusahaan", path: "/Admin/FotoPerusahaan" },
                 { name: "Asset Konten", path: "/Admin/AssetKonten" },
                 ...myChildren,
               ];
             }
 
+            if (
+                parent.nama_menu === "Portofolio" || 
+                parent.url === "#Portofolio"
+              ) {
+                myChildren = [
+                  { name: "Produk", path: "/Admin/Produk" },
+                  { name: "Client", path: "/Admin/Proyek/Client" },  
+                ];
+              }
+
+            // ----------------------------------
 
             return {
               name: parent.nama_menu,

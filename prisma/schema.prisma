@@ -7,7 +7,15 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
+model menu_foto {
+  id         Int      @id @default(autoincrement())
+  user_id    String   // Menyimpan username/ID admin yang mengubah
+  foto1      String?  // Path Foto Utama (Kanan)
+  foto2      String?  // Path Foto Overlay (Kiri)
+  foto3      String?  // Path Foto Tentang Kami (Bawah)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
 model activity_logs {
   id         BigInt    @id @default(autoincrement())
   user_id    BigInt?

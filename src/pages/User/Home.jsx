@@ -5,31 +5,15 @@ import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../../assets'; 
 import { motion } from 'framer-motion';
 
-// --- HELPER: FORMAT DESKRIPSI SINGKAT (DIPERBAIKI) ---
 const getSummary = (text) => {
     if (!text) return "Layanan profesional dari PT Divus.";
-
-    // 1. Hapus kalimat "Layanan Yang Ditawarkan: -" (Case Insensitive)
-    // Regex ini akan mencari variasi tulisan tersebut dan menghapusnya
-    let cleanText = text.replace(/Layanan\s+Yang\s+Ditawarkan\s*:\s*-?/gi, "");
-
-    // 2. Hapus karakter Markdown bintang (**)
-    cleanText = cleanText.replace(/\*\*/g, "");
-
-    // 3. Ambil ringkasan jika ada marker khusus, atau potong 100 karakter
+    let cleanText = text.replace(/Layanan\s+Yang\s+Ditawarkan\s*:\s*-?/gi, "").replace(/\*\*/g, "");
     const marker = "Ringkasan:";
     const index = cleanText.indexOf(marker);
-    
-    if (index !== -1) {
-        // Jika ada kata "Ringkasan:", ambil teks setelahnya
-        cleanText = cleanText.substring(index + marker.length);
-    }
-
-    // 4. Potong sisa spasi di awal/akhir dan batasi panjang karakter
+    if (index !== -1) cleanText = cleanText.substring(index + marker.length);
     return cleanText.trim().substring(0, 100) + (cleanText.length > 100 ? "..." : "");
 };
 
-// Data Statis
 const statsData = [
 	{ value: '10 Thn', label: 'Pengalaman' },
 	{ value: '44+', label: 'Klien Divus' },
@@ -59,6 +43,12 @@ export default function Home() {
     const [activePorto, setActivePorto] = useState('produk'); 
     const [loading, setLoading] = useState(true);
 
+    const [heroImages, setHeroImages] = useState({
+        img1: Assets.Hero1,
+        img2: Assets.Hero3, 
+        img3: Assets.Hero4 
+    });
+
     // --- FETCH DATA ---
     useEffect(() => {
         const fetchAllData = async () => {
@@ -82,6 +72,27 @@ export default function Home() {
                 const dataProj = await resProj.json();
                 if (resProj.ok && Array.isArray(dataProj)) {
                     setProjects(dataProj); 
+                }
+                try {
+                    // Panggil API Hero
+                    const resHero = await fetch('/api/hero'); 
+                    
+                    if (resHero.ok) {
+                        const dataHero = await resHero.json();
+                        
+                        // Debugging: Cek apakah data masuk di Console Browser (F12)
+                        console.log("Data Hero diterima:", dataHero);
+
+                        setHeroImages(prev => ({
+                            // PENTING: Mapping dari 'foto' (Database) ke 'img' (Frontend)
+                            // Gunakan dataHero.foto1, bukan dataHero.img1
+                            img1: dataHero.foto1 || prev.img1,
+                            img2: dataHero.foto2 || prev.img2,
+                            img3: dataHero.foto3 || prev.img3
+                        }));
+                    }
+                } catch (e) {
+                    console.log("Gagal load hero assets:", e);
                 }
 
             } catch (error) {
@@ -156,11 +167,20 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="w-full md:w-1/2 relative flex justify-center items-center">
-                            <div className="relative w-[320px] sm:w-[420px] md:w-[550px] h-[380px] sm:h-[450px] md:h-[480px]">
-                                <img className="absolute top-[140px] sm:top-[160px] md:top-[185px] left-6 sm:left-12 md:left-16 w-[250px] sm:w-[350px] md:w-[490px] h-[200px] sm:h-[280px] md:h-[360px] rounded-2xl object-cover" src={Assets.Hero3} alt="Gambar Latar" />
-                                <img className="absolute top-[30px] sm:top-[40px] md:top-[50px] left-2 sm:left-5 w-[480px] sm:w-[650px] md:w-[900px] h-[460px] sm:h-[650px] md:h-[860px] rounded-2xl object-cover" src={Assets.Hero1} alt="Gambar Tengah" />
-                                <img className="absolute top-[120px] sm:top-[130px] md:top-[160px] right-10 md:right-24 w-[380px] sm:w-[520px] md:w-[700px] h-[350px] sm:h-[480px] md:h-[620px] rounded-2xl object-cover" src={Assets.Hero2} alt="Gambar Depan" />
+                        <div className="w-full md:w-1/2 relative flex justify-center items-center mt-12 md:mt-0">
+                            <div className="relative w-full max-w-[550px] aspect-[5/4] sm:aspect-[4/3]">
+                                <img className="absolute left-10 top-13 w-[2000px] object-contain z-0 pointer-events-none opacity-90" 
+                                    src={Assets.Hero3} 
+                                    alt="Dekorasi" 
+                                />
+                                <img  className="aspect-square object-cover top-4 absolute right-3 w-[57%] rounded-2xl object-cover shadow-lg z" 
+                                    src={heroImages.img1} 
+                                    alt="Office Meeting" 
+                                />
+                                <img className="aspect-square object-cover absolute bottom-15 left-0 w-[47%] rounded-2xl object-cover z-20" 
+                                    src={heroImages.img2} 
+                                    alt="Team Discussion" 
+                                />
                             </div>
                         </div>
                     </div>
@@ -200,12 +220,12 @@ export default function Home() {
                     </div>
                     <div className="w-full lg:w-1/2 flex justify-center">
                         <div className="relative w-full max-w-[520px] h-[350px] sm:h-[420px] lg:h-[450px] overflow-hidden rounded-2xl">
-                            <img className="absolute inset-0 rounded-2xl object-cover w-full h-full" src={Assets.Hero4} alt="Tentang Kami" />
+                            <img className="absolute inset-0 rounded-2xl object-cover w-full h-full" src={heroImages.img3} alt="Tentang Kami" />
                         </div>
                     </div>
                 </section>
 
-				{/* LAYANAN (DENGAN FIX getSummary) */}
+				{/* LAYANAN */}
 				<section className="px-6 md:px-10 py-16 md:py-20 bg-gray-50 overflow-hidden">
 					<div className="max-w-[1440px] mx-auto px-6 md:px-10">
 						<div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
@@ -314,24 +334,35 @@ export default function Home() {
                                                     {projects.map((item, idx) => (
                                                         <tr key={idx} className="hover:bg-green-50 transition-colors bg-white/50">
                                                             
+                                                            {/* CUSTOMER (Ambil dari relation client) */}
                                                             <td className="px-4 py-3 font-medium text-gray-900">
-                                                                {item.client?.client_name || '-'}
+                                                                {item.client?.client_name || item.customer || '-'}
                                                             </td>
                                                             
+                                                            {/* PROYEK */}
                                                             <td className="px-4 py-3 text-gray-600">
-                                                                {item.project_name || '-'}
+                                                                {item.project_name || item.namaProyek || '-'}
                                                             </td>
                                                             
+                                                            {/* BIDANG (Perbaikan: Ambil dari category.bidang) */}
                                                             <td className="px-4 py-3 text-gray-600">
-                                                                {item.category?.bidang || '-'}
+                                                                {item.category?.bidang || item.bidang || '-'}
                                                             </td>
                                                             
+                                                            {/* TAHUN */}
                                                             <td className="px-4 py-3 text-center text-gray-600">
                                                                 {item.tahun || '-'}
                                                             </td>
 
                                                         </tr>
                                                     ))}
+                                                    {projects.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">
+                                                                Belum ada data proyek.
+                                                            </td>
+                                                        </tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>

@@ -12,6 +12,8 @@ export const config = {
   },
 };
 
+// fjkdlsajklfdsajklfdjklsfkljaskjlfds
+
 export default async function handler(req, res) {
   const { id } = req.query;
   const serviceId = BigInt(id);
@@ -149,7 +151,7 @@ export default async function handler(req, res) {
             console.error("Error deleting image file:", err);
           }
         }
-        
+      //32323232
         // 3. Hapus Data dari Database
         await tx.services.delete({ where: { id: serviceId } });
 

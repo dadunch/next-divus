@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { Assets } from '../../../assets'; // Sesuaikan path assets Anda
+import { motion } from 'framer-motion';
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 50 },
+  whileInView: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: "easeOut" },
+  viewport: { once: false, amount: 0.2 }
+};
 
 export default function DaftarLayanan() {
   const [services, setServices] = useState([]);
@@ -40,11 +48,11 @@ export default function DaftarLayanan() {
       </div>
 
       {/* Grid Layanan */}
-      <div className="max-w-7xl mx-auto px-6 -mt-10">
+      <motion.div {...fadeInUp} className="max-w-7xl mx-auto px-6 -mt-10">
         {loading ? (
-           <p className="text-center mt-10">Memuat layanan...</p>
+          <p className="text-center mt-10">Memuat layanan...</p>
         ) : services.length === 0 ? (
-           <div className="bg-white p-10 rounded-xl shadow text-center">Belum ada layanan tersedia.</div>
+          <div className="bg-white p-10 rounded-xl shadow text-center">Belum ada layanan tersedia.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((item) => (
@@ -59,18 +67,18 @@ export default function DaftarLayanan() {
                     )}
                     {/* Icon Floating */}
                     {item.icon_url && (
-                        <div className="absolute bottom-[-16px] right-6 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg text-white text-xl border-4 border-white">
-                            <i className={item.icon_url}></i>
-                        </div>
+                      <div className="absolute bottom-[-16px] right-6 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg text-white text-xl border-4 border-white">
+                        <i className={item.icon_url}></i>
+                      </div>
                     )}
                   </div>
-                  
+
                   {/* Konten */}
                   <div className="p-6 pt-8 flex-1 flex flex-col">
                     <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600 transition-colors">{item.title}</h3>
                     <p className="text-gray-500 text-sm line-clamp-3 mb-4 flex-1">
-                        {/* Hapus markdown simpel untuk preview */}
-                        {item.description.replace(/\*\*.*?\*\*/g, '').replace(/[-•]/g, '').substring(0, 100)}...
+                      {/* Hapus markdown simpel untuk preview */}
+                      {item.description.replace(/\*\*.*?\*\*/g, '').replace(/[-•]/g, '').substring(0, 100)}...
                     </p>
                     <span className="text-green-600 font-semibold text-sm flex items-center gap-2">
                       Lihat Detail <i className="fa-solid fa-arrow-right"></i>
@@ -81,7 +89,7 @@ export default function DaftarLayanan() {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Assets } from '../../../assets'; // Pastikan path assets sesuai struktur folder Anda
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaDownload } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 
 const reasons = [
@@ -25,7 +25,7 @@ const reasons = [
 const ServiceHighlights = ({ items }) => (
 	<div className="w-full mt-6">
 		<div className="max-w-6xl mx-auto">
-            {/* PERUBAHAN: Gunakan flex, flex-wrap, dan justify-center */}
+			{/* PERUBAHAN: Gunakan flex, flex-wrap, dan justify-center */}
 			<div className="flex flex-wrap justify-center gap-6 py-2">
 				{items.map((text, idx) => (
 					<div
@@ -44,47 +44,47 @@ const ServiceHighlights = ({ items }) => (
 
 export default function LayananDetail() {
 	const router = useRouter();
-    // 'id' di sini sebenarnya menangkap SLUG dari URL
-	const { id } = router.query; 
-	
+	// 'id' di sini sebenarnya menangkap SLUG dari URL
+	const { id } = router.query;
+
 	const [serviceData, setServiceData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
-    // --- PERBAIKAN LOGIKA FETCH DATA ---
+	// --- PERBAIKAN LOGIKA FETCH DATA ---
 	useEffect(() => {
 		if (!id) return;
 
 		const fetchServiceData = async () => {
 			try {
 				setLoading(true);
-                
-                // 1. Ambil SEMUA data layanan (bukan per ID)
-                // Kita gunakan '/api/services' yang mengembalikan array list layanan
+
+				// 1. Ambil SEMUA data layanan (bukan per ID)
+				// Kita gunakan '/api/services' yang mengembalikan array list layanan
 				const response = await fetch('/api/services');
-				
+
 				if (!response.ok) {
 					throw new Error('Gagal menghubungi server');
 				}
-				
-				const data = await response.json();
-                
-                // 2. Cari layanan yang SLUG-nya cocok dengan URL
-                // 'item.slug' adalah slug di database, 'id' adalah slug dari URL
-                const foundService = data.find(item => item.slug === id);
 
-                if (foundService) {
-                    setServiceData(foundService);
-                    setError(null);
-                } else {
-                    // Fallback: Jika URL masih pakai ID lama (angka), coba cari by ID
-                    const foundById = data.find(item => String(item.id) === String(id));
-                    if (foundById) {
-                        setServiceData(foundById);
-                    } else {
-                        throw new Error('Layanan tidak ditemukan');
-                    }
-                }
+				const data = await response.json();
+
+				// 2. Cari layanan yang SLUG-nya cocok dengan URL
+				// 'item.slug' adalah slug di database, 'id' adalah slug dari URL
+				const foundService = data.find(item => item.slug === id);
+
+				if (foundService) {
+					setServiceData(foundService);
+					setError(null);
+				} else {
+					// Fallback: Jika URL masih pakai ID lama (angka), coba cari by ID
+					const foundById = data.find(item => String(item.id) === String(id));
+					if (foundById) {
+						setServiceData(foundById);
+					} else {
+						throw new Error('Layanan tidak ditemukan');
+					}
+				}
 
 			} catch (err) {
 				setError(err.message);
@@ -105,24 +105,24 @@ export default function LayananDetail() {
 		return match[1].split('\n').filter(line => line.startsWith('- ')).map(line => line.replace('- ', '').trim());
 	};
 
-    // Helper: Membersihkan deskripsi agar tidak menampilkan kode aneh
-    const cleanDescription = (desc) => {
-        if (!desc) return "";
-        // Hapus bagian list layanan
-        let clean = desc.replace(/\*\*Layanan yang ditawarkan:\*\*\n((?:- .+\n?)+)/, '');
-        // Hapus bagian Ringkasan
-        clean = clean.replace(/\*\*Ringkasan:\*\*.*?\n\n/s, '');
-        // Format Bold
-        clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-        return clean.trim();
-    };
+	// Helper: Membersihkan deskripsi agar tidak menampilkan kode aneh
+	const cleanDescription = (desc) => {
+		if (!desc) return "";
+		// Hapus bagian list layanan
+		let clean = desc.replace(/\*\*Layanan yang ditawarkan:\*\*\n((?:- .+\n?)+)/, '');
+		// Hapus bagian Ringkasan
+		clean = clean.replace(/\*\*Ringkasan:\*\*.*?\n\n/s, '');
+		// Format Bold
+		clean = clean.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+		return clean.trim();
+	};
 
 	if (loading) return <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">Loading...</div>;
 	if (error) return <div className="min-h-screen flex items-center justify-center text-xl text-red-600">Error: {error}</div>;
 	if (!serviceData) return <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">Layanan tidak ditemukan</div>;
 
 	const servicesList = parseServices(serviceData.description);
-    const displayDesc = cleanDescription(serviceData.description);
+	const displayDesc = cleanDescription(serviceData.description);
 
 	return (
 		<div className="relative w-full bg-white overflow-hidden font-['Poppins']">
@@ -159,11 +159,11 @@ export default function LayananDetail() {
 			<section className="max-w-[1440px] mx-auto px-6 md:px-20 py-12 flex flex-col lg:flex-row lg:items-center gap-10">
 				<div className="w-full lg:w-1/2 flex justify-center">
 					<div className="w-full md:w-[635px] h-80 md:h-96 overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative">
-                        {serviceData.image_url ? (
-						    <img className="w-full h-full object-cover rounded-2xl" src={serviceData.image_url} alt={serviceData.title} />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
-                        )}
+						{serviceData.image_url ? (
+							<img className="w-full h-full object-cover rounded-2xl" src={serviceData.image_url} alt={serviceData.title} />
+						) : (
+							<div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+						)}
 					</div>
 				</div>
 
@@ -171,10 +171,10 @@ export default function LayananDetail() {
 					<h1 className="text-zinc-800 text-2xl lg:text-3xl font-bold leading-tight">
 						Apa Itu {serviceData.title}?
 					</h1>
-					<div 
-                        className="text-zinc-800 text-base font-normal leading-6 text-justify whitespace-pre-line"
-                        dangerouslySetInnerHTML={{ __html: displayDesc }}
-                    />
+					<div
+						className="text-zinc-800 text-base font-normal leading-6 text-justify whitespace-pre-line"
+						dangerouslySetInnerHTML={{ __html: displayDesc }}
+					/>
 
 					<Link href="/User/Contact" className="inline-flex justify-start items-center px-5 py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
 						<span className="text-white text-base font-semibold leading-6">Konsultasi Sekarang</span>
@@ -182,7 +182,7 @@ export default function LayananDetail() {
 				</div>
 			</section>
 
-            {/* Highlights */}
+			{/* Highlights */}
 			<section className="max-w-[1440px] mx-auto px-6 md:px-20 py-12">
 				<h2 className="text-lime-500 text-lg md:text-2xl text-center font-medium capitalize mb-4">
 					Kembangkan Bisnis Anda Bersama Kami
@@ -190,8 +190,8 @@ export default function LayananDetail() {
 				<p className="text-zinc-700 text-2xl md:text-3xl font-semibold text-center leading-relaxed mb-8">
 					Layanan {serviceData.title} Apa Yang Kami Tawarkan?
 				</p>
-				
-                {/* PERBAIKAN: Gunakan 'servicesList' bukan 'services' */}
+
+				{/* PERBAIKAN: Gunakan 'servicesList' bukan 'services' */}
 				{servicesList.length > 0 ? (
 					<ServiceHighlights items={servicesList} />
 				) : (
@@ -221,23 +221,23 @@ export default function LayananDetail() {
 			</section>
 
 			{/* CTA SECTION */}
-            <section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden">
-                <div className="max-w-7xl mx-auto">
-                    <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
-                        <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
-                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                        </div>
-                        <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-                            <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
-                            <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
-                            <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
-                                <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-                                <span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">Konsultasi Sekarang</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </section>
+			<section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
+				<div className="max-w-7xl mx-auto">
+					<div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
+						<div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
+							<div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+						</div>
+						<div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
+							<h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
+							<p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
+							<a href="/downloads/file.pdf" download className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+								<FaDownload className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
+								<span className="text-black text-base md:text-lg font-semibold font-['Poppins'] capitalize">Download</span>
+							</a>
+						</div>
+					</div>
+				</div>
+			</section>
 
 			{/* WA Button */}
 			<a href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-green-600 transition-colors">

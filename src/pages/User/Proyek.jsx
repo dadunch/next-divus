@@ -148,7 +148,7 @@ export default function Proyek() {
                 setCurrentPage(1); // Reset ke halaman 1 saat filter berubah
               }}
               className={`px-6 py-2 rounded-[10px] text-lg font-medium transition-all ${activeFilter === category
-                ? 'bg-zinc-800 text-white'
+                ? 'bg-zinc-700 text-white'
                 : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
                 }`}
             >
@@ -161,7 +161,7 @@ export default function Proyek() {
         <div className="flex justify-end mb-8 relative">
           <button
             onClick={() => setShowYearDropdown(!showYearDropdown)}
-            className="w-36 h-10 px-4 bg-zinc-800 rounded-[10px] flex items-center justify-between gap-2 text-sm relative"
+            className="w-36 h-10 px-4 bg-zinc-700 rounded-[10px] flex items-center justify-between gap-2 text-sm relative"
           >
             <span className="text-white text-sm font-medium leading-6">
               {selectedYear === 'Semua' ? 'Tahun' : selectedYear}
@@ -189,21 +189,21 @@ export default function Proyek() {
         </div>
 
         {/* Table */}
-        <div className="w-full bg-white rounded-lg border border-zinc-700 overflow-hidden mb-8 overflow-x-auto">
+        <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden mb-8 overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>
               <tr className="bg-zinc-100">
                 <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
-                  Customer:
+                  Customer
                 </th>
                 <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
-                  Proyek:
+                  Proyek
                 </th>
                 <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
-                  Bidang:
+                  Bidang
                 </th>
                 <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
-                  Tahun:
+                  Tahun
                 </th>
               </tr>
             </thead>
@@ -246,7 +246,7 @@ export default function Proyek() {
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+              className="w-10 h-10 bg-zinc-700 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-50 transition-colors"
             >
               <FaChevronLeft className="text-white w-5 h-5" />
             </button>
@@ -261,7 +261,7 @@ export default function Proyek() {
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="w-10 h-10 bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+              className="w-10 h-10 bg-zinc-700 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-50 transition-colors"
             >
               <FaChevronLeft className="text-white w-5 h-5 rotate-180" />
             </button>

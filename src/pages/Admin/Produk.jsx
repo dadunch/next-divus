@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AddProductModal from "../../components/Modals/AddProductModul";
+import EditProductModal from "../../components/Modals/EditProductModal";
 import Swal from "sweetalert2";
 import { Search, Plus, Trash2, Eye, Package, X } from "lucide-react";
 import { useSelector } from "react-redux";
@@ -13,6 +14,8 @@ const Produk = () => {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState(null);
   const [detailData, setDetailData] = useState(null);
 
   const fetchProducts = async () => {

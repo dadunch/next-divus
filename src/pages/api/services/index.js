@@ -1,50 +1,33 @@
 import { IncomingForm } from 'formidable';
 import path from 'path';
-import fs from 'fs-extra'; // Pastikan install: npm install fs-extra
+import fs from 'fs-extra';
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
 
-// 1. CONFIG: Matikan Body Parser bawaan Next.js (WAJIB untuk upload file)
+// CONFIG: Matikan Body Parser bawaan Next.js (WAJIB untuk upload file)
 export const config = {
   api: {
     bodyParser: false,
   },
 };
-// udin mamba
 
 export default async function handler(req, res) {
   
-  // --- GET: AMBIL DATA (Logika Tetap Sama) ---
-  // if (req.method === 'GET') {
-  //   try {
-  //     const services = await prisma.services.findMany({
-  //       orderBy: { created_at: 'desc' }
-  //       // select: {
-  //       //   id: true,
-  //       //   title: true,
-  //       //   slug: true,
-  //       //   icon_url: true, // Pastikan nama kolom di DB sesuai (icon_url atau icon_class?)
-  //       //   image_url: true,
-  //       //   description: true
-  //       // }
-  //     });
-  //     return res.status(200).json(serialize(services));
-  //   } catch (error) {
-  //     return res.status(500).json({ error: "Gagal mengambil data layanan" });
-  //   }
-  // }
-
+  // --- GET: AMBIL DATA ---
   if (req.method === 'GET') {
     try {
-      const services = await prisma.services.findMany({ orderBy: { created_at: 'desc' } });
+      const services = await prisma.services.findMany({ 
+        orderBy: { created_at: 'desc' } 
+      });
       return res.status(200).json(serialize(services));
     } catch (error) {
+      console.error("Error getting services:", error);
       return res.status(500).json({ error: "Gagal mengambil data layanan" });
     }
   }
 
-  // --- POST: TAMBAH LAYANAN (LOGIKA BARU DENGAN FORMIDABLE) ---
+  // --- POST: TAMBAH LAYANAN (DENGAN FILE UPLOAD) ---
   if (req.method === 'POST') {
     
     // Siapkan folder upload
@@ -68,16 +51,15 @@ export default async function handler(req, res) {
         });
       });
 
-      // Ambil Data Text (Formidable v3 mengembalikan array, jadi ambil index 0)
-      // Gunakan '||' untuk jaga-jaga jika formatnya string langsung
+      // Ambil Data Text (Formidable v3 mengembalikan array)
       const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
       const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
-      const icon_class = Array.isArray(fields.icon_class) ? fields.icon_class[0] : fields.icon_class;
+      const short_description = Array.isArray(fields.short_description) ? fields.short_description[0] : fields.short_description;
+      const icon_url = Array.isArray(fields.icon_url) ? fields.icon_url[0] : fields.icon_url;
       const userId = Array.isArray(fields.userId) ? fields.userId[0] : fields.userId;
 
       // Ambil Path Gambar
       let dbImageUrl = null;
-      // Cek apakah ada file yang diupload dengan key 'image'
       const uploadedFile = files.image ? (Array.isArray(files.image) ? files.image[0] : files.image) : null;
 
       if (uploadedFile) {
@@ -95,16 +77,16 @@ export default async function handler(req, res) {
             title, 
             slug, 
             description, 
-            icon_url: icon_class, // Sesuaikan dengan nama kolom DB Anda
+            short_description: short_description || '',
+            icon_url: icon_url || '', // Simpan class icon (fa-solid fa-user)
             image_url: dbImageUrl // Simpan path gambar (/uploads/products/...)
           }
         });
 
         // Catat Log Aktivitas
-        // Konversi userId ke BigInt atau Int sesuai tipe data DB Anda
         const uid = userId ? parseInt(userId) : null; 
-        if(uid) {
-            await createLog(tx, uid, "Tambah Layanan", `Menambahkan layanan baru: ${title}`);
+        if (uid) {
+          await createLog(tx, uid, "Tambah Layanan", `Menambahkan layanan baru: ${title}`);
         }
 
         return newService;

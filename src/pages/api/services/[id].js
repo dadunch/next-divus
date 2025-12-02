@@ -8,11 +8,9 @@ import fs from 'fs-extra';
 // Disable default body parser untuk handle file upload
 export const config = {
   api: {
-    bodyParser: false, // Matikan default body parser
+    bodyParser: false,
   },
 };
-
-// fjkdlsajklfdsajklfdjklsfkljaskjlfds
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -35,7 +33,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // PUT (Edit - DENGAN FILE UPLOAD)
+  // --- PUT: EDIT LAYANAN (DENGAN FILE UPLOAD) ---
   if (req.method === 'PUT') {
     // Siapkan folder upload
     const uploadDir = path.join(process.cwd(), 'public/uploads/products');
@@ -95,8 +93,8 @@ export default async function handler(req, res) {
         const updateData = { 
           title, 
           description, 
-          short_description, 
-          icon_url,
+          short_description: short_description || '', 
+          icon_url: icon_url || '',
           image_url: dbImageUrl
         };
 
@@ -122,7 +120,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // DELETE (Hapus - PERLU LOG + HAPUS FILE)
+  // --- DELETE: HAPUS LAYANAN (PERLU LOG + HAPUS FILE) ---
   if (req.method === 'DELETE') {
     // Parse body untuk ambil userId
     const chunks = [];
@@ -151,7 +149,7 @@ export default async function handler(req, res) {
             console.error("Error deleting image file:", err);
           }
         }
-      //32323232
+      
         // 3. Hapus Data dari Database
         await tx.services.delete({ where: { id: serviceId } });
 

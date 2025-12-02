@@ -14,23 +14,10 @@ const getSummary = (text) => {
     return cleanText.trim().substring(0, 100) + (cleanText.length > 100 ? "..." : "");
 };
 
-const statsData = [
-    { value: '10 Thn', label: 'Pengalaman' },
-    { value: '44+', label: 'Klien Divus' },
-    { value: '49+', label: 'Proyek Selesai' },
-];
-
 const reasons = [
     { number: 1, title: 'KONSULTAN BERPENGALAMAN', desc: 'PT Divus diisi oleh para profesional berpengalaman.' },
     { number: 2, title: 'AHLI PROFESIONAL', desc: 'Tim ahli dari berbagai bidang dengan pendekatan relevan.' },
     { number: 3, title: 'HASIL TERUKUR & CEPAT', desc: 'Output berkualitas tinggi berdasarkan data dan insight akurat.' },
-];
-
-const clientLogos = [
-    Assets.Client1, Assets.Client2, Assets.Client3, Assets.Client4,
-    Assets.Client5, Assets.Client6, Assets.Client7, Assets.Client8,
-    Assets.Client9, Assets.Client10, Assets.Client11, Assets.Client12,
-    Assets.Client13,
 ];
 
 const fadeInUp = {
@@ -41,12 +28,21 @@ const fadeInUp = {
 };
 
 export default function Home() {
-    // State Data
+    // --- STATE DATA ---
     const [services, setServices] = useState([]);
     const [products, setProducts] = useState([]);
     const [projects, setProjects] = useState([]);
+    
+    // State Logo Klien (Dinamis dari Database)
+    const [clientLogos, setClientLogos] = useState([]); 
 
-    // State UI
+    // State Statistik
+    const [statsData, setStatsData] = useState([
+        { value: '11', label: 'Tahun Pengalaman' }, // Hardcode 11 Tahun
+        { value: '0+', label: 'Klien Divus' },
+        { value: '0+', label: 'Proyek Selesai' },
+    ]);
+
     const [activePorto, setActivePorto] = useState('produk');
     const [loading, setLoading] = useState(true);
 
@@ -80,19 +76,46 @@ export default function Home() {
                 if (resProj.ok && Array.isArray(dataProj)) {
                     setProjects(dataProj);
                 }
+
+                // 4. Fetch Clients (LOGO UNTUK BANNER)
+                // Ini yang menghubungkan ke API Client Anda
                 try {
-                    // Panggil API Hero
-                    const resHero = await fetch('/api/hero'); 
+                    const resClients = await fetch('/api/clients');
+                    const dataClients = await resClients.json();
+                    if (resClients.ok && Array.isArray(dataClients)) {
+                        // Ambil hanya field 'client_logo' dari setiap data client
+                        // Dan filter jika ada yang kosong
+                        const logos = dataClients
+                            .map(client => client.client_logo)
+                            .filter(logo => logo !== null && logo !== "");
+                        setClientLogos(logos);
+                    }
+                } catch (e) {
+                    console.error("Gagal fetch clients:", e);
+                }
+
+                // 5. Fetch Dashboard Stats (Untuk Angka Statistik)
+                try {
+                    const resDash = await fetch('/api/dashboard');
+                    const dataDash = await resDash.json();
                     
+                    if (resDash.ok && dataDash.stats) {
+                        setStatsData([
+                            { value: '11', label: 'Tahun Pengalaman' }, // Tetap 11
+                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+                        ]);
+                    }
+                } catch (error) {
+                    console.warn("Gagal fetch stats dashboard:", error);
+                }
+
+                // 6. Fetch Hero Images
+                try {
+                    const resHero = await fetch('/api/hero'); 
                     if (resHero.ok) {
                         const dataHero = await resHero.json();
-                        
-                        // Debugging: Cek apakah data masuk di Console Browser (F12)
-                        console.log("Data Hero diterima:", dataHero);
-
                         setHeroImages(prev => ({
-                            // PENTING: Mapping dari 'foto' (Database) ke 'img' (Frontend)
-                            // Gunakan dataHero.foto1, bukan dataHero.img1
                             img1: dataHero.foto1 || prev.img1,
                             img2: dataHero.foto2 || prev.img2,
                             img3: dataHero.foto3 || prev.img3
@@ -197,16 +220,14 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* STATS + CLIENT LOGO */}
+                {/* STATS + CLIENT LOGO (DIHAPUS AGAR TIDAK DUPLIKAT) */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-12 md:py-16">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                         <h2 className="text-zinc-500 text-xl font-semibold leading-6 w-64 text-center md:text-left">
                             Dipercaya Oleh Mitra Internasional
                         </h2>
-                        <div className="flex gap-8 justify-center">
-                            <img className="w-28 md:w-32 h-auto" src={Assets.Client12} alt="Mitra A" />
-                            <img className="w-24 md:w-28 h-auto" src={Assets.Client13} alt="Mitra B" />
-                        </div>
+                        {/* Logo kecil statis dihapus, fokus ke marquee di bawah */}
+                        <div className="w-full h-1 bg-gray-200 md:w-1/2 rounded-full"></div> 
                     </div>
                     <div className="mt-10 w-full relative flex justify-center">
                         <div className="w-full h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
@@ -261,8 +282,10 @@ export default function Home() {
                                         <div>
                                             <div className="flex items-center gap-4 mb-6">
                                                 <div className="w-20 h-20 flex-shrink-0 bg-lime-500/20 rounded-tr-3xl rounded-bl-3xl flex items-center justify-center p-4">
-                                                    {item.icon_url ? (
+                                                    {item.icon_url && item.icon_url.startsWith('fa-') ? (
                                                         <i className={`${item.icon_url} text-4xl text-green-600`}></i>
+                                                    ) : item.image_url ? (
+                                                        <img src={item.image_url} className="w-10 h-10 object-contain" alt={item.title} />
                                                     ) : (
                                                         <i className="fa-solid fa-briefcase text-4xl text-green-600"></i>
                                                     )}
@@ -282,12 +305,11 @@ export default function Home() {
                         </div>
                     </div>
                 </section>
+
                 {/* PORTOFOLIO SECTION */}
                 <motion.section {...fadeInUp} className="px-4 md:px-20 py-20 bg-white">
                     <div className="w-full rounded-3xl overflow-hidden relative shadow-lg bg-gradient-to-b from-[#4ade80] to-[#84cc16]">
                         <div className="flex flex-col lg:flex-row items-center lg:items-start p-8 md:p-14 gap-10">
-
-                            {/* TEXT & BUTTONS */}
                             <div className="w-full lg:w-5/12 flex flex-col items-start gap-6 text-white z-10">
                                 <h2 className="text-3xl md:text-4xl font-bold">Portofolio Kami</h2>
                                 <p className="text-base md:text-lg font-medium leading-relaxed text-justify lg:text-left opacity-95">
@@ -306,10 +328,7 @@ export default function Home() {
                                 </div>
                             </div>
 
-                            {/* DISPLAY AREA */}
                             <div className="w-full lg:w-7/12 flex justify-center lg:justify-end items-center">
-
-                                {/* --- PRODUK (GRID) --- */}
                                 {activePorto === 'produk' && (
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
                                         {products.map((item, idx) => (
@@ -326,8 +345,6 @@ export default function Home() {
                                         ))}
                                     </div>
                                 )}
-
-                                {/* --- PROYEK (TABEL FINAL) --- */}
                                 {activePorto === 'proyek' && (
                                     <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20">
                                         <div className="overflow-x-auto">
@@ -341,44 +358,20 @@ export default function Home() {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-200">
-                                                    {projects.map((item, idx) => (
+                                                    {projects.slice(0, 3).map((item, idx) => (
                                                         <tr key={idx} className="hover:bg-green-50 transition-colors bg-white/50">
-                                                            
-                                                            {/* CUSTOMER (Ambil dari relation client) */}
-                                                            <td className="px-4 py-3 font-medium text-gray-900">
-                                                                {item.client?.client_name || item.customer || '-'}
-                                                            </td>
-                                                            
-                                                            {/* PROYEK */}
-                                                            <td className="px-4 py-3 text-gray-600">
-                                                                {item.project_name || item.namaProyek || '-'}
-                                                            </td>
-                                                            
-                                                            {/* BIDANG (Perbaikan: Ambil dari category.bidang) */}
-                                                            <td className="px-4 py-3 text-gray-600">
-                                                                {item.category?.bidang || item.bidang || '-'}
-                                                            </td>
-                                                            
-                                                            {/* TAHUN */}
-                                                            <td className="px-4 py-3 text-center text-gray-600">
-                                                                {item.tahun || '-'}
-                                                            </td>
-
+                                                            <td className="px-4 py-3 font-medium text-gray-900">{item.client?.client_name || item.customer || '-'}</td>
+                                                            <td className="px-4 py-3 text-gray-600">{item.project_name || item.namaProyek || '-'}</td>
+                                                            <td className="px-4 py-3 text-gray-600">{item.category?.bidang || item.bidang || '-'}</td>
+                                                            <td className="px-4 py-3 text-center text-gray-600">{item.tahun || '-'}</td>
                                                         </tr>
                                                     ))}
-                                                    {projects.length === 0 && (
-                                                        <tr>
-                                                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">
-                                                                Belum ada data proyek.
-                                                            </td>
-                                                        </tr>
-                                                    )}
+                                                    {projects.length === 0 && <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">Belum ada data proyek.</td></tr>}
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
                                 )}
-
                             </div>
                         </div>
                     </div>
@@ -402,26 +395,38 @@ export default function Home() {
                     </div>
                 </motion.section>
 
-                {/* KLIEN KAMI */}
+                {/* --- KLIEN KAMI (DINAMIS DARI DATABASE) --- */}
                 <motion.section {...fadeInUp} className="bg-white relative overflow-hidden w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
                     <h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
                     <p className="text-center font-medium text-lg text-lime-500 mt-8">Dipercaya oleh 100+ klien dari Nasional Dan Internasional</p>
                     <div className="relative h-48 overflow-hidden mt-10 w-full">
-                        <motion.div
-                            className="absolute flex items-center gap-16 w-max will-change-transform"
-                            animate={{ x: ['0%', '-50%'] }}
-                            transition={{ repeat: Infinity, duration: 45, ease: 'linear' }}
-                        >
-                            {Array(2).fill(clientLogos).flat().map((ImgClnt, i) => (
-                                <motion.img
-                                    key={i}
-                                    src={ImgClnt}
-                                    alt="Client Logo"
-                                    className="h-20 w-20 md:h-28 md:w-28 opacity-80 hover:opacity-100 transform hover:scale-110 transition-all duration-500 ease-in-out"
-                                    loading="lazy"
-                                />
-                            ))}
-                        </motion.div>
+                        
+                        {/* Marquee Animation */}
+                        {clientLogos.length > 0 ? (
+                            <motion.div
+                                className="absolute flex items-center gap-16 w-max will-change-transform"
+                                animate={{ x: ['0%', '-700%'] }}
+                                transition={{ repeat: Infinity, duration: 45, ease: 'linear' }}
+                            >
+                                {/* Kita duplikasi array agar looping mulus */}
+                                {[...Array(2)].map((_, groupIndex) => (
+                                    <div key={groupIndex} className="flex gap-16">
+                                        {clientLogos.map((logo, i) => (
+                                            <motion.img
+                                                key={i}
+                                                src={logo}
+                                                alt="Client Logo"
+                                                className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 transform hover:scale-110 transition-all duration-500 ease-in-out"
+                                                loading="lazy"
+                                            />
+                                        ))}
+                                    </div>
+                                ))}
+                            </motion.div>
+                        ) : (
+                            <p className="text-center w-full text-gray-400 italic mt-10">Belum ada logo klien di database.</p>
+                        )}
+
                     </div>
                 </motion.section>
 

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
 import { X, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
-import Navbar from '../../components/navbar';
 import Footer from '../../components/Footer';
 import { Assets } from '../../assets';
 
@@ -85,8 +84,6 @@ const Produk = () => {
             <Head>
                 <title>Portofolio Produk - PT Divus Global Mediacomm</title>
             </Head>
-
-            <Navbar />
 
             <main>
                 {/* Header Section Sesuai Permintaan */}

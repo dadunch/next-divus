@@ -1,4 +1,5 @@
-import { useRouter } from 'next/router';
+import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -20,10 +21,48 @@ const fadeInRight = {
 };
 
 export default function Contact() {
+    // State Data Perusahaan
+    const [company, setCompany] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch Data dari API
+    useEffect(() => {
+        const fetchCompany = async () => {
+            try {
+                const res = await fetch('/api/company');
+                const data = await res.json();
+                if (res.ok) {
+                    setCompany(data);
+                }
+            } catch (error) {
+                console.error("Gagal mengambil data perusahaan:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCompany();
+    }, []);
+
+    // Helper untuk link WA dinamis
+    const getWhatsappLink = (phone) => {
+        if (!phone) return "https://wa.me/";
+        // Bersihkan karakter selain angka
+        let cleanPhone = phone.replace(/\D/g, '');
+        // Ubah 08xx jadi 628xx
+        if (cleanPhone.startsWith('0')) {
+            cleanPhone = '62' + cleanPhone.slice(1);
+        }
+        return `https://wa.me/${cleanPhone}`;
+    };
+
     return (
-        <div className="relative w-full bg-white overflow-hidden">
+        <div className="relative w-full bg-white overflow-hidden font-['Poppins']">
+            <Head>
+                <title>Kontak - PT Divus Global Mediacomm</title>
+            </Head>
+
             <header className="relative w-full">
-                {/* Hero Banner */}
                 <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
                     <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
                         {/* Logo */}
@@ -46,7 +85,6 @@ export default function Contact() {
                         </div>
                     </div>
                 </section>
-
                 {/* Breadcrumb */}
                 <div className="w-full bg-zinc-300 py-3 mb-4">
                     <div className="max-w-7xl mx-auto">
@@ -59,72 +97,78 @@ export default function Contact() {
                     </div>
                 </div>
             </header>
-
             <section className="max-w-[1440px] mx-auto px-6 md:px-20 py-16 flex flex-col lg:flex-row gap-12 items-start">
+                
                 {/* Detail Kontak */}
                 <motion.div {...fadeInLeft} className="flex-1 w-full lg:w-2/5">
                     <h2 className="text-3xl md:text-4xl font-bold text-zinc-800 mb-8 capitalize">
                         Informasi Detail Kontak
                     </h2>
 
-                    <div className="flex flex-col gap-6">
-                        {/* Alamat */}
-                        <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
-                            <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                <MapPin className="text-white w-6 h-6 " />
+                    {isLoading ? (
+                        <p className="text-gray-500">Memuat informasi...</p>
+                    ) : (
+                        <div className="flex flex-col gap-6">
+                            {/* Alamat */}
+                            <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                                <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <MapPin className="text-white w-6 h-6 " />
+                                </div>
+                                <div>
+                                    <h3 className="text-zinc-800 text-xl font-semibold capitalize">
+                                        Alamat
+                                    </h3>
+                                    <p className="text-black text-base mt-1 leading-relaxed">
+                                        {company?.address || "Alamat belum tersedia."}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-zinc-800 text-xl font-semibold capitalize">
-                                    Alamat
-                                </h3>
-                                <p className="text-black text-base mt-1 leading-relaxed">
-                                    Jl. Terusan Kapten Halim, Kampung Sukamulya, Kel. Salammulya,
-                                    Kec. Pondoksalam, Kab. Purwakarta, Prov. Jawa Barat 41115
-                                </p>
-                            </div>
-                        </div>
 
-                        {/* Telepon */}
-                        <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
-                            <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                <Phone className="text-white w-6 h-6" />
+                            {/* Telepon */}
+                            <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                                <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Phone className="text-white w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-zinc-800 text-xl font-semibold capitalize">
+                                        Telepon
+                                    </h3>
+                                    <a
+                                        href={company?.phone ? `tel:${company.phone}` : "#"}
+                                        className="text-zinc-800 text-lg hover:text-green-600 transition-colors"
+                                    >
+                                        {company?.phone || "Nomor belum tersedia"}
+                                    </a>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-zinc-800 text-xl font-semibold capitalize">
-                                    Telepon
-                                </h3>
-                                <a
-                                    href="tel:+6285220203453"
-                                    className="text-zinc-800 text-lg hover:text-green-600 transition-colors"
-                                >
-                                    +62-8522-0203-453
-                                </a>
-                            </div>
-                        </div>
 
-                        {/* Email */}
-                        <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
-                            <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                <Mail className="text-white w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-zinc-800 text-xl font-semibold capitalize">
-                                    Email
-                                </h3>
-                                <a
-                                    href="mailto:divusgm@gmail.com"
-                                    className="text-zinc-800 text-lg hover:text-green-600 transition-colors"
-                                >
-                                    divusgm@gmail.com
-                                </a>
+                            {/* Email */}
+                            <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                                <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Mail className="text-white w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-zinc-800 text-xl font-semibold capitalize">
+                                        Email
+                                    </h3>
+                                    <a
+                                        href={company?.email ? `mailto:${company.email}` : "#"}
+                                        className="text-zinc-800 text-lg hover:text-green-600 transition-colors"
+                                    >
+                                        {company?.email || "Email belum tersedia"}
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </motion.div>
-                {/* Map */}
+
+                {/* Map (Tetap Hardcode karena biasanya link map embed jarang berubah/disimpan di DB profil sederhana) */}
+                {/* Jika ingin dinamis juga, harus tambah kolom 'map_url' di tabel company_profile */}
                 <motion.div {...fadeInRight} className="flex-1 w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 rounded-xl overflow-hidden border-r-4 border-b-4 shadow-md border-zinc-300 h-[470px]">
                     <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3997.006528885579!2d107.68974571062172!3d-6.902019367516907!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e7799d64ea97%3A0x6354e71b8440d24e!2sDivus%20Global%20Mediacomm!5e1!3m2!1sid!2sid!4v1761939450230!5m2!1sid!2sid"
+                        src="https://www.google.com/maps/place/Divus+Global+Mediacom/@-6.6170559,107.4963877,21z/data=!4m6!3m5!1s0x2e691b42640098b5:0xbede1a67bdddbc3e!8m2!3d-6.6170382!4d107.4963857!16s%2Fg%2F11rx36dmmt?entry=ttu&g_ep=EgoyMDI1MTEyMy4xIKXMDSoASAFQAw%3D%3D" 
+                        // Ganti src di atas dengan link embed map asli kantor Anda jika ada
                         width="100%"
                         height="100%"
                         style={{ border: 0 }}
@@ -134,9 +178,10 @@ export default function Contact() {
                     />
                 </motion.div>
             </section>
-            {/* Wa */}
+            
+            {/* Wa Floating Button */}
             <a
-                href="https://wa.me/6285220203453"
+                href={getWhatsappLink(company?.phone)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-green-600 transition-colors"

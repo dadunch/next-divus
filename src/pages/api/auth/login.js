@@ -1,5 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
+import bcrypt from 'bcryptjs'; 
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -20,32 +21,61 @@ export default async function handler(req, res) {
       return res.status(401).json({ message: 'Username tidak ditemukan' });
     }
 
-    // 2. Cek password
-    if (user.password !== password) {
+    // ============================================================
+    // 2. CEK PASSWORD (MODIFIKASI: Support Plain Text)
+    // ============================================================
+    
+    // A. Cek langsung string (untuk akun yang passwordnya belum di-hash)
+    let isPasswordValid = user.password === password;
+
+    // B. (Opsional) Jika cek string gagal, coba cek pakai bcrypt 
+    // (Jaga-jaga kalau Anda punya campuran akun hash & non-hash)
+    if (!isPasswordValid) {
+        // Cek apakah string terlihat seperti hash bcrypt (biasanya diawali $2a$ atau $2b$)
+        if (user.password.startsWith('$2')) {
+            isPasswordValid = await bcrypt.compare(password, user.password);
+        }
+    }
+    
+    if (!isPasswordValid) {
       return res.status(401).json({ message: 'Password salah' });
     }
+    // ============================================================
 
-    // 3. AMBIL ROLE ID DARI TABEL EMPLOYEE
-    // Kita cari data pegawai berdasarkan users_id
+
+    // 3. AMBIL DATA PEGAWAI & ROLES (Multi Role)
     const employee = await prisma.employee.findFirst({
       where: { users_id: user.id },
-      include: { role: true } // Opsional: ambil nama role juga
+      include: { roles: true } 
     });
 
-    // Jika user ada tapi belum diset sebagai pegawai (belum punya role)
+    // Jika user ada tapi belum diset sebagai pegawai
     if (!employee) {
-      return res.status(403).json({ message: 'Akun ini belum memiliki Jabatan/Role.' });
+      return res.status(403).json({ message: 'Akun ini belum terdaftar sebagai pegawai.' });
+    }
+
+    // Cek apakah punya role
+    if (!employee.roles || employee.roles.length === 0) {
+        return res.status(403).json({ message: 'Akun ini belum memiliki Jabatan/Role apapun.' });
     }
 
     // 4. Login Sukses & Kirim Data Lengkap
     const { password: _, ...userWithoutPassword } = user;
     
+    // Ambil semua role untuk dikirim ke frontend
+    const userRoles = employee.roles.map(r => ({
+        id: r.id.toString(),
+        name: r.role
+    }));
+
     return res.status(200).json({ 
         message: 'Login Berhasil', 
         user: {
           ...serialize(userWithoutPassword),
-          roleId: employee.role_id.toString(), // PENTING: Kirim Role ID ke frontend
-          roleName: employee.role?.role
+          roles: userRoles,
+          // Fallback untuk frontend lama
+          roleId: userRoles[0]?.id, 
+          roleName: userRoles[0]?.name
         }
     });
 

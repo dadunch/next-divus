@@ -65,8 +65,7 @@ model company_profile {
 model employee {
   id       BigInt @id @default(autoincrement())
   users_id BigInt
-  role_id  BigInt
-  role     role   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  roles    role[]
   users    users  @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

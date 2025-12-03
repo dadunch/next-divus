@@ -8,7 +8,7 @@ import Swal from "sweetalert2";
 // Layout (Sesuaikan path import Anda)
 import AdminLayouts from "../../layouts/AdminLayouts";
 
-// Modals (Pastikan komponen ini sudah dibuat)
+// Modals
 import AddAdminModal from "../../components/Modals/AddAdminModal";
 import EditAdminModal from "../../components/Modals/EditAdminModal";
 
@@ -53,8 +53,8 @@ const AdminManage = () => {
 
   // === 2. FILTER SEARCH ===
   const filteredAdmins = admins.filter((item) =>
-    item.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.role?.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.username || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.role || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // === 3. HANDLE EDIT CLICK ===
@@ -219,14 +219,32 @@ const AdminManage = () => {
                       <td className="py-4 px-6 text-center font-medium text-gray-500">
                         {index + 1}
                       </td>
+                      
                       <td className="py-4 px-6 font-semibold text-gray-700">
                         {admin.username}
                       </td>
+                      
+                      {/* UPDATE: Menampilkan Multi-Role Badge */}
                       <td className="py-4 px-6 text-center">
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">
-                          {admin.role || "No Role"}
-                        </span>
+                        <div className="flex flex-wrap justify-center gap-1.5">
+                          {admin.roles && admin.roles.length > 0 ? (
+                            admin.roles.map((r, i) => (
+                              <span 
+                                key={i} 
+                                className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100 whitespace-nowrap"
+                              >
+                                {r.role}
+                              </span>
+                            ))
+                          ) : (
+                             // Fallback jika tidak ada data array roles, pakai string role
+                             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200">
+                                {admin.role || "-"}
+                             </span>
+                          )}
+                        </div>
                       </td>
+
                       <td className="py-4 px-6 text-center">
                         <div className="flex justify-center gap-2">
                           <button
@@ -253,10 +271,10 @@ const AdminManage = () => {
             </table>
           </div>
           
-          {/* Footer Info (Optional) */}
+          {/* Footer Info */}
           {!isLoading && filteredAdmins.length > 0 && (
              <div className="px-6 py-4 border-t border-gray-100 text-sm text-gray-500">
-                Total {filteredAdmins.length} admin terdaftar.
+               Total {filteredAdmins.length} admin terdaftar.
              </div>
           )}
         </div>

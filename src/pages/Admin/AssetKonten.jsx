@@ -3,8 +3,45 @@ import Head from "next/head";
 import { useSelector } from "react-redux";
 import { Pencil, Trash2, Save } from "lucide-react";
 import { Assets } from "../../assets"; // Pastikan path asset benar
+import Cropper from "react-easy-crop";
 
 /* ================= PREVIEW (DESAIN ORIGINAL) ================= */
+const createImage = (url) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", reject);
+    image.src = url;
+  });
+
+const getCroppedImg = async (imageSrc, pixelCrop) => {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      const fileUrl = URL.createObjectURL(blob);
+      resolve({ blob, fileUrl });
+    }, "image/jpeg");
+  });
+};
+
 const PreviewSneakPeek = ({ images }) => {
   return (
     <div className="bg-white rounded-xl border shadow-sm p-6">
@@ -79,6 +116,13 @@ const PreviewSneakPeek = ({ images }) => {
 const AssetKontenPage = () => {
   const { user } = useSelector((state) => state.auth || {});
 
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [tempImage, setTempImage] = useState(null);
+  const [tempKey, setTempKey] = useState(null);
+
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   // State Preview
   const [images, setImages] = useState({
     img1: null,
@@ -98,8 +142,12 @@ const AssetKontenPage = () => {
   // LOGIC: Format Nama File
   const getFormattedFileName = (key, originalFile) => {
     const now = new Date();
-    const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-    const ext = originalFile.name.split('.').pop();
+    const timestamp = `${now.getFullYear()}${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(
+      now.getHours()
+    ).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+    const ext = originalFile.name.split(".").pop();
     return `${key}-${timestamp}.${ext}`;
   };
 
@@ -107,17 +155,31 @@ const AssetKontenPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Preview
+    setTempKey(key);
+    setTempImage(URL.createObjectURL(file));
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCropModalOpen(true);
+  };
+
+  const selesaiCrop = async () => {
+    const { blob, fileUrl } = await getCroppedImg(tempImage, croppedAreaPixels);
+
+    const croppedFile = new File([blob], `crop-${tempKey}.jpg`, {
+      type: "image/jpeg",
+    });
+
     setImages((prev) => ({
       ...prev,
-      [key]: URL.createObjectURL(file),
+      [tempKey]: fileUrl,
     }));
 
-    // Simpan File
     setFiles((prev) => ({
       ...prev,
-      [key]: file,
+      [tempKey]: croppedFile,
     }));
+
+    setCropModalOpen(false);
   };
 
   const handleDelete = (key) => {
@@ -129,21 +191,25 @@ const AssetKontenPage = () => {
     setIsSaving(true);
     try {
       const formData = new FormData();
-      
+
       // 1. Kirim User ID (Penting untuk log history)
-      const currentUserId = user?.username || user?.id || "Admin"; 
-      formData.append('user_id', currentUserId);
+      const currentUserId = user?.username || user?.id || "Admin";
+      formData.append("user_id", currentUserId);
 
       // 2. Kirim File Gambar
       Object.keys(files).forEach((key) => {
         if (files[key]) {
-          formData.append(key, files[key], getFormattedFileName(key, files[key]));
+          formData.append(
+            key,
+            files[key],
+            getFormattedFileName(key, files[key])
+          );
         }
       });
 
       // 3. Kirim ke API Hero
-      const response = await fetch('/api/hero', {
-        method: 'POST',
+      const response = await fetch("/api/hero", {
+        method: "POST",
         body: formData,
       });
 
@@ -152,7 +218,6 @@ const AssetKontenPage = () => {
       } else {
         alert("Gagal menyimpan data.");
       }
-
     } catch (error) {
       console.error(error);
       alert("Terjadi kesalahan koneksi.");
@@ -212,7 +277,7 @@ const AssetKontenPage = () => {
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-end items-center">
         <div className="flex items-center gap-3 text-white">
           <p className="text-sm font-medium text-white mr-1">
-              Hi, {user?.username || "Admin"}
+            Hi, {user?.username || "Admin"}
           </p>
           <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
             {user?.username ? user.username.charAt(0) : "A"}
@@ -230,6 +295,35 @@ const AssetKontenPage = () => {
             <ImageBox label="Main Image 1 (Utama)" imgKey="img1" />
             <ImageBox label="Main Image 2 (Kiri)" imgKey="img2" />
             <ImageBox label="Main Image 3 (Bawah)" imgKey="img3" />
+            <div className="bg-white border rounded-xl p-4 shadow-sm h-fit">
+              <h3 className="font-semibold text-sm mb-2 text-gray-800">
+                Rekomendasi Ukuran Gambar
+              </h3>
+
+              <ul className="text-xs text-gray-600 leading-relaxed">
+                <li>
+                  <span className="font-medium">Main Image 1:</span>
+                  <br />
+                  Rasio 1:1 • 800×800 px (min 600×600)
+                </li>
+                <li>
+                  <span className="font-medium">Main Image 2:</span>
+                  <br />
+                  Rasio 1:1 • 600×600 px (min 400×400)
+                </li>
+                <li>
+                  <span className="font-medium">Main Image 3:</span>
+                  <br />
+                  Rasio 1:1 • 700×700 px (min 500×500)
+                </li>
+                <li className="pt-1">
+                  <span className="font-medium">Format:</span> JPG/PNG
+                </li>
+                <li>
+                  <span className="font-medium">Ukuran File:</span> Maks. 2 MB
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* RIGHT: PREVIEW */}
@@ -237,7 +331,7 @@ const AssetKontenPage = () => {
             <p className="font-semibold mb-2">Preview(homepage)</p>
             <PreviewSneakPeek images={images} />
 
-            <div className="mt-10 flex justify-end">
+            <div className="mt-3 flex justify-end">
               <button
                 onClick={handleSubmit}
                 disabled={isSaving}
@@ -250,6 +344,53 @@ const AssetKontenPage = () => {
           </div>
         </div>
       </div>
+
+      {cropModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 shadow-lg relative w-[90%] h-[80%] max-w-lg flex flex-col">
+            <h2 className="text-lg font-semibold mb-3">Crop Gambar</h2>
+
+            <div className="relative flex-1">
+              <Cropper
+                image={tempImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(croppedArea, croppedPixels) =>
+                  setCroppedAreaPixels(croppedPixels)
+                }
+              />
+            </div>
+
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(e.target.value)}
+              className="mt-3"
+            />
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setCropModalOpen(false)}
+              >
+                Batal
+              </button>
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded"
+                onClick={selesaiCrop}
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

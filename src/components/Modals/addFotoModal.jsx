@@ -1,42 +1,97 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Image as ImageIcon } from "lucide-react";
 import Swal from "sweetalert2";
 import { useSelector } from "react-redux";
+import Cropper from "react-easy-crop";
 
 const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useSelector((state) => state.auth);
 
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [title, setTitle] = useState(""); // Ubah nama state agar sesuai konteks DB
+  const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fungsi convert gambar ke text Base64
+  // CROP STATE
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [tempImage, setTempImage] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  /* ================= RESET STATE ================= */
+  const resetState = () => {
+    setImageFile(null);
+    setPreview(null);
+    setTitle("");
+    setIsSubmitting(false);
+    setCropModalOpen(false);
+    setTempImage(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+  };
+
+  /* ================= BASE64 ================= */
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => resolve(reader.result);
-      reader.onerror = (err) => reject(err);
+      reader.onerror = reject;
     });
 
-  const handleImageChange = async (e) => {
+  /* ================= IMAGE PICK ================= */
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // VALIDASI UKURAN FILE (Maks 2MB agar server tidak crash)
     if (file.size > 2 * 1024 * 1024) {
-      Swal.fire("File Terlalu Besar", "Maksimal ukuran foto adalah 2MB", "warning");
+      Swal.fire("File Terlalu Besar", "Maksimal 2MB", "warning");
       return;
     }
 
-    setImageFile(file);
-    setPreview(URL.createObjectURL(file));
+    const url = URL.createObjectURL(file);
+    setTempImage(url);
+    setCropModalOpen(true);
   };
 
+  /* ================= CROP FINISH ================= */
+  const selesaiCrop = async () => {
+    if (!croppedAreaPixels) return;
+
+    const image = new Image();
+    image.src = tempImage;
+    await new Promise((resolve) => (image.onload = resolve));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = croppedAreaPixels.width;
+    canvas.height = croppedAreaPixels.height;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(
+      image,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height
+    );
+
+    canvas.toBlob((blob) => {
+      const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+      setImageFile(file);
+      setPreview(URL.createObjectURL(blob));
+      setCropModalOpen(false);
+    }, "image/jpeg");
+  };
+
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!imageFile) {
       Swal.fire("Error", "Foto wajib diunggah", "error");
       return;
@@ -45,19 +100,13 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       setIsSubmitting(true);
 
-      // 1. Convert gambar ke Base64 string
       const base64image = await toBase64(imageFile);
-
-      // 2. Siapkan data sesuai Schema Database (company_photos)
-      const currentUserId = user?.id || 1; // Fallback ID jika user logout
-      
       const bodyData = {
-        title: title,           // Sesuai kolom 'title' di DB
-        image_url: base64image, // Sesuai kolom 'image_url' di DB
-        userId: currentUserId,  // Untuk Logger
+        title,
+        image_url: base64image,
+        userId: user?.id || 1,
       };
 
-      // 3. Kirim ke Endpoint yang benar (huruf kecil)
       const res = await fetch("/api/photos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,104 +117,163 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
 
       if (res.ok) {
         Swal.fire("Berhasil", "Foto berhasil ditambahkan", "success");
-        // Reset Form
-        setImageFile(null);
-        setPreview(null);
-        setTitle("");
-        onSuccess(); // Refresh data di halaman parent
+        resetState();
+        onSuccess();
+        onClose();
       } else {
-        throw new Error(result.message || "Gagal menyimpan data");
+        throw new Error(result.message);
       }
     } catch (err) {
-      console.error(err);
       Swal.fire("Error", err.message, "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /* ================= AUTO RESET SAAT MODAL TUTUP ================= */
+  useEffect(() => {
+    if (!isOpen) resetState();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-fade-in-up">
+      <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
+
         {/* HEADER */}
-        <div className="p-5 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Tambah Foto Perusahaan
-          </h2>
+        <div className="p-5 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Tambah Foto Perusahaan</h2>
           <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={() => {
+              resetState();
+              onClose();
+            }}
+            className="p-2 hover:bg-gray-100 rounded-full"
           >
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
-          {/* Preview Image */}
-          <div className="border-2 border-dashed border-gray-200 rounded-xl min-h-[200px] flex items-center justify-center bg-gray-50 relative overflow-hidden group">
+
+          {/* PREVIEW */}
+          <div className="border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 relative overflow-hidden group hover:border-green-500 transition">
             {preview ? (
               <>
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="w-full h-64 object-contain"
-                />
-                {/* Overlay ganti foto */}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ">
-                    <p className="text-white font-medium">Klik untuk ganti</p>
+                <div className="relative w-full aspect-[4/3]">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                  <p className="text-white">Klik untuk ganti</p>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center text-gray-400 p-6">
-                <ImageIcon size={48} className="mb-2 opacity-50" />
-                <span className="text-sm font-medium">Preview foto akan muncul di sini</span>
+              <div className="min-h-[200px] flex flex-col items-center justify-center text-gray-400">
+                <ImageIcon size={48} />
+                <span className="text-sm">upload foto</span>
               </div>
             )}
-            
-            {/* Input file yang menutupi area preview agar bisa diklik di mana saja */}
+
             <input
               type="file"
               accept="image/*"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer "
               onChange={handleImageChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
 
-          <div className="text-xs text-gray-500 text-center ">
-             *Format: JPG/PNG. Maksimal 2MB.
+          {/* SIZE INFO */}
+          <div className="text-xs text-gray-500 space-y-1">
+            <div className="flex justify-between">
+              <span>Rasio</span> <span className="font-medium">4 : 3</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Rekomendasi</span> <span>800 × 600 px</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Minimum</span> <span>400 × 300 px</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Format</span> <span>JPG / PNG</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Maks</span> <span>2 MB</span>
+            </div>
           </div>
 
-          {/* Input Judul / Deskripsi */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Judul Foto</label>
-            <input
-              type="text"
-              placeholder="Contoh: Kegiatan Rapat Tahunan 2024"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-800 placeholder-gray-400"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
+          {/* TITLE */}
+          <input
+            type="text"
+            placeholder="Judul foto (opsional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full border border-gray-300 px-4 py-2 rounded-lg outline-none
+           focus:ring-1 focus:ring-green-500
+           focus:border-green-500" />
 
-          {/* Submit Button */}
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#2D2D39] text-white py-3 rounded-xl hover:bg-black transition-all disabled:opacity-70 disabled:cursor-not-allowed font-medium flex justify-center items-center gap-2"
+            className="w-full bg-[#2D2D39] text-white py-3 rounded-xl hover:bg-black"
           >
-            {isSubmitting ? (
-               <>
-                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                 Menyimpan...
-               </>
-            ) : (
-               "Simpan Foto"
-            )}
+            {isSubmitting ? "Menyimpan..." : "Simpan Foto"}
           </button>
         </form>
       </div>
+
+      {/* CROP MODAL */}
+      {cropModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl p-4 w-[90%] max-w-lg h-[80%] flex flex-col">
+            <h2 className="text-lg font-semibold mb-3">Crop Foto</h2>
+
+            <div className="relative flex-1">
+              <Cropper
+                image={tempImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={4 / 3}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, pixels) =>
+                  setCroppedAreaPixels(pixels)
+                }
+              />
+            </div>
+
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(e.target.value)}
+              className="mt-4"
+            />
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={resetState}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Batal
+              </button>
+              <button
+                onClick={selesaiCrop}
+                className="px-4 py-2 bg-green-600 text-white rounded"
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

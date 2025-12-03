@@ -2,16 +2,32 @@ import React, { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import {
-  Upload,
-  Save,
-  Trash2,
-  ArrowLeft,
-  Plus,
-  X,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Upload, Save, Trash2, ArrowLeft, Plus, X, Image as ImageIcon } from "lucide-react";
 import Swal from "sweetalert2";
+import Cropper from "react-easy-crop";
+
+// --- FUNGSI HELPER CROP ---
+async function getCroppedImg(imageSrc, pixelCrop) {
+  const image = new Image();
+  image.src = imageSrc;
+  await new Promise((resolve) => (image.onload = resolve));
+  const canvas = document.createElement("canvas");
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+  return canvas.toDataURL("image/jpeg");
+}
 
 const EditLayananPage = () => {
   const router = useRouter();
@@ -22,18 +38,24 @@ const EditLayananPage = () => {
   const [serviceId, setServiceId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // --- STATE CROP (NEW) ---
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [tempImage, setTempImage] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
   // --- STATE FORM ---
   const [foto, setFoto] = useState(null);
   const [previewFoto, setPreviewFoto] = useState(null);
-
   const [namaLayanan, setNamaLayanan] = useState("");
   const [deskripsiSingkat, setDeskripsiSingkat] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
 
   // State List Layanan
   const [inputLayanan, setInputLayanan] = useState("");
-  const [layananDitawarkan, setLayananDitawarkan] = useState([]); 
-  const [originalLayanan, setOriginalLayanan] = useState([]); // Untuk tracking data awal
+  const [layananDitawarkan, setLayananDitawarkan] = useState([]);
+  const [originalLayanan, setOriginalLayanan] = useState([]);
 
   // Icon State
   const [showIconModal, setShowIconModal] = useState(false);
@@ -50,11 +72,9 @@ const EditLayananPage = () => {
   const fetchFontAwesomeIcons = async (searchQuery = "") => {
     setFaLoading(true);
     setFaError("");
-    
     try {
       const response = await fetch('https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/metadata/icons.json');
       const data = await response.json();
-      
       const iconsArray = Object.entries(data).map(([key, value]) => ({
         name: key,
         label: value.label || key,
@@ -65,8 +85,8 @@ const EditLayananPage = () => {
       let filtered = iconsArray;
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        filtered = iconsArray.filter(icon => 
-          icon.name.includes(query) || 
+        filtered = iconsArray.filter(icon =>
+          icon.name.includes(query) ||
           icon.label.toLowerCase().includes(query) ||
           icon.search.some(term => term.includes(query))
         );
@@ -79,7 +99,6 @@ const EditLayananPage = () => {
       setFaError("Gagal memuat icon dari Font Awesome");
       setFaLoading(false);
       
-      // Fallback ke icon list default
       const defaultIcons = [
         { name: "user", styles: ["solid"] },
         { name: "users", styles: ["solid"] },
@@ -106,99 +125,72 @@ const EditLayananPage = () => {
   // Search dengan debounce
   useEffect(() => {
     if (!showIconModal) return;
-    
     const delayDebounce = setTimeout(() => {
       fetchFontAwesomeIcons(faSearch);
     }, 500);
-
     return () => clearTimeout(delayDebounce);
   }, [faSearch]);
 
   // --- FETCH & PARSE DATA ---
   const fetchData = async () => {
     if (!slug) return;
-    
     try {
       const resDetail = await fetch(`/api/services/${slug}`);
       const detail = await resDetail.json();
-      
       const resSubLayanan = await fetch(`/api/sub_services/by_services/${slug}`);
       const Subdetail = await resSubLayanan.json();
-      
+
       if (resDetail.ok) {
         setServiceId(detail.id);
         setNamaLayanan(detail.title);
 
-        // --- START FIX: FLEXIBLE PARSING LOGIC ---
         let rawDescription = detail.description || "";
-        let rawShortDesc = detail.short_description || ""; // Cek kolom short_description juga
-        
-        // Gabungkan sementara untuk memudahkan pencarian
+        let rawShortDesc = detail.short_description || "";
         let fullTextToCheck = rawDescription + "\n" + rawShortDesc;
 
-        // Siapkan array layanan dari DB
         let fetchedSubServices = Subdetail.map(item => ({
           id: item.id,
           sub_services: item.sub_services,
           isNew: false
         }));
 
-        // 1. EKSTRAK LIST LAYANAN (Cari pola: "Layanan yang ditawarkan" diikuti apapun)
-        // Regex ini mencari kata "Layanan yang ditawarkan" dengan variasi tanda baca (. atau :) dan bold/tidak
         const serviceRegex = /(?:\*\*|)?Layanan yang ditawarkan(?:\*\*|)?(?:[:.]|\s)([\s\S]*)/i;
         const serviceMatch = fullTextToCheck.match(serviceRegex);
-
         if (serviceMatch) {
-            const listText = serviceMatch[1]; // Ambil teks setelah kata kunci
-            
-            // Bersihkan teks list dari Deskripsi & Short Desc agar tidak duplikat
-            rawDescription = rawDescription.replace(serviceMatch[0], "").trim();
-            rawShortDesc = rawShortDesc.replace(serviceMatch[0], "").trim();
-
-            const lines = listText.split('\n');
-            lines.forEach(line => {
-                // Hapus dash, bullet, atau angka di awal
-                const cleanLine = line.replace(/^[\s-•\d.]+/, '').trim();
-                
-                // Filter baris kosong atau yang berisi "Ringkasan"
-                if (cleanLine && !cleanLine.toLowerCase().includes("ringkasan")) {
-                    const alreadyExists = fetchedSubServices.some(
-                        item => item.sub_services.toLowerCase() === cleanLine.toLowerCase()
-                    );
-                    
-                    if (!alreadyExists) {
-                        fetchedSubServices.push({
-                            sub_services: cleanLine,
-                            isNew: true 
-                        });
-                    }
-                }
-            });
+          const listText = serviceMatch[1];
+          rawDescription = rawDescription.replace(serviceMatch[0], "").trim();
+          rawShortDesc = rawShortDesc.replace(serviceMatch[0], "").trim();
+          const lines = listText.split('\n');
+          lines.forEach(line => {
+            const cleanLine = line.replace(/^[\s-•\d.]+/, '').trim();
+            if (cleanLine && !cleanLine.toLowerCase().includes("ringkasan")) {
+              const alreadyExists = fetchedSubServices.some(
+                item => item.sub_services.toLowerCase() === cleanLine.toLowerCase()
+              );
+              if (!alreadyExists) {
+                fetchedSubServices.push({
+                  sub_services: cleanLine,
+                  isNew: true
+                });
+              }
+            }
+          });
         }
 
-        // 2. EKSTRAK RINGKASAN
-        // Cari kata "Ringkasan" diikuti tanda baca
         const summaryRegex = /(?:\*\*|)?Ringkasan(?:\*\*|)?(?:[:.]|\s)([\s\S]*?)(?=\n\n|$)/i;
         const summaryMatch = rawDescription.match(summaryRegex);
-
         let finalShortDesc = rawShortDesc;
         let finalDescription = rawDescription;
-
         if (summaryMatch) {
-            // Jika ketemu label "Ringkasan" di deskripsi, pindahkan ke field short_desc
-            finalShortDesc = summaryMatch[1].trim();
-            finalDescription = rawDescription.replace(summaryMatch[0], "").trim();
-        } 
-        
-        // Bersihkan sisa-sisa label jika masih tertinggal
+          finalShortDesc = summaryMatch[1].trim();
+          finalDescription = rawDescription.replace(summaryMatch[0], "").trim();
+        }
         finalDescription = finalDescription.replace(/(?:\*\*|)?Ringkasan(?:\*\*|)?(?:[:.]|\s)/i, "").trim();
 
-        // --- SET STATE ---
         setDeskripsi(finalDescription);
         setDeskripsiSingkat(finalShortDesc);
         setLayananDitawarkan(fetchedSubServices);
-        
-        // Simpan original state untuk fitur delete
+
         const originalFromDB = Subdetail.map(item => ({
           id: item.id,
           sub_services: item.sub_services,
@@ -206,19 +198,16 @@ const EditLayananPage = () => {
         }));
         setOriginalLayanan(originalFromDB);
 
-        // --- HANDLE ICON & FOTO ---
         if (detail.image_url) {
           setFoto(detail.image_url);
           setPreviewFoto(detail.image_url);
         }
-        
-        // Prioritas Icon
+
         if (detail.icon_url && detail.icon_url.trim() !== "") {
-            setSelectedIcon(detail.icon_url); // Set icon dari DB
+          setSelectedIcon(detail.icon_url);
         } else if (detail.icon_class && detail.icon_class.trim() !== "") {
-            setSelectedIcon(detail.icon_class); // Jaga-jaga jika nama kolomnya icon_class
+          setSelectedIcon(detail.icon_class);
         }
-        
       } else {
         Swal.fire("Error", "Layanan tidak ditemukan", "error")
           .then(() => router.push('/Admin/Dashboard'));
@@ -234,28 +223,29 @@ const EditLayananPage = () => {
     fetchData();
   }, [slug]);
 
-  // Helper Base64
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-
-  // --- HANDLERS ---
-  const handleFotoChange = async (e) => {
-    const file = e.target.files[0];
+  // --- HANDLERS FOTO (UPDATED dengan CROP) ---
+  const handleFotoChange = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024)
-      return Swal.fire("Error", "Max 2MB", "error");
+    
+    if (file.size > 2 * 1024 * 1024) {
+      return Swal.fire("Error", "Ukuran file maksimal 2MB", "error");
+    }
 
-    setPreviewFoto(URL.createObjectURL(file));
-    try { 
-      const base64String = await toBase64(file); 
-      setFoto(base64String); 
-    } catch (err) { 
-      console.error(err); 
+    const fileURL = URL.createObjectURL(file);
+    setTempImage(fileURL);
+    setCropModalOpen(true);
+  };
+
+  const selesaiCrop = async () => {
+    try {
+      const croppedImg = await getCroppedImg(tempImage, croppedAreaPixels);
+      setPreviewFoto(croppedImg);
+      setFoto(croppedImg);
+      setCropModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Gagal memproses gambar", "error");
     }
   };
 
@@ -280,11 +270,7 @@ const EditLayananPage = () => {
 
   const tambahLayananItem = () => {
     if (!inputLayanan.trim()) return;
-    
-    setLayananDitawarkan([...layananDitawarkan, { 
-      sub_services: inputLayanan.trim(),
-      isNew: true
-    }]);
+    setLayananDitawarkan([...layananDitawarkan, { sub_services: inputLayanan.trim(), isNew: true }]);
     setInputLayanan("");
   };
 
@@ -297,73 +283,60 @@ const EditLayananPage = () => {
     if (!namaLayanan.trim()) {
       return Swal.fire("Error", "Nama wajib diisi", "error");
     }
-  
+
     setIsSubmitting(true);
-    
     try {
-      // 1. UPDATE SERVICE UTAMA dengan FormData
       const formData = new FormData();
       formData.append('title', namaLayanan);
       formData.append('description', deskripsi || '');
       formData.append('short_description', deskripsiSingkat || '');
       formData.append('icon_url', selectedIcon || '');
       formData.append('userId', user?.id || '');
-      
+
       // Handle Image Upload
       if (foto && foto.startsWith('data:image')) {
-        // Jika foto adalah base64 baru, convert ke file
         const response = await fetch(foto);
         const blob = await response.blob();
         const fileName = `service-${Date.now()}.${blob.type.split('/')[1]}`;
         formData.append('image', blob, fileName);
       } else if (foto && foto.startsWith('/uploads/')) {
-        // Jika foto adalah path lama, kirim sebagai existing
         formData.append('existingImageUrl', foto);
       }
-  
+
       const resService = await fetch(`/api/services/${serviceId}`, {
         method: 'PUT',
-        body: formData // Tidak perlu Content-Type header, browser akan set otomatis
+        body: formData
       });
-  
+
       if (!resService.ok) {
         throw new Error("Gagal update layanan utama");
       }
-  
-      // 2. HANDLE SUB LAYANAN
-      // Identifikasi item yang dihapus (ada di original tapi tidak ada di current)
-      const itemsToDelete = originalLayanan.filter(original => 
+
+      // Handle Sub Layanan
+      const itemsToDelete = originalLayanan.filter(original =>
         !layananDitawarkan.some(current => current.id === original.id)
       );
-  
-      // Identifikasi item baru yang perlu diinsert
+
       const itemsToInsert = layananDitawarkan.filter(item => item.isNew === true);
-  
-      console.log("Items to delete:", itemsToDelete);
-      console.log("Items to insert:", itemsToInsert);
-  
-      // 3. DELETE sub layanan yang dihapus
+
+      // Delete sub layanan
       for (const item of itemsToDelete) {
-        if (!item.id) continue; // Skip jika tidak ada id
-        
+        if (!item.id) continue;
         try {
           const resDelete = await fetch(`/api/sub_services/${item.id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: user?.id })
           });
-          
           if (!resDelete.ok) {
             console.error(`Gagal menghapus sub layanan ID ${item.id}`);
-          } else {
-            console.log(`Berhasil menghapus sub layanan ID ${item.id}`);
           }
         } catch (error) {
           console.error(`Error deleting sub service ${item.id}:`, error);
         }
       }
-  
-      // 4. INSERT sub layanan baru
+
+      // Insert sub layanan baru
       for (const item of itemsToInsert) {
         try {
           const resInsert = await fetch(`/api/sub_services`, {
@@ -375,32 +348,25 @@ const EditLayananPage = () => {
               userId: user?.id
             })
           });
-          
           if (!resInsert.ok) {
             console.error(`Gagal menambahkan sub layanan: ${item.sub_services}`);
-          } else {
-            console.log(`Berhasil menambahkan sub layanan: ${item.sub_services}`);
           }
         } catch (error) {
           console.error(`Error inserting sub service:`, error);
         }
       }
-  
-      // 5. Refresh data dan tampilkan success
+
       Swal.fire({
         title: "Berhasil",
         text: "Layanan dan sub layanan berhasil diperbarui!",
         icon: "success"
       }).then(() => {
-        // Reload data dari server
         fetchData();
       });
-  
     } catch (error) {
       console.error('Update error:', error);
       Swal.fire("Gagal", error.message || "Terjadi kesalahan saat menyimpan", "error");
     } finally {
-      setIsSubmitting(false);
       setIsSubmitting(false);
     }
   };
@@ -419,17 +385,16 @@ const EditLayananPage = () => {
           const res = await fetch(`/api/services/${serviceId}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user?.id }) 
+            body: JSON.stringify({ userId: user?.id })
           });
-
           if (res.ok) {
             Swal.fire("Terhapus!", "Layanan telah dihapus.", "success")
               .then(() => router.push('/Admin/Dashboard'));
-          } else { 
-            throw new Error("Gagal menghapus"); 
+          } else {
+            throw new Error("Gagal menghapus");
           }
-        } catch (error) { 
-          Swal.fire("Error", error.message, "error"); 
+        } catch (error) {
+          Swal.fire("Error", error.message, "error");
         }
       }
     });
@@ -443,10 +408,7 @@ const EditLayananPage = () => {
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
       <Head>
         <title>Edit Layanan - Admin</title>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
       </Head>
 
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
@@ -457,7 +419,6 @@ const EditLayananPage = () => {
           Edit Layanan
         </div>
         <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
-          {user?.username ? user.username.charAt(0) : "A"}
           {user?.username ? user.username.charAt(0) : "A"}
         </div>
       </header>
@@ -489,6 +450,30 @@ const EditLayananPage = () => {
               <button onClick={() => fileInputRef.current.click()} className="w-full py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition">
                 {previewFoto ? "Ganti Foto" : "Upload Foto"}
               </button>
+
+              {/* Size Chart */}
+              <div className="mt-2 text-xs text-gray-500 space-y-1">
+                <div className="flex justify-between">
+                  <span>Rasio</span>
+                  <span className="font-medium text-gray-700">16 : 9 (Persegi Panjang)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Ukuran Maksimum</span>
+                  <span className="font-medium text-gray-700">1080 × 1080 px</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Ukuran Minimum</span>
+                  <span className="font-medium text-gray-700">200 × 200 px</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Format</span>
+                  <span className="font-medium text-gray-700">PNG, JPG</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Maksimal File</span>
+                  <span className="font-medium text-gray-700">2 MB</span>
+                </div>
+              </div>
             </div>
 
             {/* KANAN: ICON */}
@@ -522,47 +507,34 @@ const EditLayananPage = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Layanan</label>
-              <input 
-                type="text" 
-                value={namaLayanan} 
-                onChange={(e) => setNamaLayanan(e.target.value)} 
-                className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all" 
+              <input
+                type="text"
+                value={namaLayanan}
+                onChange={(e) => setNamaLayanan(e.target.value)}
+                className="w-full bg-gray-100 border border-transparent outline-none focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
 
-            {/* List Layanan SEJAJAR */}
+            {/* List Layanan */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Poin-poin Layanan yang Ditawarkan</label>
               <div>
                 <div className="flex gap-0 h-11 mb-4">
-                  <input 
-                    type="text" 
-                    placeholder="Masukkan poin layanan..." 
-                    value={inputLayanan} 
-                    onChange={(e) => setInputLayanan(e.target.value)} 
-                    className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all"
+                  <input
+                    type="text"
+                    placeholder="Masukkan poin layanan..."
+                    value={inputLayanan}
+                    onChange={(e) => setInputLayanan(e.target.value)}
+                    className="w-full bg-gray-100 border border-transparent outline-none focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-lg px-4 py-3 text-gray-800 transition-all"
                     onKeyPress={(e) => e.key === 'Enter' && tambahLayananItem()}
                   />
-                  <button 
-                    onClick={tambahLayananItem} 
+                  <button
+                    onClick={tambahLayananItem}
                     className="bg-[#1E293B] text-white px-6 text-sm font-medium rounded-r-lg hover:bg-black transition flex items-center gap-2 whitespace-nowrap"
                   >
                     <Plus size={16} /> Tambah Layanan
                   </button>
                 </div>
-                
                 <div className="space-y-2">
                   {layananDitawarkan.length === 0 ? (
                     <p className="text-xs text-gray-400 italic text-center">Belum ada Layanan.</p>
@@ -573,10 +545,7 @@ const EditLayananPage = () => {
                           • {item.sub_services}
                           {item.isNew && <span className="ml-2 text-xs text-green-600">(Baru)</span>}
                         </span>
-                        <button 
-                          onClick={() => hapusLayananItem(idx)} 
-                          className="text-gray-400 hover:text-red-500"
-                        >
+                        <button onClick={() => hapusLayananItem(idx)} className="text-gray-400 hover:text-red-500">
                           <Trash2 size={14}/>
                         </button>
                       </div>
@@ -588,50 +557,37 @@ const EditLayananPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">Deskripsi Singkat</label>
-              <textarea 
-                value={deskripsiSingkat} 
-                onChange={(e) => setDeskripsiSingkat(e.target.value)} 
-                rows={2} 
-                className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all" 
-                placeholder="Ringkasan layanan..." 
+              <textarea
+                value={deskripsiSingkat}
+                onChange={(e) => setDeskripsiSingkat(e.target.value)}
+                rows={2}
+                className="w-full bg-gray-100 border border-transparent outline-none focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-lg px-4 py-3 text-gray-800 transition-all"
+                placeholder="Ringkasan layanan..."
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">Deskripsi Lengkap</label>
-              <textarea 
-                value={deskripsi} 
-                onChange={(e) => setDeskripsi(e.target.value)} 
-                rows={10} 
-                className="w-full bg-gray-100 
-             border border-transparent 
-             outline-none
-             focus:bg-white 
-             focus:border-green-500 
-             focus:ring-1 focus:ring-green-500
-             rounded-lg px-4 py-3 text-gray-800 transition-all"
+              <textarea
+                value={deskripsi}
+                onChange={(e) => setDeskripsi(e.target.value)}
+                rows={10}
+                className="w-full bg-gray-100 border border-transparent outline-none focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-lg px-4 py-3 text-gray-800 transition-all"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="mt-8 flex justify-between">
-            <button 
-              onClick={handleDelete} 
+            <button
+              onClick={handleDelete}
               className="flex items-center gap-2 bg-red-100 text-red-600 hover:bg-red-200 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors"
             >
               <Trash2 size={18}/> Hapus Layanan
             </button>
-
-            <button 
-              onClick={handleUpdate} 
-              disabled={isSubmitting} 
+            <button
+              onClick={handleUpdate}
+              disabled={isSubmitting}
               className="flex items-center gap-2 bg-[#1E293B] hover:bg-[#0F172A] text-white px-8 py-3 rounded-lg font-medium text-sm transition-all shadow-lg disabled:opacity-50"
             >
               {isSubmitting ? 'Menyimpan...' : <><Save size={18} /> Simpan Perubahan</>}
@@ -649,19 +605,16 @@ const EditLayananPage = () => {
                 <h3 className="font-bold text-xl">Pilih Icon Font Awesome</h3>
                 <p className="text-xs text-gray-500 mt-1">Cari dari 2000+ icon</p>
               </div>
-              <button 
-                onClick={() => setShowIconModal(false)}
-                className="hover:bg-gray-100 p-2 rounded-lg transition"
-              >
+              <button onClick={() => setShowIconModal(false)} className="hover:bg-gray-100 p-2 rounded-lg transition">
                 <X size={24}/>
               </button>
             </div>
-            
-            <input 
-              type="text" 
-              placeholder="Cari icon... (contoh: user, chart, building)" 
-              value={faSearch} 
-              onChange={(e) => setFaSearch(e.target.value)} 
+
+            <input
+              type="text"
+              placeholder="Cari icon... (contoh: user, chart, building)"
+              value={faSearch}
+              onChange={(e) => setFaSearch(e.target.value)}
               className="w-full border-2 border-gray-300 px-4 py-3 mb-4 rounded-lg focus:border-blue-500 outline-none"
               autoFocus
             />
@@ -681,7 +634,7 @@ const EditLayananPage = () => {
               ) : (
                 <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
                   {faIcons.map((icon) => (
-                    <button 
+                    <button
                       key={icon.name}
                       onClick={() => pilihIcon(icon.name, icon.styles[0])}
                       className="p-4 border-2 border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-400 flex flex-col items-center justify-center gap-2 transition-all group"
@@ -711,8 +664,58 @@ const EditLayananPage = () => {
           </div>
         </div>
       )}
+
+      {/* Crop Modal (NEW) */}
+      {cropModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-md bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 shadow-lg relative w-[90%] h-[80%] max-w-lg flex flex-col">
+            <h2 className="text-lg font-semibold mb-3">Crop Gambar</h2>
+            <div className="relative flex-1">
+              <Cropper
+                image={tempImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={16 / 9}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(croppedArea, croppedPixels) => setCroppedAreaPixels(croppedPixels)}
+                style={{
+                  containerStyle: {
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: "#f3f3f3",
+                  },
+                }}
+              />
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(e.target.value)}
+              className="mt-3"
+            />
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setCropModalOpen(false)}
+              >
+                Batal
+              </button>
+              <button
+                className="px-4 py-2 bg-green-600 text-white rounded"
+                onClick={selesaiCrop}
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default EditLayananPage;
+export default EditLayananPage

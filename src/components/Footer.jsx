@@ -63,7 +63,7 @@ export default function Footer() {
                             alt="PT Divus Logo"
                             onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/154x80/000/fff?text=LOGO" }}
                         />
-                        <p className="text-white/90 text-base font-light leading-6 text-justify">
+                        <p className="text-white/70 text-base font-light leading-6 text-justify">
                             {/* Deskripsi Dinamis (Potong jika terlalu panjang) */}
                             {companyData?.description 
                                 ? (companyData.description.length > 200 ? companyData.description.substring(0, 200) + "..." : companyData.description)
@@ -74,15 +74,15 @@ export default function Footer() {
 
                     {/* Kolom 2: Layanan */}
                     <div>
-                        <h4 className="text-white/90 text-xl font-semibold capitalize leading-7 pt-4 mb-4">Layanan</h4>
-                        <div className="flex flex-col space-y-2">
+                        <h4 className="text-white/90 text-xl font-semibold ml-12 capitalize leading-7 pt-12 mb-4">Layanan</h4>
+                        <div className="flex flex-col space-y-2 ml-12">
                             {servicesList.length > 0 ? (
                                 servicesList.map(service => (
                                     <Link 
                                         key={service.id} 
                                         // Arahkan ke halaman list layanan
                                         href="/User/LayananProduk" 
-                                        className="text-white/90 text-base font-light leading-6 hover:text-lime-500 transition-colors"
+                                        className="text-white/70 text-base font-light leading-6 hover:text-lime-500 transition-colors"
                                     >
                                         {service.title}
                                     </Link>
@@ -96,7 +96,7 @@ export default function Footer() {
 
                     {/* Kolom 3: Kontak */}
                     <div>
-                        <h4 className="text-white/90 text-xl font-semibold capitalize leading-7 pt-4 mb-4">Kontak</h4>
+                        <h4 className="text-white/90 text-xl font-semibold capitalize leading-7 pt-12 mb-4">Kontak</h4>
                         <div className="flex flex-col space-y-4">
                             {contacts.map((contact, index) => (
                                 <ContactItem key={index} icon={contact.icon} text={contact.text} />
@@ -107,7 +107,7 @@ export default function Footer() {
                 
                 {/* Bagian Bawah Footer (Copyright) */}
                 <div className="pt-8 text-center">
-                    <p className="text-zinc-300 text-base md:text-xl light capitalize leading-7">
+                    <p className="text-zinc-200 text-base md:text-xl light capitalize leading-7">
                         Copyright © {new Date().getFullYear()} {companyData?.company_name || "PT Divus Global Mediacomm"}. All rights reserved.
                     </p>
                 </div>
@@ -119,8 +119,8 @@ export default function Footer() {
 // Sub-komponen untuk item kontak
 const ContactItem = ({ icon: Icon, text }) => (
     <div className="flex justify-start items-start gap-3.5">
-        <Icon size={24} className="text-white mt-0.5 min-w-[24px] shrink-0" />
-        <div className="text-justify text-white text-base font-light leading-6 flex-1 break-words">
+        <Icon size={24} className="text-white/70 mt-0.5 min-w-[24px] shrink-0" />
+        <div className="text-justify text-white/70 text-lg font-light leading-6 flex-1 break-words">
             {text}
         </div>
     </div>

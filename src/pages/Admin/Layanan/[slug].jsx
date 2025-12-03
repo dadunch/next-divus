@@ -128,40 +128,103 @@ const EditLayananPage = () => {
       if (resDetail.ok) {
         setServiceId(detail.id);
         setNamaLayanan(detail.title);
-        setDeskripsi(detail.description || "");
-        setDeskripsiSingkat(detail.short_description || "");
+
+        // --- START FIX: FLEXIBLE PARSING LOGIC ---
+        let rawDescription = detail.description || "";
+        let rawShortDesc = detail.short_description || ""; // Cek kolom short_description juga
         
-        // Simpan dengan struktur yang konsisten
-        const formattedSubLayanan = Subdetail.map(item => ({
+        // Gabungkan sementara untuk memudahkan pencarian
+        let fullTextToCheck = rawDescription + "\n" + rawShortDesc;
+
+        // Siapkan array layanan dari DB
+        let fetchedSubServices = Subdetail.map(item => ({
           id: item.id,
           sub_services: item.sub_services,
           isNew: false
         }));
-        
-        setLayananDitawarkan(formattedSubLayanan);
-        setOriginalLayanan(formattedSubLayanan);
 
-        // Handle Gambar & Icon
+        // 1. EKSTRAK LIST LAYANAN (Cari pola: "Layanan yang ditawarkan" diikuti apapun)
+        // Regex ini mencari kata "Layanan yang ditawarkan" dengan variasi tanda baca (. atau :) dan bold/tidak
+        const serviceRegex = /(?:\*\*|)?Layanan yang ditawarkan(?:\*\*|)?(?:[:.]|\s)([\s\S]*)/i;
+        const serviceMatch = fullTextToCheck.match(serviceRegex);
+
+        if (serviceMatch) {
+            const listText = serviceMatch[1]; // Ambil teks setelah kata kunci
+            
+            // Bersihkan teks list dari Deskripsi & Short Desc agar tidak duplikat
+            rawDescription = rawDescription.replace(serviceMatch[0], "").trim();
+            rawShortDesc = rawShortDesc.replace(serviceMatch[0], "").trim();
+
+            const lines = listText.split('\n');
+            lines.forEach(line => {
+                // Hapus dash, bullet, atau angka di awal
+                const cleanLine = line.replace(/^[\s-•\d.]+/, '').trim();
+                
+                // Filter baris kosong atau yang berisi "Ringkasan"
+                if (cleanLine && !cleanLine.toLowerCase().includes("ringkasan")) {
+                    const alreadyExists = fetchedSubServices.some(
+                        item => item.sub_services.toLowerCase() === cleanLine.toLowerCase()
+                    );
+                    
+                    if (!alreadyExists) {
+                        fetchedSubServices.push({
+                            sub_services: cleanLine,
+                            isNew: true 
+                        });
+                    }
+                }
+            });
+        }
+
+        // 2. EKSTRAK RINGKASAN
+        // Cari kata "Ringkasan" diikuti tanda baca
+        const summaryRegex = /(?:\*\*|)?Ringkasan(?:\*\*|)?(?:[:.]|\s)([\s\S]*?)(?=\n\n|$)/i;
+        const summaryMatch = rawDescription.match(summaryRegex);
+
+        let finalShortDesc = rawShortDesc;
+        let finalDescription = rawDescription;
+
+        if (summaryMatch) {
+            // Jika ketemu label "Ringkasan" di deskripsi, pindahkan ke field short_desc
+            finalShortDesc = summaryMatch[1].trim();
+            finalDescription = rawDescription.replace(summaryMatch[0], "").trim();
+        } 
+        
+        // Bersihkan sisa-sisa label jika masih tertinggal
+        finalDescription = finalDescription.replace(/(?:\*\*|)?Ringkasan(?:\*\*|)?(?:[:.]|\s)/i, "").trim();
+
+        // --- SET STATE ---
+        setDeskripsi(finalDescription);
+        setDeskripsiSingkat(finalShortDesc);
+        setLayananDitawarkan(fetchedSubServices);
+        
+        // Simpan original state untuk fitur delete
+        const originalFromDB = Subdetail.map(item => ({
+          id: item.id,
+          sub_services: item.sub_services,
+          isNew: false
+        }));
+        setOriginalLayanan(originalFromDB);
+
+        // --- HANDLE ICON & FOTO ---
         if (detail.image_url) {
           setFoto(detail.image_url);
           setPreviewFoto(detail.image_url);
         }
         
-        if (detail.icon_url) {
-          if (detail.icon_url.startsWith('fa-')) {
-            setSelectedIcon(detail.icon_url);
-          } else if (detail.icon_url.startsWith('data:image') && !detail.image_url) {
-            setFoto(detail.icon_url);
-            setPreviewFoto(detail.icon_url);
-          }
+        // Prioritas Icon
+        if (detail.icon_url && detail.icon_url.trim() !== "") {
+            setSelectedIcon(detail.icon_url); // Set icon dari DB
+        } else if (detail.icon_class && detail.icon_class.trim() !== "") {
+            setSelectedIcon(detail.icon_class); // Jaga-jaga jika nama kolomnya icon_class
         }
+        
       } else {
         Swal.fire("Error", "Layanan tidak ditemukan", "error")
           .then(() => router.push('/Admin/Dashboard'));
       }
     } catch (error) {
       console.error("Error fetch:", error);
-      Swal.fire("Error", "Terjadi kesalahan saat mengambil data", "error");
     } finally {
       setIsLoading(false);
     }
@@ -584,7 +647,7 @@ const EditLayananPage = () => {
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h3 className="font-bold text-xl">Pilih Icon Font Awesome</h3>
-                <p className="text-xs text-gray-500 mt-1">Cari dari 2000+ icon gratis</p>
+                <p className="text-xs text-gray-500 mt-1">Cari dari 2000+ icon</p>
               </div>
               <button 
                 onClick={() => setShowIconModal(false)}

@@ -225,9 +225,6 @@ export default function Home() {
                     </div>
                     <div className="mt-10 w-full relative flex justify-center">
                         <div className="w-full h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
-                        <a href="https://wa.me/62812345678" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-10 w-16 h-16 p-3 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors z-10">
-                            <FaWhatsapp size={32} className="text-white" />
-                        </a>
                     </div>
                 </motion.section>
 
@@ -432,16 +429,12 @@ export default function Home() {
                         <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
                             <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
                             <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
-                            <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
-                                <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-                                <span className="text-black text-base md:text-lg font-semibold capitalize">Konsultasi Sekarang</span>
-                            </a>
                         </div>
                     </div>
                 </motion.section>
                 <a href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-green-600 transition-colors">
-                                <FaWhatsapp size={32} className="text-white" />
-                            </a>
+                <FaWhatsapp size={32} className="text-white" />
+                </a>
             </div>
         </main>
     );

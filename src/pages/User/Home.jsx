@@ -38,7 +38,7 @@ export default function Home() {
 
     // State Statistik
     const [statsData, setStatsData] = useState([
-        { value: '0', label: 'Tahun Pengalaman' }, // Hardcode 11 Tahun
+        { value: '0', label: 'Pengalaman' },
         { value: '0+', label: 'Klien Divus' },
         { value: '0+', label: 'Proyek Selesai' },
     ]);
@@ -94,7 +94,7 @@ export default function Home() {
                         if (resDash.ok && dataDash.stats) {
                             setStatsData([
                                 // PERBAIKAN: Ubah .year menjadi .years (tambahkan huruf 's')
-                                { value: `Thn${dataDash.stats.years}`, label: 'Tahun Pengalaman' }, 
+                                { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
                                 { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
                                 { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
                             ]);

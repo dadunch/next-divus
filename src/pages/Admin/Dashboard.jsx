@@ -400,7 +400,8 @@ const DashboardAdmin = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={currentData}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  // UPDATE: Tambah margin bottom/left agar label axis tidak terpotong
+                  margin={{ top: 10, right: 10, left: 15, bottom: 25 }}
                 >
                   <defs>
                     <linearGradient
@@ -433,11 +434,34 @@ const DashboardAdmin = () => {
                     tickLine={false}
                     tick={{ fill: "#9CA3AF", fontSize: 12 }}
                     dy={10}
+                    // UPDATE: Label Sumbu X
+                    label={{
+                      value: timeFilter === "Bulan Ini" ? "Tanggal" : "Bulan",
+                      position: "insideBottom",
+                      offset: -20,
+                      fill: "#6B7280",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                    // UPDATE: Label Sumbu Y Dinamis
+                    label={{
+                      value:
+                        selectedChart === "mitra"
+                          ? "Total Mitra"
+                          : selectedChart === "produk"
+                          ? "Total Produk"
+                          : "Total Proyek",
+                      angle: -90,
+                      position: "insideLeft",
+                      fill: "#6B7280",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
                   />
                   <Tooltip
                     contentStyle={{

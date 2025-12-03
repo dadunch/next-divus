@@ -38,7 +38,7 @@ export default function Home() {
 
     // State Statistik
     const [statsData, setStatsData] = useState([
-        { value: '11', label: 'Tahun Pengalaman' }, // Hardcode 11 Tahun
+        { value: '0', label: 'Tahun Pengalaman' }, // Hardcode 11 Tahun
         { value: '0+', label: 'Klien Divus' },
         { value: '0+', label: 'Proyek Selesai' },
     ]);
@@ -56,35 +56,28 @@ export default function Home() {
     useEffect(() => {
         const fetchAllData = async () => {
             try {
-                // 1. Fetch Services
                 const resService = await fetch('/api/services');
                 const dataService = await resService.json();
                 if (resService.ok && Array.isArray(dataService)) {
                     setServices(dataService);
                 }
 
-                // 2. Fetch Products
                 const resProd = await fetch('/api/products');
                 const dataProd = await resProd.json();
                 if (resProd.ok && Array.isArray(dataProd)) {
                     setProducts(dataProd.slice(0, 3));
                 }
 
-                // 3. Fetch Projects
                 const resProj = await fetch('/api/projects');
                 const dataProj = await resProj.json();
                 if (resProj.ok && Array.isArray(dataProj)) {
                     setProjects(dataProj);
                 }
 
-                // 4. Fetch Clients (LOGO UNTUK BANNER)
-                // Ini yang menghubungkan ke API Client Anda
                 try {
                     const resClients = await fetch('/api/clients');
                     const dataClients = await resClients.json();
                     if (resClients.ok && Array.isArray(dataClients)) {
-                        // Ambil hanya field 'client_logo' dari setiap data client
-                        // Dan filter jika ada yang kosong
                         const logos = dataClients
                             .map(client => client.client_logo)
                             .filter(logo => logo !== null && logo !== "");
@@ -94,23 +87,22 @@ export default function Home() {
                     console.error("Gagal fetch clients:", e);
                 }
 
-                // 5. Fetch Dashboard Stats (Untuk Angka Statistik)
                 try {
-                    const resDash = await fetch('/api/dashboard');
-                    const dataDash = await resDash.json();
-                    
-                    if (resDash.ok && dataDash.stats) {
-                        setStatsData([
-                            { value: '11', label: 'Tahun Pengalaman' }, // Tetap 11
-                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-                        ]);
+                        const resDash = await fetch('/api/dashboard');
+                        const dataDash = await resDash.json();
+                        
+                        if (resDash.ok && dataDash.stats) {
+                            setStatsData([
+                                // PERBAIKAN: Ubah .year menjadi .years (tambahkan huruf 's')
+                                { value: `Thn${dataDash.stats.years}`, label: 'Tahun Pengalaman' }, 
+                                { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+                                { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+                            ]);
+                        }
+                    } catch (error) {
+                        console.warn("Gagal fetch stats dashboard:", error);
                     }
-                } catch (error) {
-                    console.warn("Gagal fetch stats dashboard:", error);
-                }
 
-                // 6. Fetch Hero Images
                 try {
                     const resHero = await fetch('/api/hero'); 
                     if (resHero.ok) {
@@ -226,8 +218,10 @@ export default function Home() {
                         <h2 className="text-zinc-500 text-xl font-semibold leading-6 w-64 text-center md:text-left">
                             Dipercaya Oleh Mitra Internasional
                         </h2>
-                        {/* Logo kecil statis dihapus, fokus ke marquee di bawah */}
-                        <div className="w-full h-1 bg-gray-200 md:w-1/2 rounded-full"></div> 
+                        <div className="flex gap-8 justify-center">
+                            <img className="w-28 md:w-32 h-auto" src={Assets.Client12} alt="Mitra A" />
+                            <img className="w-24 md:w-28 h-auto" src={Assets.Client13} alt="Mitra B" />
+                        </div>
                     </div>
                     <div className="mt-10 w-full relative flex justify-center">
                         <div className="w-full h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
@@ -263,13 +257,13 @@ export default function Home() {
 						<div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
 							<div className="w-full lg:w-1/2 relative">
 								<h2 className="text-zinc-800 text-2xl md:text-3xl font-semibold leading-tight z-10 relative">
-									Solusi Tepat untuk Bisnis Anda.
+									Solusi Tepat untuk Meningkatkan Efektivitas Strategi Bisnis.
 									<span className="inline-block ml-3 w-32 md:w-48 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
 								</h2>
 							</div>
                             <div className="w-full lg:w-5/12">
                                 <p className="text-zinc-600 text-base md:text-lg font-normal leading-relaxed text-justify lg:text-left">
-                                    Kami menyediakan layanan profesional mulai dari konsultasi hingga eksekusi strategi.
+                                    PT Divus menyediakan layanan management consulting, riset, laporan, corporate identity, serta Report dan jurnal guna membantu perusahaan mencapai strategi dan tujuan bisnis secara optimal.
                                 </p>
                             </div>
                         </div>
@@ -445,6 +439,9 @@ export default function Home() {
                         </div>
                     </div>
                 </motion.section>
+                <a href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-2xl z-50 hover:bg-green-600 transition-colors">
+                                <FaWhatsapp size={32} className="text-white" />
+                            </a>
             </div>
         </main>
     );

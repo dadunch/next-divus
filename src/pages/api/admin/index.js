@@ -90,7 +90,7 @@ export default async function handler(req, res) {
         await createLog(
             tx, 
             currentUserId, 
-            "CREATE_ADMIN", 
+            "Tambah Admin", 
             `Menambahkan admin baru: ${username}`
         );
 

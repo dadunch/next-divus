@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         await createLog(
           tx,
           userId,
-          "CREATE_PHOTO",
+          "Tambah Foto",
           `Menambahkan foto: ${title || 'Tanpa Judul'}`
         );
 

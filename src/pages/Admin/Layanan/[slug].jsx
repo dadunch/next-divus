@@ -418,8 +418,15 @@ const EditLayananPage = () => {
           </button>
           Edit Layanan
         </div>
-        <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
-          {user?.username ? user.username.charAt(0) : "A"}
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-medium text-white">
+              Hi, {user?.username || "Admin"}
+            </p>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
+            {user?.username ? user.username.charAt(0) : "A"}
+          </div>
         </div>
       </header>
 

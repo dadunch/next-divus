@@ -163,10 +163,7 @@ const Produk = () => {
                   {/* IMAGE */}
                   <div className="relative h-48 bg-gray-100 overflow-hidden">
                     {cover ? (
-                      <img
-                        src={cover}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
+                      <img src={cover} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 flex-col">
                         <Package size={32} />
@@ -181,9 +178,7 @@ const Produk = () => {
 
                     {/* DELETE */}
                     <button
-                      onClick={() =>
-                        handleDelete(item.id, item.nama_produk)
-                      }
+                      onClick={() => handleDelete(item.id, item.nama_produk)}
                       className="absolute top-3 right-3 p-2 bg-white rounded-lg opacity-0 group-hover:opacity-100 transition"
                     >
                       <Trash2 size={16} className="text-red-500" />
@@ -227,50 +222,50 @@ const Produk = () => {
         />
 
         {/* DETAIL MODAL */}
-{showDetailModal && detailData && (
-  <div
-    className="fixed inset-0 bg-black/70 z-[999] flex justify-center items-start overflow-y-auto py-10 px-4"
-    onClick={() => setShowDetailModal(false)}
-  >
-    <div
-      className="bg-white max-w-3xl w-full rounded-2xl p-8 relative shadow-xl animate-fadeIn"
-      onClick={(e) => e.stopPropagation()} // biar klik dalam modal ga nutup
-    >
-      {/* CLOSE */}
-      <button
-        onClick={() => setShowDetailModal(false)}
-        className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
-      >
-        <X size={22} />
-      </button>
-
-      {/* TITLE */}
-      <h2 className="text-3xl font-bold mb-2 text-gray-900">
-        {detailData.nama_produk}
-      </h2>
-
-      <p className="text-gray-600 mb-6 leading-relaxed">
-        {detailData.deskripsi || "Tidak ada deskripsi"}
-      </p>
-
-      {/* IMAGE GALLERY */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {getImages(detailData.foto_produk).map((img, i) => (
+        {showDetailModal && detailData && (
           <div
-            key={i}
-            className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden"
+            className="fixed inset-0 bg-black/70 z-[999] flex justify-center items-start overflow-y-auto py-10 px-4"
+            onClick={() => setShowDetailModal(false)}
           >
-            <img
-              src={img}
-              alt={`Detail ${i}`}
-              className="w-full h-full object-contain rounded-xl"
-            />
+            <div
+              className="bg-white max-w-3xl w-full rounded-2xl p-8 relative shadow-xl animate-fadeIn"
+              onClick={(e) => e.stopPropagation()} // biar klik dalam modal ga nutup
+            >
+              {/* CLOSE */}
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X size={22} />
+              </button>
+
+              {/* TITLE */}
+              <h2 className="text-3xl font-bold mb-2 text-gray-900">
+                {detailData.nama_produk}
+              </h2>
+
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                {detailData.deskripsi || "Tidak ada deskripsi"}
+              </p>
+
+              {/* IMAGE GALLERY */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {getImages(detailData.foto_produk).map((img, i) => (
+                  <div
+                    key={i}
+                    className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden"
+                  >
+                    <img
+                      src={img}
+                      alt={`Detail ${i}`}
+                      className="w-full h-full object-contain rounded-xl"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
+        )}
       </div>
     </div>
   );

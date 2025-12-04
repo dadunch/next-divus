@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
 import AddFotoModal from "../../components/Modals/addFotoModal";
 import Swal from "sweetalert2";
-import { Search, Plus, Trash2, Package, Image as ImageIcon } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Trash2,
+  Package,
+  Image as ImageIcon,
+} from "lucide-react";
 import { useSelector } from "react-redux";
 
 const Foto = () => {
   const { user } = useSelector((state) => state.auth);
 
   // Ubah nama state agar tidak bentrok dengan nama Component
-  const [photos, setPhotos] = useState([]); 
+  const [photos, setPhotos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -17,7 +23,7 @@ const Foto = () => {
     setIsLoading(true);
     try {
       // Gunakan endpoint lowercase sesuai standar
-      const res = await fetch("/api/photos"); 
+      const res = await fetch("/api/photos");
       if (!res.ok) throw new Error("Gagal mengambil data");
       const data = await res.json();
       setPhotos(data);
@@ -35,7 +41,7 @@ const Foto = () => {
 
   const handleDelete = async (id, title) => {
     const result = await Swal.fire({
-      title: `Hapus foto "${title || 'ini'}"?`,
+      title: `Hapus foto "${title || "ini"}"?`,
       text: "Data akan hilang permanen!",
       icon: "warning",
       showCancelButton: true,
@@ -77,19 +83,19 @@ const Foto = () => {
         <div className="relative w-1/3">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
           </div>
           <input
             type="text"
@@ -140,7 +146,10 @@ const Foto = () => {
           // LOADING SKELETON
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="bg-white rounded-2xl h-64 animate-pulse border border-gray-200">
+              <div
+                key={n}
+                className="bg-white rounded-2xl h-64 animate-pulse border border-gray-200"
+              >
                 <div className="h-40 bg-gray-200 rounded-t-2xl"></div>
                 <div className="p-4 space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -170,18 +179,20 @@ const Foto = () => {
                   <div
                     className="absolute inset-0 opacity-[0.05]"
                     style={{
-                      backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+                      backgroundImage:
+                        "radial-gradient(#000 1px, transparent 1px)",
                       backgroundSize: "10px 10px",
                     }}
                   ></div>
 
                   {item.image_url ? (
                     <img
-                      src={item.image_url} // Sesuaikan dengan DB: image_url
+                      src={item.image_url}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover"
                       onError={(e) =>
-                        (e.target.src = "https://placehold.co/400?text=No+Image")
+                        (e.target.src =
+                          "https://placehold.co/400?text=No+Image")
                       }
                     />
                   ) : (
@@ -207,11 +218,17 @@ const Foto = () => {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-800 line-clamp-1 mb-1">
-                       {item.title || "Tanpa Judul"} {/* Sesuaikan dengan DB: title */}
+                      {item.title || "Tanpa Judul"}{" "}
+                      {/* Sesuaikan dengan DB: title */}
                     </h3>
                     <p className="text-xs text-gray-400">
-                       {/* Format tanggal jika ada created_at */}
-                       {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : "-"}
+                      {/* Format tanggal jika ada created_at */}
+                      {item.created_at
+                        ? new Date(item.created_at).toLocaleDateString(
+                            "id-ID",
+                            { day: "numeric", month: "long", year: "numeric" }
+                          )
+                        : "-"}
                     </p>
                   </div>
                 </div>

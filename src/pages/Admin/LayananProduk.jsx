@@ -285,7 +285,7 @@ const TambahLayananPage = () => {
               Hi, {user?.username || "Admin"}
             </p>
           </div>
-          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold border-2 border-gray-400">
+          <div className="h-10 w-10 rounded-full bg-gray-500 flex items-center justify-center text-white uppercase font-bold border-2 border-gray-400">
             {user?.username ? user.username.charAt(0) : "A"}
           </div>
         </div>

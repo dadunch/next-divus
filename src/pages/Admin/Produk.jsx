@@ -165,7 +165,7 @@ const Produk = () => {
                     {cover ? (
                       <img
                         src={cover}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 flex-col">

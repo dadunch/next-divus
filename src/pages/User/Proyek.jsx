@@ -132,7 +132,7 @@ export default function Proyek() {
       {/* Section utama */}
       <motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-16">
         <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold  capitalize">
-          Proyek References
+          Proyek Referensi
         </h2>
         <span className="inline-block w-32 md:w-20 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
         <p className="text-zinc-700 text-base font-normal leading-relaxed">

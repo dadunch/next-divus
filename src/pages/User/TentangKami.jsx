@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head'; // WAJIB ADA AGAR ICON MUNCUL
 import Link from 'next/link';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaDownload } from 'react-icons/fa';
 import { Assets } from '../../assets';
 import { motion } from 'framer-motion';
 
@@ -306,11 +306,11 @@ export default function TentangKami() {
               <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
             </div>
             <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-              <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">{company?.company_name || "PT Divus Global Mediacomm"} siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
-              <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
-              <a href={getWhatsappLink(company?.phone)} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
-                <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
-                <span className="text-black text-base md:text-lg font-semibold capitalize">Konsultasi Sekarang</span>
+              <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">Ingin Mengenal jauh Tentang Kami?</h2>
+              <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Download Company Profile </p>
+              <a href={company?.brochure_url || "#"} download="Company_Profile.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+                <FaDownload className="text-black w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-black text-base md:text-lg font-semibold capitalize">Download</span>
               </a>
             </div>
           </div>

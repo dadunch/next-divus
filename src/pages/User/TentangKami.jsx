@@ -40,7 +40,7 @@ const getSummary = (text) => {
   return text.substring(0, 100).replace(/\*\*/g, '') + "...";
 };
 
-// --- DATA STATIS (Fallback) ---
+// --- DATA STATIS (Fallback untuk Services) ---
 const fallbackSolutions = [
   {
     title: 'Management Consulting',
@@ -59,17 +59,18 @@ const fallbackSolutions = [
   },
 ];
 
-const statsData = [
-  { value: "10", label: "Pengalaman" },
-  { value: "510+", label: "Klien Divus" },
-  { value: "100+", label: "Proyek Selesai" },
-];
-
 export default function TentangKami() {
   const [company, setCompany] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [services, setServices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // --- STATE BARU: Untuk Data Statistik (Dinamis) ---
+  const [statsData, setStatsData] = useState([
+      { value: "0", label: "Pengalaman" },
+      { value: "0+", label: "Klien Divus" },
+      { value: "0+", label: "Proyek Selesai" },
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,6 +95,22 @@ export default function TentangKami() {
           setServices(servicesData);
         } else {
           setServices(fallbackSolutions);
+        }
+
+        // 4. Fetch Dashboard Stats (LOGIKA BARU - SEPERTI DI HOME)
+        try {
+            const resDash = await fetch('/api/dashboard');
+            const dataDash = await resDash.json();
+            
+            if (resDash.ok && dataDash.stats) {
+                setStatsData([
+                    { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, // Menambah "Thn" agar sesuai konteks
+                    { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+                    { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+                ]);
+            }
+        } catch (error) {
+            console.warn("Gagal fetch stats dashboard:", error);
         }
 
       } catch (error) {

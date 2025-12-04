@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Check } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useSelector } from 'react-redux';
 
@@ -9,7 +9,7 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
   // FORM STATE
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [roleId, setRoleId] = useState("");
+  const [selectedRoleIds, setSelectedRoleIds] = useState([]);
 
   // DATA & UI STATE
   const [rolesList, setRolesList] = useState([]);
@@ -39,8 +39,19 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
   useEffect(() => {
     if (isOpen && adminData) {
       setUsername(adminData.username || "");
-      setRoleId(adminData.role_id || "");
       setPassword("");
+      
+      // LOGIC POPULATE ROLES:
+      if (adminData.roles && Array.isArray(adminData.roles)) {
+        setSelectedRoleIds(adminData.roles.map(r => r.id));
+      } else if (adminData.role_ids && Array.isArray(adminData.role_ids)) {
+         setSelectedRoleIds(adminData.role_ids);
+      } else if (adminData.role_id) {
+        setSelectedRoleIds([adminData.role_id]);
+      } else {
+        setSelectedRoleIds([]);
+      }
+
       setIsRoleDropdownOpen(false);
     }
   }, [isOpen, adminData]);
@@ -56,10 +67,30 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ROLE LABEL
+  // ROLE LABEL GENERATOR
   const getSelectedRoleLabel = () => {
-    const selected = rolesList.find((r) => r.id == roleId);
-    return selected ? selected.role : "Pilih Jabatan";
+    if (selectedRoleIds.length === 0) return "Pilih Jabatan";
+    
+    const selectedNames = rolesList
+      .filter((r) => selectedRoleIds.includes(r.id))
+      .map((r) => r.role);
+
+    if (selectedNames.length > 2) {
+      return `${selectedNames.slice(0, 2).join(", ")} +${selectedNames.length - 2} lainnya`;
+    }
+    
+    return selectedNames.join(", ");
+  };
+
+  // TOGGLE SELECTION HANDLER
+  const toggleRole = (id) => {
+    setSelectedRoleIds((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((roleId) => roleId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
   };
 
   // CLOSE HANDLER
@@ -76,7 +107,7 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
     try {
       const payload = {
         username,
-        role_id: parseInt(roleId),
+        role_ids: selectedRoleIds, 
         currentUserId: user?.id || 1,
         ...(password && { password }),
       };
@@ -118,13 +149,16 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-fade-in-up">
+      {/* PERBAIKAN DISINI: 
+         Saya menghapus class 'overflow-hidden' agar dropdown bisa tampil keluar dari kotak modal.
+      */}
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up">
 
         {/* HEADER */}
         <div className="px-8 pt-8 pb-4 border-b flex justify-between items-center">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Edit Pegawai</h2>
-            <p className="text-xs text-gray-500 mt-1">Ubah informasi login pegawai</p>
+            <p className="text-xs text-gray-500 mt-1">Ubah informasi login & role pegawai</p>
           </div>
           <button
             onClick={handleClose}
@@ -162,10 +196,10 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
             />
           </div>
 
-          {/* CUSTOM DROPDOWN */}
+          {/* CUSTOM MULTI-SELECT DROPDOWN */}
           <div className="relative" ref={dropdownRef}>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              Jabatan / Role
+              Jabatan / Role (Multi-select)
             </label>
 
             <button
@@ -178,13 +212,13 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
                 }
               `}
             >
-              <span className={`text-base font-medium ${roleId ? "text-gray-900" : "text-gray-400"}`}>
+              <span className={`text-base font-medium truncate pr-2 ${selectedRoleIds.length > 0 ? "text-gray-900" : "text-gray-400"}`}>
                 {rolesList.length > 0 ? getSelectedRoleLabel() : "Memuat data..."}
               </span>
 
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                className={`h-5 w-5 flex-shrink-0 text-gray-400 transition-transform duration-200 ${
                   isRoleDropdownOpen ? "rotate-180 text-[#27D14C]" : ""
                 }`}
                 fill="none"
@@ -196,27 +230,27 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
             </button>
 
             {isRoleDropdownOpen && (
-              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-30 overflow-y-auto">
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-48 overflow-y-auto">
                 {rolesList.length > 0 ? (
-                  rolesList.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => {
-                        setRoleId(r.id);
-                        setIsRoleDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0
-                        ${
-                          parseInt(roleId) === r.id
+                  rolesList.map((r) => {
+                    const isSelected = selectedRoleIds.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => toggleRole(r.id)}
+                        className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 flex justify-between items-center
+                          ${isSelected
                             ? "bg-green-50 text-[#27D14C]"
                             : "text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]"
-                        }
-                      `}
-                    >
-                      {r.role}
-                    </button>
-                  ))
+                          }
+                        `}
+                      >
+                        <span>{r.role}</span>
+                        {isSelected && <Check size={16} className="text-[#27D14C]" />}
+                      </button>
+                    );
+                  })
                 ) : (
                   <div className="px-5 py-3 text-sm text-gray-400 italic text-center">
                     Tidak ada data role
@@ -224,10 +258,6 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
                 )}
               </div>
             )}
-
-            <p className="text-xs text-gray-400 mt-2 ml-1">
-              *Pastikan Master Role sudah diisi.
-            </p>
           </div>
 
           {/* BUTTONS */}

@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import { Assets } from "../assets";
 import Swal from 'sweetalert2';
-import { Plus } from 'lucide-react'; 
+// import { Plus } from 'lucide-react'; // Uncomment jika dipakai
 
 // --- ICON MAPPING (TETAP SAMA) ---
 const ICON_MAP = {
@@ -52,7 +52,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const [openMenus, setOpenMenus] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. FUNGSI FETCH SERVICES (Dipisah agar bisa dipanggil ulang)
+  // 1. FUNGSI FETCH SERVICES
   const fetchServices = async () => {
     try {
       const res = await fetch('/api/services');
@@ -70,42 +70,61 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     }
   };
 
-  // 2. USE EFFECT untuk EVENT LISTENER (Agar Update Tanpa Refresh)
+  // 2. USE EFFECT untuk EVENT LISTENER
   useEffect(() => {
-    fetchServices(); // Load awal
+    fetchServices(); 
 
-    // Fungsi Listener untuk menangkap sinyal 'refreshSidebar'
     const handleRefresh = () => {
         console.log("Sidebar mendeteksi perubahan, merefresh menu...");
         fetchServices();
     };
 
-    // Pasang Telinga (Event Listener)
     window.addEventListener('refreshSidebar', handleRefresh);
-
-    // Copot Telinga saat komponen hancur (Cleanup)
     return () => {
         window.removeEventListener('refreshSidebar', handleRefresh);
     };
   }, []);
 
-  // 3. FETCH MENU PERMISSIONS & MERGE
+  // 3. FETCH MENU PERMISSIONS (UPDATED FOR MULTI-ROLE)
   useEffect(() => {
     const fetchMenus = async () => {
-      const roleId = user?.roleId || user?.role_id;
-      if (!roleId) {
+      // === UPDATE LOGIC PENGAMBILAN ROLE ===
+      let roleIds = [];
+
+      // Cek apakah user punya array roles (Login Baru)
+      if (user?.roles && Array.isArray(user.roles)) {
+        roleIds = user.roles.map(r => r.id);
+      } 
+      // Fallback: Cek apakah user punya roleId tunggal (Login Lama / Redux Lama)
+      else if (user?.roleId || user?.role_id) {
+        roleIds = [user.roleId || user.role_id];
+      }
+
+      // Jika tidak ada role sama sekali, stop.
+      if (roleIds.length === 0) {
         setIsLoading(false); 
         return;
       }
 
       try {
-        const res = await fetch(`/api/roles/permissions?role_id=${roleId}`);
+        // Gabungkan ID menjadi string (contoh: "1,2,3")
+        const idsParam = roleIds.join(',');
+
+        // Perhatian: Pastikan API permissions Anda mendukung query param 'role_ids' 
+        // atau loop request jika API backend belum diupdate.
+        // Di sini saya asumsikan API backend bisa terima 'role_ids'
+        const res = await fetch(`/api/roles/permissions?role_ids=${idsParam}`);
         const data = await res.json(); 
 
         if (res.ok) {
-          const rawMenus = data.map(item => item.menu);
+          // Flattening array of permissions jika API mengembalikan nested arrays karena multi-role
+          // (Tergantung implementasi backend Anda nanti)
+          const rawMenus = Array.isArray(data) ? data.map(item => item.menu).flat() : [];
           
-          const normalizedMenus = rawMenus.map(m => ({
+          // Hilangkan duplikat menu (karena multiple role bisa punya akses ke menu yg sama)
+          const uniqueMenus = Array.from(new Map(rawMenus.map(m => [m.id, m])).values());
+
+          const normalizedMenus = uniqueMenus.map(m => ({
             ...m,
             id: String(m.id),
             parent_id: m.parent_id ? String(m.parent_id) : null,
@@ -114,8 +133,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
           const parents = normalizedMenus.filter(m => !m.parent_id);
           const children = normalizedMenus.filter(m => m.parent_id);
-
-// ... (kode sebelumnya tetap sama)
 
           const structuredMenu = parents.map(parent => {
             
@@ -127,7 +144,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 path: child.url
               }));
 
-            // 2. Logika Khusus: LAYANAN (Tetap seperti kode asli Anda)
+            // 2. Logika Khusus: LAYANAN
             if (parent.nama_menu === 'Layanan' || parent.url === '#Layanan') {
                myChildren = [
                  ...myChildren,     
@@ -136,7 +153,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                ];
             }
 
-            // 3. Logika Khusus: PERUSAHAAN (Tetap seperti kode asli Anda)
+            // 3. Logika Khusus: PERUSAHAAN
              if (
               parent.nama_menu === "Perusahaan" ||
               parent.url === "#Perusahaan"
@@ -149,6 +166,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               ];
             }
 
+            // 4. Logika Khusus: PORTOFOLIO
             if (
                 parent.nama_menu === "Portofolio" || 
                 parent.url === "#Portofolio"
@@ -159,8 +177,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 ];
               }
 
-            // ----------------------------------
-
             return {
               name: parent.nama_menu,
               path: parent.url || "#",
@@ -169,6 +185,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             };
           });
 
+          // Tambahkan Dashboard jika belum ada
           if (!structuredMenu.find(m => m.path === '/Admin/Dashboard')) {
              structuredMenu.unshift({
                name: "Beranda",
@@ -188,8 +205,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     };
 
     fetchMenus();
-  }, [user, servicesMenu]); // Dependensi servicesMenu penting agar re-render saat data baru masuk
+  }, [user, servicesMenu]); 
 
+  // --- (SISANYA KE BAWAH TETAP SAMA) ---
   const toggleMenu = (menuName) => {
     setOpenMenus((prev) => ({ ...prev, [menuName]: !prev[menuName] }));
   };

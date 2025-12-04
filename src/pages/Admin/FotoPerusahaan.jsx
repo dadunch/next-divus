@@ -165,7 +165,7 @@ const Foto = () => {
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group relative flex flex-col h-full"
               >
                 {/* Image Container */}
-                <div className="relative h-48 bg-gray-100 overflow-hidden flex items-center justify-center group">
+                <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden flex items-center justify-center group">
                   {/* Pattern Background */}
                   <div
                     className="absolute inset-0 opacity-[0.05]"

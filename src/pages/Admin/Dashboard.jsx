@@ -400,7 +400,8 @@ const DashboardAdmin = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={currentData}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  // UPDATE: Tambah margin bottom/left agar label axis tidak terpotong
+                  margin={{ top: 10, right: 10, left: 15, bottom: 25 }}
                 >
                   <defs>
                     <linearGradient
@@ -433,11 +434,34 @@ const DashboardAdmin = () => {
                     tickLine={false}
                     tick={{ fill: "#9CA3AF", fontSize: 12 }}
                     dy={10}
+                    // UPDATE: Label Sumbu X
+                    label={{
+                      value: timeFilter === "Bulan Ini" ? "Tanggal" : "Bulan",
+                      position: "insideBottom",
+                      offset: -20,
+                      fill: "#6B7280",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                    // UPDATE: Label Sumbu Y Dinamis
+                    label={{
+                      value:
+                        selectedChart === "mitra"
+                          ? "Total Mitra"
+                          : selectedChart === "produk"
+                          ? "Total Produk"
+                          : "Total Proyek",
+                      angle: -90,
+                      position: "insideLeft",
+                      fill: "#6B7280",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                    }}
                   />
                   <Tooltip
                     contentStyle={{
@@ -706,11 +730,11 @@ const DashboardAdmin = () => {
                   <button
                     onClick={() => paginate(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className={`p-2
+                    className={`w-11 h-11 rounded-xl text-lg font-bold transition-all duration-200
             ${
               currentPage === 1
-                ? "border-gray-100 text-gray-300 bg-gray-50"
-                : "border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
+                ? "border border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                : "border border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
             }`}
                   >
                     ‹
@@ -718,20 +742,31 @@ const DashboardAdmin = () => {
 
                   <div className="flex gap-2">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pNum = i + 1;
-                      if (totalPages > 5 && currentPage > 3)
+                      let pNum;
+                      
+                      if (totalPages <= 5) {
+                        // Jika total halaman <= 5, tampilkan semua
+                        pNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        // Jika di awal (halaman 1-3), tampilkan 1-5
+                        pNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        // Jika di akhir (3 halaman terakhir), tampilkan 5 halaman terakhir
+                        pNum = totalPages - 4 + i;
+                      } else {
+                        // Jika di tengah, tampilkan current page di tengah
                         pNum = currentPage - 2 + i;
-                      if (pNum > totalPages) pNum = totalPages - 4 + i;
+                      }
 
                       return (
                         <button
                           key={pNum}
                           onClick={() => paginate(pNum)}
-                          className={`w-11 h-11 rounded-xl text-sm font-bold
+                          className={`w-11 h-11 rounded-xl text-sm font-bold transition-all duration-200
                   ${
                     currentPage === pNum
                       ? "bg-[#27D14C] text-white shadow-lg"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-[#27D14C]"
+                      : "border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-[#27D14C] hover:border-[#27D14C]"
                   }`}
                         >
                           {pNum}
@@ -743,11 +778,11 @@ const DashboardAdmin = () => {
                   <button
                     onClick={() => paginate(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className={`p-2
+                    className={`w-11 h-11 rounded-xl text-lg font-bold transition-all duration-200
             ${
               currentPage === totalPages
-                ? "border-gray-100 text-gray-300 bg-gray-50"
-                : "border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
+                ? "border border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                : "border border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
             }`}
                   >
                     ›

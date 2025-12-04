@@ -227,31 +227,50 @@ const Produk = () => {
         />
 
         {/* DETAIL MODAL */}
-        {showDetailModal && detailData && (
-          <div className="fixed inset-0 bg-black/80 z-[999] flex justify-center items-start pt-10">
-            <div className="bg-white max-w-3xl w-full rounded-2xl p-8 relative">
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="absolute top-4 right-4"
-              >
-                <X size={24} />
-              </button>
+{showDetailModal && detailData && (
+  <div
+    className="fixed inset-0 bg-black/70 z-[999] flex justify-center items-start overflow-y-auto py-10 px-4"
+    onClick={() => setShowDetailModal(false)}
+  >
+    <div
+      className="bg-white max-w-3xl w-full rounded-2xl p-8 relative shadow-xl animate-fadeIn"
+      onClick={(e) => e.stopPropagation()} // biar klik dalam modal ga nutup
+    >
+      {/* CLOSE */}
+      <button
+        onClick={() => setShowDetailModal(false)}
+        className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
+      >
+        <X size={22} />
+      </button>
 
-              <h2 className="text-3xl font-bold mb-2">
-                {detailData.nama_produk}
-              </h2>
-              <p className="text-gray-700 mb-6">
-                {detailData.deskripsi}
-              </p>
+      {/* TITLE */}
+      <h2 className="text-3xl font-bold mb-2 text-gray-900">
+        {detailData.nama_produk}
+      </h2>
 
-              <div className="space-y-4">
-                {getImages(detailData.foto_produk).map((img, i) => (
-                  <img key={i} src={img} className="rounded-xl" />
-                ))}
-              </div>
-            </div>
+      <p className="text-gray-600 mb-6 leading-relaxed">
+        {detailData.deskripsi || "Tidak ada deskripsi"}
+      </p>
+
+      {/* IMAGE GALLERY */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {getImages(detailData.foto_produk).map((img, i) => (
+          <div
+            key={i}
+            className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden"
+          >
+            <img
+              src={img}
+              alt={`Detail ${i}`}
+              className="w-full h-full object-contain rounded-xl"
+            />
           </div>
-        )}
+        ))}
+      </div>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );

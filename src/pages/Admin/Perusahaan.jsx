@@ -4,16 +4,23 @@ import { useSelector } from "react-redux";
 import { Search, Upload, Save, Calendar as CalendarIcon } from "lucide-react";
 import Swal from "sweetalert2";
 import AdminLayouts from "../../layouts/AdminLayouts";
+import Cropper from "react-easy-crop";
 
 // --- DATEPICKER IMPORTS ---
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { id } from "date-fns/locale";
 
-
 const PerusahaanPage = () => {
   const { user } = useSelector((state) => state.auth); // 1. Ambil User Login
   const fileInputRef = useRef(null);
+
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [tempImage, setTempImage] = useState(null);
+
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   // State Form
   const [logo, setLogo] = useState(null);
@@ -32,6 +39,44 @@ const PerusahaanPage = () => {
     description: "",
     business_field: "",
   });
+
+  const createImage = (url) =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.addEventListener("load", () => resolve(image));
+      image.addEventListener("error", reject);
+      image.src = url;
+    });
+
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      pixelCrop.width,
+      pixelCrop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve({
+          blob,
+          url: URL.createObjectURL(blob),
+        });
+      }, "image/jpeg");
+    });
+  };
 
   // 1. Fetch Data
   useEffect(() => {
@@ -72,20 +117,35 @@ const PerusahaanPage = () => {
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        Swal.fire({
-          icon: "warning",
-          title: "File Terlalu Besar",
-          text: "Ukuran file maksimal 2MB",
-          confirmButtonColor: "#F59E0B",
-          customClass: { popup: 'font-["Poppins"] rounded-xl' },
-        });
-        return;
-      }
-      setLogoFile(file);
-      setLogo(URL.createObjectURL(file));
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      Swal.fire({
+        icon: "warning",
+        title: "File Terlalu Besar",
+        text: "Ukuran file maksimal 2MB",
+        confirmButtonColor: "#F59E0B",
+        customClass: { popup: 'font-["Poppins"] rounded-xl' },
+      });
+      return;
     }
+
+    setTempImage(URL.createObjectURL(file));
+    setZoom(1);
+    setCrop({ x: 0, y: 0 });
+    setCropModalOpen(true);
+  };
+
+  const selesaiCrop = async () => {
+    const { blob, url } = await getCroppedImg(tempImage, croppedAreaPixels);
+
+    const croppedFile = new File([blob], "logo-cropped.jpg", {
+      type: "image/jpeg",
+    });
+
+    setLogo(url);
+    setLogoFile(croppedFile);
+    setCropModalOpen(false);
   };
 
   const toBase64 = (file) =>
@@ -154,8 +214,6 @@ const PerusahaanPage = () => {
       <Head>
         <title>Informasi Perusahaan - Divus Admin</title>
       </Head>
-
-      
 
       {/* --- CUSTOM CSS UNTUK DATEPICKER --- */}
       <style jsx global>{`
@@ -284,7 +342,7 @@ const PerusahaanPage = () => {
                 Upload Logo
               </button>
               <p className="text-xs text-gray-400 mt-2">
-                PNG, JPG hingga 2MB <br /> *Ukuran disarankan persegi (1:1)
+                JPG/PNG hingga 2MB <br /> *Ukuran disarankan persegi (1:1)
               </p>
             </div>
           </div>
@@ -448,6 +506,50 @@ const PerusahaanPage = () => {
           </div>
         </div>
       </div>
+      {cropModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 shadow-lg relative w-[90%] h-[80%] max-w-lg flex flex-col">
+            <h2 className="text-lg font-semibold mb-3">Crop Logo</h2>
+
+            <div className="relative flex-1 bg-gray-900/60 rounded-lg overflow-hidden">
+              <Cropper
+                image={tempImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(area, pixels) => setCroppedAreaPixels(pixels)}
+              />
+            </div>
+
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(e.target.value)}
+              className="mt-3"
+            />
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setCropModalOpen(false)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Batal
+              </button>
+              <button
+                onClick={selesaiCrop}
+                className="px-4 py-2 bg-green-600 text-white rounded"
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

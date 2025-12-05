@@ -3,14 +3,14 @@ import Head from "next/head";
 import { useSelector } from "react-redux";
 import { Search, Upload, Save, Calendar as CalendarIcon } from "lucide-react";
 import Swal from "sweetalert2";
-import AdminLayouts from "../../layouts/AdminLayouts";
+// import AdminLayouts from "../../layouts/AdminLayouts"; // Uncomment jika perlu
 import Cropper from "react-easy-crop";
-
 
 // --- DATEPICKER IMPORTS ---
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { id } from "date-fns/locale";
+// PERBAIKAN: Rename import 'id' menjadi 'idLocale' agar tidak crash dengan form.id
+import { id as idLocale } from "date-fns/locale";
 
 const PerusahaanPage = () => {
   const { user } = useSelector((state) => state.auth);
@@ -24,13 +24,12 @@ const PerusahaanPage = () => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
   // PDF State
-  const [companyPdf, setCompanyPdf] = useState(null);
-  const [companyPdfFile, setCompanyPdfFile] = useState(null);
-
+  const [companyPdf, setCompanyPdf] = useState(null); // Nama file untuk tampilan UI
+  const [companyPdfFile, setCompanyPdfFile] = useState(null); // File binary untuk upload
 
   // State Form
-  const [logo, setLogo] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
+  const [logo, setLogo] = useState(null); // URL Preview Logo
+  const [logoFile, setLogoFile] = useState(null); // File binary Logo
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -46,6 +45,7 @@ const PerusahaanPage = () => {
     business_field: "",
   });
 
+  // --- CROPPER HELPERS ---
   const createImage = (url) =>
     new Promise((resolve, reject) => {
       const image = new Image();
@@ -88,11 +88,12 @@ const PerusahaanPage = () => {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const res = await fetch("/api/company");
+        const res = await fetch("/api/company"); // Pastikan path ini benar
         const data = await res.json();
+        
         if (res.ok && data) {
           setForm({
-            id: data.id,
+            id: data.id || "",
             company_name: data.company_name || "",
             email: data.email || "",
             phone: data.phone || "",
@@ -106,6 +107,13 @@ const PerusahaanPage = () => {
           }
 
           setLogo(data.logo_url || null);
+
+          // Handle Nama PDF dari Database
+          if (data.file_url) {
+             // Ambil nama file saja dari path (misal: /uploads/docs/123_file.pdf -> 123_file.pdf)
+             const fileName = data.file_url.split('/').pop();
+             setCompanyPdf(fileName);
+          }
         }
       } catch (error) {
         console.error("Gagal load data perusahaan", error);
@@ -144,7 +152,6 @@ const PerusahaanPage = () => {
 
   const selesaiCrop = async () => {
     const { blob, url } = await getCroppedImg(tempImage, croppedAreaPixels);
-
     const croppedFile = new File([blob], "logo-cropped.jpg", {
       type: "image/jpeg",
     });
@@ -153,69 +160,6 @@ const PerusahaanPage = () => {
     setLogoFile(croppedFile);
     setCropModalOpen(false);
   };
-
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-
-  const handleSubmit = async () => {
-    setIsSaving(true);
-    try {
-      let logoData = logo;
-      if (logoFile) {
-        logoData = await toBase64(logoFile);
-      }
-
-      let pdfData = null;
-      if (companyPdfFile) {
-        pdfData = await toBase64(companyPdfFile);
-      }
-
-      const payload = {
-        ...form,
-        established_date: selectedDate ? selectedDate.toISOString() : null,
-        logo_url: logoData,
-        userId: user?.id,
-        pdf_file: pdfData,
-        pdf_name: companyPdf,
-      };
-
-      const res = await fetch("/api/company", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Berhasil Disimpan!",
-          text: "Informasi perusahaan telah diperbarui.",
-          confirmButtonColor: "#27D14C",
-          customClass: { popup: 'font-["Poppins"] rounded-xl' },
-        });
-      } else {
-        throw new Error("Gagal menyimpan");
-      }
-
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal",
-        text: "Terjadi kesalahan saat menyimpan data.",
-        confirmButtonColor: "#EF4444",
-        customClass: { popup: 'font-["Poppins"] rounded-xl' },
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
 
   const handlePdfChange = (e) => {
     const file = e.target.files[0];
@@ -232,11 +176,11 @@ const PerusahaanPage = () => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 20 * 1024 * 1024) { // Naikkan limit jadi 20MB untuk PDF
       Swal.fire({
         icon: "warning",
         title: "File Terlalu Besar",
-        text: "Ukuran PDF maksimal 5MB.",
+        text: "Ukuran PDF maksimal 20MB.",
         confirmButtonColor: "#F59E0B",
         customClass: { popup: 'font-["Poppins"] rounded-xl' },
       });
@@ -247,7 +191,70 @@ const PerusahaanPage = () => {
     setCompanyPdf(file.name);
   };
 
+  // === SUBMIT MENGGUNAKAN FORMDATA ===
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
 
+      // 1. Append semua text field
+      Object.keys(form).forEach((key) => {
+         const value = form[key];
+         formData.append(key, value !== null && value !== undefined ? value : "");
+      });
+
+      // 2. Append Date
+      if (selectedDate) {
+         formData.append('established_date', selectedDate.toISOString());
+      }
+
+      // 3. Append User ID
+      if (user?.id) {
+         formData.append('userId', user.id);
+      }
+
+      // 4. Append Files (Kirim File Asli/Binary, bukan Base64)
+      if (logoFile) {
+         formData.append('logo_url', logoFile);
+      }
+      
+      if (companyPdfFile) {
+         formData.append('file_url', companyPdfFile);
+      }
+
+      const res = await fetch("/api/company", {
+        method: "PUT",
+        // PENTING: Jangan set 'Content-Type': 'application/json'
+        // Biarkan browser otomatis set boundary multipart/form-data
+        body: formData,
+      });
+
+      if (res.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil Disimpan!",
+          text: "Informasi perusahaan telah diperbarui.",
+          confirmButtonColor: "#27D14C",
+          customClass: { popup: 'font-["Poppins"] rounded-xl' },
+        });
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Gagal menyimpan");
+      }
+
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Terjadi kesalahan saat menyimpan data.",
+        confirmButtonColor: "#EF4444",
+        customClass: { popup: 'font-["Poppins"] rounded-xl' },
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isLoading)
     return (
@@ -427,7 +434,8 @@ const PerusahaanPage = () => {
                   selected={selectedDate}
                   onChange={(date) => setSelectedDate(date)}
                   dateFormat="dd MMMM yyyy"
-                  locale={id}
+                  // Gunakan locale yang sudah di-rename agar aman
+                  locale={idLocale}
                   placeholderText="Pilih tanggal berdiri"
                   showYearDropdown
                   scrollableYearDropdown

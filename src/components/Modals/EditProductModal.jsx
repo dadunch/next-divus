@@ -10,8 +10,8 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
     tahun: new Date().getFullYear()
   });
 
-  // Array untuk menyimpan semua foto (URL existing + file baru)
-  const [photos, setPhotos] = useState([]); // Format: [{ url: '...', isNew: false }, ...]
+  // Array untuk menyimpan semua foto
+  const [photos, setPhotos] = useState([]); 
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -137,11 +137,9 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
     setIsSubmitting(true);
 
     try {
-      // Pisahkan foto existing dan foto baru
       const existingPhotos = photos.filter(p => !p.isNew).map(p => p.url);
       const newPhotos = photos.filter(p => p.isNew);
 
-      // Upload foto baru
       const uploadedUrls = [];
       for (const photo of newPhotos) {
         const formDataUpload = new FormData();
@@ -158,10 +156,9 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
         }
       }
 
-      // Gabungkan foto existing dan foto baru
       const finalPhotos = [...existingPhotos, ...uploadedUrls];
 
-      // Update ke database
+
       const updateData = {
         nama_produk: formData.nama_produk.trim(),
         deskripsi: formData.deskripsi?.trim() || '',

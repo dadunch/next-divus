@@ -176,7 +176,6 @@ const AdminManage = () => {
 
               <tbody className="divide-y divide-gray-100">
                 {isLoading ? (
-                  // Loading Skeleton
                   [...Array(3)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td className="py-4 px-6 text-center"><div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div></td>
@@ -217,7 +216,6 @@ const AdminManage = () => {
                               </span>
                             ))
                           ) : (
-                             // Fallback jika tidak ada data array roles, pakai string role
                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200">
                                 {admin.role || "-"}
                              </span>

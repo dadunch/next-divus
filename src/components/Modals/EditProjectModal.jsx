@@ -17,7 +17,6 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
   
   const dropdownRef = useRef(null);
 
-  // 1. Fetch Kategori saat modal dibuka
   useEffect(() => {
     if (isOpen) {
       fetch('/api/categories')
@@ -27,7 +26,6 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     }
   }, [isOpen]);
 
-  // 2. Isi Form saat projectData berubah (saat tombol edit diklik)
   useEffect(() => {
     if (projectData) {
       setFormData({
@@ -38,7 +36,6 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     }
   }, [projectData]);
 
-  // 3. Click Outside untuk menutup DROPDOWN
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -49,7 +46,6 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 4. Handle Submit (Update Proyek)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -67,13 +63,12 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     setIsSubmitting(true);
 
     try {
-      // Endpoint untuk Update (PUT)
       const res = await fetch(`/api/projects/${projectData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          userId: userId // Penting untuk Log Aktivitas
+          userId: userId
         }),
       });
 
@@ -88,7 +83,7 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
         customClass: { popup: 'font-["Poppins"] rounded-xl' }
       });
       
-      onSuccess(); // Refresh data di parent
+      onSuccess();
       handleClose();
 
     } catch (error) {
@@ -118,7 +113,6 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
   if (!isOpen) return null;
 
   return (
-    // Backdrop
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']"
       onClick={handleClose}

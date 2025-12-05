@@ -9,7 +9,6 @@ const AddAdminModal = ({ isOpen, onClose, onSuccess }) => {
   // Form States
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  // UBAH: Menggunakan Array untuk multiple selection
   const [selectedRoleIds, setSelectedRoleIds] = useState([]);
 
   // Data & UI States

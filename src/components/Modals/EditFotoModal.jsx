@@ -30,7 +30,7 @@ const EditFotoModal = ({ isOpen, onClose, onSuccess, data }) => {
     if (!file) return;
 
     setImageFile(file);
-    setPreview(URL.createObjectURL(file)); // preview lokal
+    setPreview(URL.createObjectURL(file));
   };
 
   const removeImage = () => {
@@ -45,7 +45,6 @@ const EditFotoModal = ({ isOpen, onClose, onSuccess, data }) => {
     try {
       let base64Image = data.foto;
 
-      // Jika user mengganti foto → convert ke base64
       if (imageFile) {
         base64Image = await toBase64(imageFile);
       }

@@ -103,12 +103,10 @@ const AddProjectModal = ({ isOpen, onClose, onSuccess, clientId }) => {
   if (!isOpen) return null;
 
   return (
-    // 1. Backdrop dengan onClick={onClose} -> Klik luar tutup modal
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']"
       onClick={handleClose}
     >
-      {/* 2. Stop Propagation -> Klik dalam kotak JANGAN tutup modal */}
       <div 
         className="bg-white rounded-2xl w-full max-w-lg shadow-2xl transform transition-all scale-100 overflow-visible"
         onClick={(e) => e.stopPropagation()}

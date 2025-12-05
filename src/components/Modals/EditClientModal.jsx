@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import Swal from "sweetalert2";
-
-// --- PERBAIKAN: Tambahkan import ini ---
 import Cropper from "react-easy-crop"; 
 
 const EditClientModal = ({
@@ -26,7 +24,7 @@ const EditClientModal = ({
 
   const fileInputRef = useRef(null);
 
-  // Efek: Isi form saat modal dibuka & data tersedia
+  // Efek
   useEffect(() => {
     if (isOpen && clientData) {
       setClientName(clientData.client_name || "");
@@ -126,14 +124,13 @@ const EditClientModal = ({
 
       if (!res.ok) throw new Error("Gagal update data");
 
-      // SUKSES: Alert Hijau & Compact
       Swal.fire({
         icon: "success",
         title: "Berhasil!",
         text: "Data client berhasil diperbarui.",
         width: "22em",
         padding: "1.5em",
-        iconColor: "#27D14C", // Hijau Divus
+        iconColor: "#27D14C", 
         showConfirmButton: false,
         timer: 1500,
         timerProgressBar: true,
@@ -202,7 +199,7 @@ const EditClientModal = ({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation(); // ⬅️ penting agar tidak trigger upload
+                      e.stopPropagation(); 
                       setLogoFile(null);
                       setPreviewUrl(null);
                     }}

@@ -11,7 +11,6 @@ const ManageCategoryModal = ({ isOpen, onClose, onSuccess }) => {
   const [deletedIds, setDeletedIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Fetch Data Awal
   useEffect(() => {
     if (isOpen) {
       fetch('/api/categories')
@@ -22,7 +21,6 @@ const ManageCategoryModal = ({ isOpen, onClose, onSuccess }) => {
     }
   }, [isOpen]);
 
-  // 2. Handle Perubahan Input
   const handleNameChange = (index, newValue) => {
     const updated = [...categories];
     updated[index].bidang = newValue;
@@ -30,7 +28,7 @@ const ManageCategoryModal = ({ isOpen, onClose, onSuccess }) => {
     setCategories(updated);
   };
 
-  // 3. Handle Hapus Item
+
   const handleDelete = (index) => {
     const item = categories[index];
     if (item.id) {
@@ -40,18 +38,16 @@ const ManageCategoryModal = ({ isOpen, onClose, onSuccess }) => {
     setCategories(updated);
   };
 
-  // 4. Handle Tambah Item
+
   const handleAdd = () => {
     setCategories([...categories, { bidang: "", isNew: true }]);
   };
 
-  // 5. SIMPAN PERUBAHAN
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
       const promises = [];
 
-      // A. Eksekusi Delete
       deletedIds.forEach(id => {
         promises.push(
           fetch(`/api/categories/${id}`, {
@@ -62,7 +58,6 @@ const ManageCategoryModal = ({ isOpen, onClose, onSuccess }) => {
         );
       });
 
-      // B. Eksekusi Update & Create
       categories.forEach(item => {
         if (item.isNew && item.bidang.trim() !== "") {
           promises.push(
@@ -108,12 +103,11 @@ const ManageCategoryModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    // 1. Tambahkan onClick={onClose} pada wrapper backdrop
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']"
       onClick={onClose} 
     >
-      {/* 2. Tambahkan stopPropagation agar klik di dalam kotak tidak menutup modal */}
+      {/* Stop propagatio  */}
       <div 
         className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()} 

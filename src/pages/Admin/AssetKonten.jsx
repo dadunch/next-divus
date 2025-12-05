@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { Pencil, Trash2, Save } from "lucide-react";
 import { Assets } from "../../assets"; // Pastikan path asset benar
 import Cropper from "react-easy-crop";
+import Swal from "sweetalert2";
 
 /* ================= PREVIEW (DESAIN ORIGINAL) ================= */
 const createImage = (url) =>
@@ -214,13 +215,30 @@ const AssetKontenPage = () => {
       });
 
       if (response.ok) {
-        alert("Perubahan berhasil disimpan! ✅");
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Perubahan berhasil disimpan.",
+          confirmButtonColor: "#16a34a",
+        });
       } else {
-        alert("Gagal menyimpan data.");
+        Swal.fire({
+          icon: "error",
+          title: "Gagal!",
+          text: "Gagal menyimpan data.",
+          confirmButtonColor: "#dc2626",
+        });
       }
+
     } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan koneksi.");
+    console.error(error);
+    Swal.fire({
+      icon: "error",
+      title: "Kesalahan!",
+      text: "Terjadi kesalahan koneksi.",
+      confirmButtonColor: "#dc2626",
+    });
+
     } finally {
       setIsSaving(false);
     }

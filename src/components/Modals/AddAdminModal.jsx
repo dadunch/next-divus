@@ -103,7 +103,6 @@ const AddAdminModal = ({ isOpen, onClose, onSuccess }) => {
         body: JSON.stringify({
           username,
           password,
-          // UBAH: Kirim array role_ids
           role_ids: selectedRoleIds,
           currentUserId: user?.id
         }),
@@ -143,38 +142,37 @@ const AddAdminModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-fade-in-up">
-
-        {/* HEADER */}
-        <div className="px-8 pt-8 pb-4 border-b flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Tambah Pegawai</h2>
-            <p className="text-xs text-gray-500 mt-1">Buat akun baru untuk akses sistem</p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition text-gray-500"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-
-          {/* USERNAME */}
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#27D14C] focus:border-[#27D14C] focus:outline-none transition-all placeholder-gray-400"
-              placeholder="Contoh: budi_admin"
-            />
-          </div>
-
-          {/* PASSWORD */}
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up">
+    
+            {/* HEADER */}
+            <div className="px-8 pt-8 pb-4 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Tambah Pegawai</h2>
+                <p className="text-xs text-gray-500 mt-1">Buat akun baru untuk akses sistem</p>
+              </div>
+              <button
+                onClick={handleClose}
+                className="p-2 hover:bg-gray-100 rounded-full transition text-gray-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
+    
+            {/* FORM */}
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+    
+              {/* USERNAME */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#27D14C] focus:border-[#27D14C] focus:outline-none transition-all placeholder-gray-400"
+                />
+              </div>
+    
+              {/* PASSWORD */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
             <input
@@ -185,8 +183,8 @@ const AddAdminModal = ({ isOpen, onClose, onSuccess }) => {
               placeholder="Minimal 6 karakter"
             />
           </div>
-
-          {/* CUSTOM MULTI-SELECT DROPDOWN */}
+    
+              {/* CUSTOM MULTI-SELECT DROPDOWN */}
           <div className="relative" ref={dropdownRef}>
             <label className="block text-sm font-bold text-gray-700 mb-2">
               Jabatan / Role (Multi-select)
@@ -218,72 +216,70 @@ const AddAdminModal = ({ isOpen, onClose, onSuccess }) => {
             </button>
 
             {isRoleDropdownOpen && (
-              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-48 overflow-y-auto">
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto">
                 {rolesList.length > 0 ? (
                   rolesList.map((r) => {
                     const isSelected = selectedRoleIds.includes(r.id);
                     return (
-                      <button
+                      <div
                         key={r.id}
-                        type="button"
                         onClick={() => toggleRole(r.id)}
-                        className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 flex justify-between items-center
+                        className={`px-4 py-3 cursor-pointer transition-colors flex justify-between items-center
                           ${isSelected
                             ? 'bg-green-50 text-[#27D14C]'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]'
+                            : 'text-gray-700 hover:bg-gray-50'
                           }
                         `}
                       >
-                        <span>{r.role}</span>
-                        {isSelected && <Check size={16} className="text-[#27D14C]" />}
-                      </button>
+                        <span className="text-sm font-medium">
+                          {r.role}
+                        </span>
+                        {isSelected && (
+                          <Check size={18} className="text-[#27D14C]" strokeWidth={3} />
+                        )}
+                      </div>
                     );
                   })
                 ) : (
-                  <div className="px-5 py-3 text-sm text-gray-400 italic text-center">
+                  <div className="px-4 py-3 text-sm text-gray-400 italic text-center">
                     Tidak ada data role
                   </div>
                 )}
               </div>
             )}
-
-            <p className="text-xs text-gray-400 mt-2 ml-1">
-              *Klik untuk memilih lebih dari satu role.
-            </p>
           </div>
-
-          {/* BUTTONS */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-              disabled={isSubmitting}
-            >
-              Batal
-            </button>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-3 rounded-xl bg-[#2D2D39] text-white font-medium hover:bg-black transition-all shadow-lg disabled:opacity-70 flex justify-center items-center gap-2 transform active:scale-95"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save size={18} /> Simpan
-                </>
-              )}
-            </button>
+    
+              {/* BUTTONS */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  disabled={isSubmitting}
+                >
+                  Batal
+                </button>
+    
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 rounded-xl bg-[#2D2D39] text-white font-medium hover:bg-black transition-all shadow-lg disabled:opacity-70 flex justify-center items-center gap-2 transform active:scale-95"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                      Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={18} /> Simpan
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-
-        </form>
-      </div>
-    </div>
+        </div>
   );
 };
 

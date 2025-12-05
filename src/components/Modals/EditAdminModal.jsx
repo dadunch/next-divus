@@ -149,9 +149,6 @@ const EditAdminModal = ({ isOpen, onClose, onSuccess, adminData }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-['Poppins']">
-      {/* PERBAIKAN DISINI: 
-         Saya menghapus class 'overflow-hidden' agar dropdown bisa tampil keluar dari kotak modal.
-      */}
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up">
 
         {/* HEADER */}

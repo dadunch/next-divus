@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AddProductModal from "../../components/Modals/AddProductModul";
 import EditProductModal from "../../components/Modals/EditProductModal";
 import Swal from "sweetalert2";
-import { Search, Plus, Trash2, Eye, Package, X } from "lucide-react";
+import { Search, Plus, Trash2, Eye, Package, Pencil } from "lucide-react";
 import { useSelector } from "react-redux";
 
 const Produk = () => {
@@ -122,7 +122,6 @@ const Produk = () => {
 
       {/* ================= MAIN CONTENT ================= */}
       <div className="px-8 pt-8">
-        {/* PAGE HEADER */}
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-3xl font-bold text-black mb-1">Produk</h1>
@@ -140,7 +139,6 @@ const Produk = () => {
           </button>
         </div>
 
-        {/* ================= PRODUCT GRID ================= */}
         {isLoading ? (
           <div className="text-center text-gray-500 py-20">
             Memuat data produk...
@@ -171,18 +169,31 @@ const Produk = () => {
                       </div>
                     )}
 
-                    {/* YEAR */}
                     <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1 rounded-lg text-xs font-bold">
                       {item.tahun}
                     </div>
 
-                    {/* DELETE */}
-                    <button
-                      onClick={() => handleDelete(item.id, item.nama_produk)}
-                      className="absolute top-3 right-3 p-2 bg-white rounded-lg opacity-0 group-hover:opacity-100 transition"
-                    >
-                      <Trash2 size={16} className="text-red-500" />
-                    </button>
+                    {/* TOMBOL EDIT & DELETE */}
+                    <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={() => {
+                          setEditData(item);
+                          setShowEditModal(true);
+                        }}
+                        className="p-2 bg-white rounded-lg shadow hover:bg-blue-50"
+                        title="Edit Produk"
+                      >
+                        <Pencil size={16} className="text-blue-600" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(item.id, item.nama_produk)}
+                        className="p-2 bg-white rounded-lg shadow hover:bg-red-50"
+                        title="Hapus Produk"
+                      >
+                        <Trash2 size={16} className="text-red-500" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* CONTENT */}
@@ -221,6 +232,23 @@ const Produk = () => {
           }}
         />
 
+        {/* MODAL EDIT */}
+        {editData && (
+          <EditProductModal
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditData(null);
+            }}
+            onSuccess={() => {
+              fetchProducts();
+              setShowEditModal(false);
+              setEditData(null);
+            }}
+            productData={editData}
+          />
+        )}
+
         {/* DETAIL MODAL */}
         {showDetailModal && detailData && (
           <div
@@ -229,17 +257,17 @@ const Produk = () => {
           >
             <div
               className="bg-white max-w-3xl w-full rounded-2xl p-8 relative shadow-xl animate-fadeIn"
-              onClick={(e) => e.stopPropagation()} // biar klik dalam modal ga nutup
+              onClick={(e) => e.stopPropagation()}
             >
-              {/* CLOSE */}
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
               >
-                <X size={22} />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
 
-              {/* TITLE */}
               <h2 className="text-3xl font-bold mb-2 text-gray-900">
                 {detailData.nama_produk}
               </h2>
@@ -248,7 +276,6 @@ const Produk = () => {
                 {detailData.deskripsi || "Tidak ada deskripsi"}
               </p>
 
-              {/* IMAGE GALLERY */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {getImages(detailData.foto_produk).map((img, i) => (
                   <div

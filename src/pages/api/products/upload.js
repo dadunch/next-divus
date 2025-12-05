@@ -20,14 +20,29 @@ export default async function handler(req, res) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
+    // Custom filename handler
     const form = formidable({
-      uploadDir,
+      uploadDir: uploadDir,
       keepExtensions: true,
-      multiples: true, // PENTING: Izinkan banyak file
-      maxFileSize: 10 * 1024 * 1024, // Naikkan ke 10MB total
-      filename: (name, ext, part) => {
-        const safeName = part.originalFilename.replace(/[^a-z0-9.]/gi, '-').toLowerCase();
-        return `${Date.now()}-${safeName}`;
+      maxFileSize: 5 * 1024 * 1024, // 5MB
+      filename: (name, ext, part, form) => {
+        // Format: NamaProduk-TahunBulanTanggal-JamMenit.jpg
+        // Contoh: Survey-Market-20251205-1430.jpg
+        const originalName = part.originalFilename || 'produk';
+        const baseName = originalName.replace(/\.[^/.]+$/, ""); // Hapus ekstensi lama
+        const extension = path.extname(part.originalFilename) || '.jpg';
+        
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        
+        const timestamp = `${year}${month}${day}-${hour}${minute}`;
+        const safeName = baseName.replace(/[^a-zA-Z0-9]/g, '-');
+        
+        return `${safeName}-${timestamp}${extension}`;
       }
     });
 
@@ -38,24 +53,19 @@ export default async function handler(req, res) {
       });
     });
 
-    // Handle single atau multiple files
-    const uploadedFiles = files.file ? (Array.isArray(files.file) ? files.file : [files.file]) : [];
+    const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
 
-    if (uploadedFiles.length === 0) {
-      return res.status(400).json({ error: 'No files uploaded' });
+    if (!uploadedFile) {
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Buat array URL
-    const urls = uploadedFiles.map(file => {
-      const fileName = path.basename(file.filepath);
-      return `/uploads/products/${fileName}`;
-    });
+    const fileName = path.basename(uploadedFile.filepath);
+    const url = `/uploads/products/${fileName}`;
 
-    // Kembalikan dalam bentuk Array URL
-    return res.status(200).json({ urls });
+    return res.status(200).json({ url });
 
   } catch (error) {
     console.error('Upload error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Upload failed', details: error.message });
   }
 }

@@ -1,6 +1,7 @@
+// File: src/pages/api/products/index.js
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
-import { createLog } from '../../../lib/logger'; // Pastikan path logger benar
+import { createLog } from '../../../lib/logger';
 
 const safeSerialize = (data) => {
   return JSON.parse(JSON.stringify(data, (key, value) =>
@@ -12,7 +13,9 @@ export default async function handler(req, res) {
   // GET
   if (req.method === 'GET') {
     try {
-      const products = await prisma.product.findMany({ orderBy: { created_at: 'desc' } });
+      const products = await prisma.product.findMany({ 
+        orderBy: { created_at: 'desc' } 
+      });
       return res.status(200).json(safeSerialize(products));
     } catch (error) {
       return res.status(500).json({ error: error.message });
@@ -21,7 +24,6 @@ export default async function handler(req, res) {
 
   // POST
   if (req.method === 'POST') {
-    // Terima userId dari body
     const { nama_produk, deskripsi, tahun, foto_produk, userId } = req.body;
     const currentUserId = userId || 1; 
 
@@ -32,7 +34,7 @@ export default async function handler(req, res) {
             nama_produk: nama_produk.trim(),
             deskripsi: deskripsi || '',
             tahun: BigInt(tahun),
-            foto_produk: foto_produk || '[]',
+            foto_produk: foto_produk || '[]', // Simpan sebagai JSON string
             created_at: new Date()
           }
         });

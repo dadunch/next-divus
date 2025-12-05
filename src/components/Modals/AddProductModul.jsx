@@ -22,8 +22,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-
-  const [aspect, setAspect] = useState(1 / 1); // default 1:1
+  const [aspect, setAspect] = useState(1 / 1);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -35,15 +34,13 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Convert cropped area to actual image
   const getCroppedImg = async (imageSrc, cropPixels) => {
     const image = new Image();
     image.src = imageSrc;
-
     await new Promise(resolve => image.onload = resolve);
+    
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-
     canvas.width = cropPixels.width;
     canvas.height = cropPixels.height;
 
@@ -59,7 +56,11 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       cropPixels.height
     );
 
-    return canvas.toDataURL("image/jpeg");
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve({ blob, url: URL.createObjectURL(blob) });
+      }, "image/jpeg");
+    });
   };
 
   const onCropComplete = useCallback((_, croppedPixels) => {
@@ -74,24 +75,29 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    // Proses crop satu per satu
     startCropFlow(fileArray[0]);
   };
 
   const startCropFlow = (file) => {
     const reader = new FileReader();
     reader.onload = function (e) {
-      setSelectedFile(e.target.result);
+      setSelectedFile({ data: e.target.result, file });
       setCropModalOpen(true);
     };
     reader.readAsDataURL(file);
   };
 
   const finishCrop = async () => {
-    const croppedImage = await getCroppedImg(selectedFile, croppedAreaPixels);
+    const { blob, url } = await getCroppedImg(selectedFile.data, croppedAreaPixels);
+    
+    // Buat File object dengan nama custom
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+    const baseName = formData.nama_produk.replace(/[^a-zA-Z0-9]/g, '-') || 'produk';
+    const croppedFile = new File([blob], `${baseName}-${timestamp}.jpg`, { type: "image/jpeg" });
 
-    setPreviews(prev => [...prev, croppedImage]);
-    setImageFiles(prev => [...prev, croppedImage]);
+    setPreviews(prev => [...prev, url]);
+    setImageFiles(prev => [...prev, croppedFile]);
 
     setCropModalOpen(false);
     setSelectedFile(null);
@@ -117,12 +123,30 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       const currentUserId = user?.id || 1;
+      
+      // Upload gambar satu per satu
+      const uploadedUrls = [];
+      for (const file of imageFiles) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+        
+        const uploadRes = await fetch('/api/products/upload', {
+          method: 'POST',
+          body: formDataUpload
+        });
 
+        if (uploadRes.ok) {
+          const { url } = await uploadRes.json();
+          uploadedUrls.push(url);
+        }
+      }
+
+      // Simpan produk dengan URL gambar
       const productData = {
         nama_produk: formData.nama_produk,
         deskripsi: formData.deskripsi,
         tahun: formData.tahun,
-        foto_produk: JSON.stringify(imageFiles),
+        foto_produk: JSON.stringify(uploadedUrls), // Array URL
         userId: currentUserId
       };
 
@@ -136,7 +160,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
         Swal.fire('Sukses', 'Produk berhasil ditambahkan', 'success');
         onSuccess();
       } else {
-        if (res.status === 413) throw new Error('Ukuran gambar terlalu besar.');
         throw new Error('Gagal menyimpan ke database');
       }
     } catch (error) {
@@ -150,7 +173,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <>
-      {/* ==================== MAIN MODAL ==================== */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
           <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
@@ -159,7 +181,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Foto Produk */}
             <label className="block font-semibold mb-2 text-gray-700">Foto Produk (Max 5)</label>
 
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-2">
@@ -176,8 +197,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               ))}
 
-              
-
               {previews.length < 5 && (
                 <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
                   <ImageIcon className="text-gray-400 mb-1" />
@@ -187,19 +206,17 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
               )}
             </div>
             
-              {/* Size Chart */}
-              <div className="mt-2 mb-4 text-xs text-gray-500 space-y-1">
-                <div className="flex justify-between">
-                  <span>Format</span>
-                  <span className="font-medium text-gray-700">PNG, JPG</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Maksimal File</span>
-                  <span className="font-medium text-gray-700">5 MB</span>
-                </div>
+            <div className="mt-2 mb-4 text-xs text-gray-500 space-y-1">
+              <div className="flex justify-between">
+                <span>Format</span>
+                <span className="font-medium text-gray-700">PNG, JPG</span>
               </div>
+              <div className="flex justify-between">
+                <span>Maksimal File</span>
+                <span className="font-medium text-gray-700">5 MB</span>
+              </div>
+            </div>
 
-            {/* Form */}
             <input name="nama_produk" value={formData.nama_produk} onChange={handleChange} placeholder="Nama Produk"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-800" required />
 
@@ -217,7 +234,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
       </div>
 
-      {/* ==================== CROP MODAL ==================== */}
       {cropModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[999] p-4">
           <div className="bg-white p-5 rounded-xl shadow-xl w-full max-w-xl">
@@ -225,7 +241,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div className="w-full h-64 relative">
               <Cropper
-                image={selectedFile}
+                image={selectedFile?.data}
                 crop={crop}
                 zoom={zoom}
                 aspect={aspect}
@@ -235,7 +251,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
               />
             </div>
 
-            {/* Aspect Ratio Buttons */}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setAspect(1 / 1)} className="px-3 py-1 bg-gray-200 rounded">1 : 1</button>
               <button onClick={() => setAspect(4 / 3)} className="px-3 py-1 bg-gray-200 rounded">4 : 3</button>

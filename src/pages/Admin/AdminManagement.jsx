@@ -5,29 +5,24 @@ import { useSelector } from "react-redux";
 import { Plus, Search, Pencil, Trash2, User, ShieldAlert } from "lucide-react";
 import Swal from "sweetalert2";
 
-// Layout (Sesuaikan path import Anda)
 import AdminLayouts from "../../layouts/AdminLayouts";
 
-// Modals
 import AddAdminModal from "../../components/Modals/AddAdminModal";
 import EditAdminModal from "../../components/Modals/EditAdminModal";
 
 const AdminManage = () => {
   const router = useRouter();
   
-  // Ambil data user yang sedang login dari Redux untuk keperluan Log
   const { user } = useSelector((state) => state.auth);
 
   const [admins, setAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
-  // === 1. FETCH DATA (GET) ===
   const fetchAdmins = async () => {
     setIsLoading(true);
     try {
@@ -51,19 +46,14 @@ const AdminManage = () => {
     fetchAdmins();
   }, []);
 
-  // === 2. FILTER SEARCH ===
   const filteredAdmins = admins.filter((item) =>
     (item.username || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.role || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // === 3. HANDLE EDIT CLICK ===
   const handleEditClick = (admin) => {
     setSelectedAdmin(admin);
     setIsEditModalOpen(true);
   };
-
-  // === 4. HANDLE DELETE (Dengan Logger) ===
   const handleDelete = (id, username) => {
     Swal.fire({
       title: `Hapus Admin "${username}"?`,
@@ -78,10 +68,7 @@ const AdminManage = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Fallback jika user ID redux kosong
           const currentUserId = user?.id || 0; 
-          
-          // Kirim request DELETE dengan query param userId untuk Activity Log
           const res = await fetch(`/api/admin/${id}?currentUserId=${currentUserId}`, {
             method: "DELETE",
           });
@@ -90,7 +77,6 @@ const AdminManage = () => {
 
           if (res.ok) {
             Swal.fire("Terhapus!", "Akun admin berhasil dihapus.", "success");
-            // Refresh data
             fetchAdmins();
           } else {
             throw new Error(data.message || "Gagal menghapus");
@@ -103,8 +89,6 @@ const AdminManage = () => {
   };
 
   return (
-    // Bungkus dengan AdminLayouts jika perlu
-    // <AdminLayouts> 
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
       <Head>
         <title>Kelola Admin - Divus Admin</title>
@@ -147,7 +131,6 @@ const AdminManage = () => {
             <p className="text-sm font-medium text-white">
               Hi, {user?.username || "Admin"}
             </p>
-            <p className="text-xs text-gray-400">Online</p>
           </div>
           <div className="h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold uppercase border-2 border-gray-500">
             {user?.username ? user.username.charAt(0) : <User size={20} />}
@@ -203,7 +186,6 @@ const AdminManage = () => {
                     </tr>
                   ))
                 ) : filteredAdmins.length === 0 ? (
-                  // Empty State
                   <tr>
                     <td colSpan={4} className="py-12 text-center text-gray-400">
                       <div className="flex flex-col items-center justify-center gap-2">
@@ -213,7 +195,6 @@ const AdminManage = () => {
                     </td>
                   </tr>
                 ) : (
-                  // Data Rows
                   filteredAdmins.map((admin, index) => (
                     <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6 text-center font-medium text-gray-500">
@@ -224,7 +205,6 @@ const AdminManage = () => {
                         {admin.username}
                       </td>
                       
-                      {/* UPDATE: Menampilkan Multi-Role Badge */}
                       <td className="py-4 px-6 text-center">
                         <div className="flex flex-wrap justify-center gap-1.5">
                           {admin.roles && admin.roles.length > 0 ? (
@@ -280,9 +260,6 @@ const AdminManage = () => {
         </div>
       </div>
 
-      {/* === MODALS === */}
-      
-      {/* Modal Tambah Admin */}
       <AddAdminModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -309,7 +286,6 @@ const AdminManage = () => {
         />
       )}
     </div>
-    // </AdminLayouts> 
   );
 };
 

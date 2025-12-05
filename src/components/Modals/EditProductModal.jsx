@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { X, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Image as ImageIcon, Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import Cropper from 'react-easy-crop';
 
-// Menerima prop 'productData' (data produk yg mau diedit)
 const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
   const [formData, setFormData] = useState({
     nama_produk: '',
@@ -10,11 +10,20 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
     tahun: new Date().getFullYear()
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  // Array untuk menyimpan semua foto (URL existing + file baru)
+  const [photos, setPhotos] = useState([]); // Format: [{ url: '...', isNew: false }, ...]
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Efek untuk mengisi form saat modal dibuka
+  // Cropper states
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [aspect, setAspect] = useState(1 / 1);
+
+  // Load data saat modal dibuka
   useEffect(() => {
     if (isOpen && productData) {
       setFormData({
@@ -22,9 +31,18 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
         deskripsi: productData.deskripsi || '',
         tahun: productData.tahun || new Date().getFullYear()
       });
-      // Tampilkan preview gambar lama jika ada
+      
+      // Parse semua foto yang ada
       if (productData.foto_produk) {
-        setImagePreview(productData.foto_produk);
+        try {
+          const parsed = JSON.parse(productData.foto_produk);
+          const photoArray = Array.isArray(parsed) ? parsed : [productData.foto_produk];
+          setPhotos(photoArray.map(url => ({ url, isNew: false, file: null })));
+        } catch {
+          setPhotos([{ url: productData.foto_produk, isNew: false, file: null }]);
+        }
+      } else {
+        setPhotos([]);
       }
     }
   }, [isOpen, productData]);
@@ -34,17 +52,78 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle jika user memilih file gambar BARU
+  // Crop functions
+  const getCroppedImg = async (imageSrc, cropPixels) => {
+    const image = new Image();
+    image.src = imageSrc;
+    await new Promise(resolve => image.onload = resolve);
+    
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = cropPixels.width;
+    canvas.height = cropPixels.height;
+
+    ctx.drawImage(
+      image,
+      cropPixels.x,
+      cropPixels.y,
+      cropPixels.width,
+      cropPixels.height,
+      0,
+      0,
+      cropPixels.width,
+      cropPixels.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve({ blob, url: URL.createObjectURL(blob) });
+      }, "image/jpeg");
+    });
+  };
+
+  const onCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const fileArray = Array.from(e.target.files);
+
+    if (photos.length + fileArray.length > 5) {
+      Swal.fire('Batas Maksimal', 'Maksimal 5 foto saja.', 'warning');
+      return;
     }
+
+    startCropFlow(fileArray[0]);
+  };
+
+  const startCropFlow = (file) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      setSelectedFile({ data: e.target.result, file });
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const finishCrop = async () => {
+    const { blob, url } = await getCroppedImg(selectedFile.data, croppedAreaPixels);
+    
+    // Buat File object dengan nama custom
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+    const baseName = formData.nama_produk.replace(/[^a-zA-Z0-9]/g, '-') || 'produk';
+    const croppedFile = new File([blob], `${baseName}-${timestamp}.jpg`, { type: "image/jpeg" });
+
+    // Tambahkan ke array photos
+    setPhotos(prev => [...prev, { url, isNew: true, file: croppedFile }]);
+
+    setCropModalOpen(false);
+    setSelectedFile(null);
+  };
+
+  const removePhoto = (index) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -58,42 +137,38 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
     setIsSubmitting(true);
 
     try {
-      // 1. Cek apakah ada upload gambar BARU
-      let finalImageUrl = productData.foto_produk; // Default pakai URL lama
+      // Pisahkan foto existing dan foto baru
+      const existingPhotos = photos.filter(p => !p.isNew).map(p => p.url);
+      const newPhotos = photos.filter(p => p.isNew);
 
-      if (imageFile) {
-        // Jika ada file baru, upload dulu
-        try {
-          const imageFormData = new FormData();
-          imageFormData.append('file', imageFile);
-          
-          const uploadRes = await fetch('/api/product/upload', {
-            method: 'POST',
-            body: imageFormData
-          });
-          
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            finalImageUrl = uploadData.url; // Pakai URL baru
-            console.log('New image uploaded:', finalImageUrl);
-          }
-        } catch (uploadError) {
-          console.warn('Upload error:', uploadError);
-          Swal.fire('Gagal Upload', 'Gagal mengupload gambar baru, menggunakan gambar lama.', 'warning');
+      // Upload foto baru
+      const uploadedUrls = [];
+      for (const photo of newPhotos) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', photo.file);
+        
+        const uploadRes = await fetch('/api/products/upload', {
+          method: 'POST',
+          body: formDataUpload
+        });
+
+        if (uploadRes.ok) {
+          const { url } = await uploadRes.json();
+          uploadedUrls.push(url);
         }
       }
 
-      // 2. Siapkan Data Update
+      // Gabungkan foto existing dan foto baru
+      const finalPhotos = [...existingPhotos, ...uploadedUrls];
+
+      // Update ke database
       const updateData = {
         nama_produk: formData.nama_produk.trim(),
         deskripsi: formData.deskripsi?.trim() || '',
-        foto_produk: finalImageUrl,
+        foto_produk: JSON.stringify(finalPhotos),
         tahun: formData.tahun
       };
 
-      console.log('Sending update data:', updateData);
-
-      // 3. Kirim ke API Update (Method PUT ke ID produk)
       const res = await fetch(`/api/products/${productData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -105,7 +180,7 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
       if (res.ok) {
         await Swal.fire('Berhasil!', 'Data produk berhasil diperbarui', 'success');
         onClose();
-        onSuccess(); // Refresh data di halaman induk
+        onSuccess();
       } else {
         throw new Error(responseData.error || 'Gagal memperbarui produk');
       }
@@ -120,114 +195,159 @@ const EditProductModal = ({ isOpen, onClose, onSuccess, productData }) => {
   if (!isOpen || !productData) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
-          <h2 className="text-2xl font-bold text-gray-800">Edit Produk</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors" disabled={isSubmitting}>
-            <X size={24} className="text-gray-600" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+    <>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Gambar Produk (Opsional)</label>
-            <div className="relative">
-              {imagePreview ? (
-                <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-gray-200">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    // Tombol silang hanya mereset preview ke gambar asli database jika ada
-                    onClick={() => { 
-                        setImageFile(null); 
-                        setImagePreview(productData.foto_produk || null);
-                    }}
-                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    title="Batalkan perubahan gambar"
-                  >
-                    <X size={16} />
-                  </button>
-                  {imageFile && <span className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">Gambar Baru Terpilih</span>}
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
+            <h2 className="text-2xl font-bold text-gray-800">Edit Produk</h2>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors" disabled={isSubmitting}>
+              <X size={24} className="text-gray-600" />
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            
+            {/* FOTO PRODUK - GRID LAYOUT */}
+            <div>
+              <label className="block font-semibold mb-2 text-gray-700">Foto Produk (Max 5)</label>
+              
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-2">
+                {photos.map((photo, idx) => (
+                  <div key={idx} className="relative aspect-square border rounded-lg overflow-hidden group">
+                    <img src={photo.url} className="w-full h-full object-cover" alt={`Foto ${idx + 1}`} />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(idx)}
+                      className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                    {photo.isNew && (
+                      <span className="absolute bottom-1 left-1 bg-blue-500 text-white text-[10px] px-1 py-0.5 rounded">Baru</span>
+                    )}
+                  </div>
+                ))}
+
+                {/* Tombol Upload Foto Baru */}
+                {photos.length < 5 && (
+                  <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
+                    <ImageIcon className="text-gray-400 mb-1" size={20} />
+                    <span className="text-xs text-gray-600">+ Tambah</span>
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                  </label>
+                )}
+              </div>
+              
+              <div className="mt-2 text-xs text-gray-500 space-y-1">
+                <div className="flex justify-between">
+                  <span>Format</span>
+                  <span className="font-medium text-gray-700">PNG, JPG</span>
                 </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors bg-gray-50">
-                  <ImageIcon size={48} className="text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Klik untuk ganti gambar</span>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                </label>
-              )}
+                <div className="flex justify-between">
+                  <span>Maksimal File</span>
+                  <span className="font-medium text-gray-700">5 MB</span>
+                </div>
+              </div>
             </div>
-            {productData.foto_produk && !imageFile && (
-                <p className="text-xs text-gray-500 mt-1 ml-1">*Ini adalah gambar saat ini. Klik gambar untuk menggantinya.</p>
-            )}
-          </div>
 
-          {/* Nama Produk */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nama Produk <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="nama_produk"
-              value={formData.nama_produk}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+            {/* Nama Produk */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nama Produk <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nama_produk"
+                value={formData.nama_produk}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-          {/* Deskripsi */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi</label>
-            <textarea
-              name="deskripsi"
-              value={formData.deskripsi}
-              onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-          </div>
+            {/* Deskripsi */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi</label>
+              <textarea
+                name="deskripsi"
+                value={formData.deskripsi}
+                onChange={handleChange}
+                rows={4}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
 
-          {/* Tahun */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun</label>
-            <input
-              type="number"
-              name="tahun"
-              value={formData.tahun}
-              onChange={handleChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            {/* Tahun */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tahun</label>
+              <input
+                type="number"
+                name="tahun"
+                value={formData.tahun}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-[#2D2D39] text-white rounded-lg font-medium hover:bg-black transition-colors"
-            >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
-            </button>
-          </div>
-        </form>
+            {/* Buttons */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 px-6 py-3 bg-[#2D2D39] text-white rounded-lg font-medium hover:bg-black transition-colors"
+              >
+                {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* CROP MODAL */}
+      {cropModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[999] p-4">
+          <div className="bg-white p-5 rounded-xl shadow-xl w-full max-w-xl">
+            <h3 className="font-semibold mb-3">Crop Gambar</h3>
+
+            <div className="w-full h-64 relative">
+              <Cropper
+                image={selectedFile?.data}
+                crop={crop}
+                zoom={zoom}
+                aspect={aspect}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setAspect(1 / 1)} className="px-3 py-1 bg-gray-200 rounded">1 : 1</button>
+              <button onClick={() => setAspect(4 / 3)} className="px-3 py-1 bg-gray-200 rounded">4 : 3</button>
+              <button onClick={() => setAspect(16 / 9)} className="px-3 py-1 bg-gray-200 rounded">16 : 9</button>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setCropModalOpen(false)} className="px-4 py-2">Batal</button>
+              <button onClick={finishCrop} className="px-4 py-2 bg-[#2D2D39] text-white rounded-lg">
+                Crop & Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

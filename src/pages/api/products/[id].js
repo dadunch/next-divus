@@ -1,3 +1,4 @@
+// File: src/pages/api/products/[id].js
 import prisma from '../../../lib/prisma';
 import { createLog } from '../../../lib/logger';
 
@@ -19,7 +20,9 @@ export default async function handler(req, res) {
       const product = await prisma.product.findUnique({ where: { id: productId } });
       if (!product) return res.status(404).json({ error: 'Not found' });
       return res.status(200).json(safeSerialize(product));
-    } catch (error) { return res.status(500).json({ error: error.message }); }
+    } catch (error) { 
+      return res.status(500).json({ error: error.message }); 
+    }
   }
 
   // PUT (Edit)
@@ -34,19 +37,25 @@ export default async function handler(req, res) {
 
         const updated = await tx.product.update({
           where: { id: productId },
-          data: { nama_produk, deskripsi, tahun: BigInt(tahun), foto_produk }
+          data: { 
+            nama_produk, 
+            deskripsi, 
+            tahun: BigInt(tahun), 
+            foto_produk // Simpan sebagai JSON string (array URL)
+          }
         });
 
         await createLog(tx, currentUserId, "Edit Produk", `Memperbarui produk: ${oldProduct.nama_produk}`);
         return updated;
       });
       return res.status(200).json(safeSerialize(result));
-    } catch (error) { return res.status(500).json({ error: error.message }); }
+    } catch (error) { 
+      return res.status(500).json({ error: error.message }); 
+    }
   }
 
   // DELETE (Hapus)
   if (req.method === 'DELETE') {
-    // AMBIL USER ID DARI QUERY PARAMETER (URL)
     const { userId } = req.query; 
     const currentUserId = userId || 1;
 
@@ -56,13 +65,13 @@ export default async function handler(req, res) {
         if (!product) throw new Error("Produk tidak ditemukan");
 
         await tx.product.delete({ where: { id: productId } });
-
-        // Log dengan ID yang benar
         await createLog(tx, currentUserId, "Hapus Produk", `Menghapus produk: ${product.nama_produk}`);
       });
 
       return res.status(200).json({ success: true });
-    } catch (error) { return res.status(500).json({ error: error.message }); }
+    } catch (error) { 
+      return res.status(500).json({ error: error.message }); 
+    }
   }
 
   return res.status(405).json({ error: 'Method not allowed' });

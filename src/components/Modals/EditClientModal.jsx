@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
-
-// --- PENTING: Hapus tanda // di bawah ini di project Anda ---
 import Swal from "sweetalert2";
+
+// --- PERBAIKAN: Tambahkan import ini ---
+import Cropper from "react-easy-crop"; 
 
 const EditClientModal = ({
   isOpen,
@@ -234,14 +235,21 @@ const EditClientModal = ({
                   1 : 1 (Persegi)
                 </span>
               </div>
-            
+              <div className="flex justify-between">
+                <span>Ukuran Rekomendasi</span>
+                <span className="font-medium text-gray-700">500 × 500 px</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Ukuran Minimum</span>
+                <span className="font-medium text-gray-700">200 × 200 px</span>
+              </div>
               <div className="flex justify-between">
                 <span>Format</span>
                 <span className="font-medium text-gray-700">PNG, JPG</span>
               </div>
               <div className="flex justify-between">
                 <span>Maksimal File</span>
-                <span className="font-medium text-gray-700">5 MB</span>
+                <span className="font-medium text-gray-700">2 MB</span>
               </div>
             </div>
 

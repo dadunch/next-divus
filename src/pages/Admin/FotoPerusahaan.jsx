@@ -166,7 +166,6 @@ const Foto = () => {
             {searchQuery && <p className="text-sm">Coba kata kunci lain</p>}
           </div>
         ) : (
-          // DATA GRID
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filtered.map((item) => (
               <div
@@ -175,7 +174,6 @@ const Foto = () => {
               >
                 {/* Image Container */}
                 <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden flex items-center justify-center group">
-                  {/* Pattern Background */}
                   <div
                     className="absolute inset-0 opacity-[0.05]"
                     style={{
@@ -219,7 +217,6 @@ const Foto = () => {
                   <div>
                     <h3 className="font-semibold text-gray-800 line-clamp-1 mb-1">
                       {item.title || "Tanpa Judul"}{" "}
-                      {/* Sesuaikan dengan DB: title */}
                     </h3>
                     <p className="text-xs text-gray-400">
                       {/* Format tanggal jika ada created_at */}

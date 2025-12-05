@@ -402,38 +402,37 @@ export default function Home() {
                     <div className="relative h-48 overflow-hidden mt-10 w-full">
                         
                         {/* Marquee Animation */}
-{clientLogos.length > 0 ? (
-  <div className="relative w-full overflow-hidden py-10"> {/* Container pelindung */}
-    <motion.div
-      className="flex gap-16 w-max" // w-max agar tidak turun ke bawah
-      animate={{ x: "-50%" }} // Gerak ke kiri sejauh setengah panjang total (set 1 selesai, set 2 menggantikan)
-      transition={{
-        ease: "linear",
-        duration: 20, // Atur kecepatan di sini (makin kecil makin cepat)
-        repeat: Infinity,
-      }}
-    >
-      {/* Kita buat array duplikat (2 set) agar looping nyambung sempurna */}
-      {[...Array(2)].map((_, groupIndex) => (
-        <div key={groupIndex} className="flex gap-16 items-center">
-          {clientLogos.map((logo, i) => (
-            <motion.img
-              key={i}
-              src={logo}
-              alt="Client Logo"
-              className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
-              loading="lazy"
-            />
-          ))}
-        </div>
-      ))}
-    </motion.div>
-  </div>
-) : (
-  <p className="text-center w-full text-gray-400 italic mt-10">
-    Belum ada logo klien di database.
-  </p>
-)}
+                        {clientLogos.length > 0 ? (
+                        <div className="relative w-full overflow-hidden py-10">
+                            <motion.div
+                            className="flex gap-16 w-max"
+                            animate={{ x: "-50%" }} 
+                            transition={{
+                                ease: "linear",
+                                duration: 20,
+                                repeat: Infinity,
+                            }}
+                            >
+                            {[...Array(2)].map((_, groupIndex) => (
+                                <div key={groupIndex} className="flex gap-16 items-center">
+                                {clientLogos.map((logo, i) => (
+                                    <motion.img
+                                    key={i}
+                                    src={logo}
+                                    alt="Client Logo"
+                                    className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
+                                    loading="lazy"
+                                    />
+                                ))}
+                                </div>
+                            ))}
+                            </motion.div>
+                        </div>
+                        ) : (
+                        <p className="text-center w-full text-gray-400 italic mt-10">
+                            Belum ada logo klien di database.
+                        </p>
+                        )}
                     </div>
                 </motion.section>
 

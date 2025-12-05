@@ -192,12 +192,7 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
             <div className="flex justify-between">
               <span>Rasio</span> <span className="font-medium">4 : 3</span>
             </div>
-            <div className="flex justify-between">
-              <span>Rekomendasi</span> <span>800 × 600 px</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Minimum</span> <span>400 × 300 px</span>
-            </div>
+
             <div className="flex justify-between">
               <span>Format</span> <span>JPG / PNG</span>
             </div>

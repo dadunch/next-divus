@@ -330,17 +330,6 @@ const TambahLayananPage = () => {
                   <span className="font-medium text-gray-700">
                     16 : 9 (Persegi Panjang)
                   </span>
-                </div><div className="flex justify-between">
-                  <span>Ukuran Maksimum</span>
-                  <span className="font-medium text-gray-700">
-                    1080 × 1080 px
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Ukuran Minimum</span>
-                  <span className="font-medium text-gray-700">
-                    200 × 200 px
-                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Format</span>

@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import AdminLayouts from "../../layouts/AdminLayouts";
 import Cropper from "react-easy-crop";
 
+
 // --- DATEPICKER IMPORTS ---
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -21,6 +22,11 @@ const PerusahaanPage = () => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  // PDF State
+  const [companyPdf, setCompanyPdf] = useState(null);
+  const [companyPdfFile, setCompanyPdfFile] = useState(null);
+
 
   // State Form
   const [logo, setLogo] = useState(null);
@@ -164,11 +170,18 @@ const PerusahaanPage = () => {
         logoData = await toBase64(logoFile);
       }
 
+      let pdfData = null;
+      if (companyPdfFile) {
+        pdfData = await toBase64(companyPdfFile);
+      }
+
       const payload = {
         ...form,
         established_date: selectedDate ? selectedDate.toISOString() : null,
         logo_url: logoData,
-        userId: user?.id, // <--- 2. PASTIKAN INI DIKIRIM (User ID Login)
+        userId: user?.id,
+        pdf_file: pdfData,
+        pdf_name: companyPdf,
       };
 
       const res = await fetch("/api/company", {
@@ -188,6 +201,7 @@ const PerusahaanPage = () => {
       } else {
         throw new Error("Gagal menyimpan");
       }
+
     } catch (error) {
       console.error(error);
       Swal.fire({
@@ -201,6 +215,39 @@ const PerusahaanPage = () => {
       setIsSaving(false);
     }
   };
+
+
+  const handlePdfChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      Swal.fire({
+        icon: "warning",
+        title: "Format Tidak Valid",
+        text: "Hanya file PDF yang diperbolehkan.",
+        confirmButtonColor: "#F59E0B",
+        customClass: { popup: 'font-["Poppins"] rounded-xl' },
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      Swal.fire({
+        icon: "warning",
+        title: "File Terlalu Besar",
+        text: "Ukuran PDF maksimal 5MB.",
+        confirmButtonColor: "#F59E0B",
+        customClass: { popup: 'font-["Poppins"] rounded-xl' },
+      });
+      return;
+    }
+
+    setCompanyPdfFile(file);
+    setCompanyPdf(file.name);
+  };
+
+
 
   if (isLoading)
     return (
@@ -493,6 +540,42 @@ const PerusahaanPage = () => {
             </div>
           </div>
 
+          <div className="w-full">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              File Company Profile
+            </label>
+
+            <div className="w-full flex items-center bg-gray-200 rounded-lg px-3 py-2">
+              {/* Hidden input */}
+              <input
+                type="file"
+                accept="application/pdf"
+                id="pdfUpload"
+                onChange={handlePdfChange}
+                className="hidden"
+              />
+
+              {/* Tombol Upload */}
+              <label
+                htmlFor="pdfUpload"
+                className="flex items-center gap-2 bg-[#2D2D39] hover:bg-black text-white text-xs rounded-md px-4 py-2 cursor-pointer"
+              >
+                <Upload size={14} />
+                Choose File
+              </label>
+
+              {/* Nama file tampil di kanan */}
+              <span className="ml-4 text-sm text-gray-600 truncate">
+                {companyPdf ? companyPdf : "Belum ada file dipilih"}
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-400 mt-1">
+              *Upload dokumen company profile dalam format PDF Maksimal 5MB
+            </p>
+          </div>
+
+
           {/* Tombol Simpan */}
           <div className="mt-10 flex justify-end">
             <button
@@ -550,6 +633,8 @@ const PerusahaanPage = () => {
           </div>
         </div>
       )}
+
+
     </div>
   );
 };

@@ -5,13 +5,18 @@ import { createLog } from '../../../lib/logger';
 export default async function handler(req, res) {
   const { id } = req.query; // Ini adalah User ID
   const { method } = req;
+  
+  // Validasi ID sebelum convert ke BigInt untuk mencegah error
+  if (!id) return res.status(400).json({ message: "ID User diperlukan" });
   const userId = BigInt(id);
 
   try {
     // === DELETE: Hapus Admin ===
     if (method === 'DELETE') {
-      // Ambil currentUserId dari query param jika dikirim frontend untuk keperluan log
-      // const currentUserId = req.query.currentUserId ? BigInt(req.query.currentUserId) : null;
+      // PERBAIKAN 1: Uncomment & Handle currentUserId dengan aman
+      const currentUserId = req.query.currentUserId 
+        ? BigInt(req.query.currentUserId) 
+        : BigInt(0); // Fallback ke 0 jika tidak ada user yang login
 
       await prisma.$transaction(async (tx) => {
         // 1. Cari data employee (karena foreign key user)
@@ -20,26 +25,25 @@ export default async function handler(req, res) {
         });
 
         // 2. Hapus Employee 
-        // (Jika relasi Many-to-Many roles diatur dengan benar di Prisma, 
-        // data di tabel penghubung biasanya akan terhapus otomatis atau via cascade)
         if (employeeRecord) {
             await tx.employee.delete({
                 where: { id: employeeRecord.id }
             });
         }
 
-        // 3. Ambil data user untuk log (opsional)
-        // const userToDelete = await tx.users.findUnique({ where: { id: userId } });
+        // PERBAIKAN 2: Uncomment user fetch agar bisa dicatat log-nya
+        const userToDelete = await tx.users.findUnique({ where: { id: userId } });
 
-        // 4. Hapus User
+        // 3. Hapus User
         await tx.users.delete({
           where: { id: userId },
         });
 
-        // 5. Log (Opsional)
-        // if (currentUserId && userToDelete) {
-        //   await createLog(tx, currentUserId, "DELETE_ADMIN", `Menghapus admin: ${userToDelete.username}`);
-        // }
+        // 4. Log 
+        if (userToDelete) {
+           // Gunakan CODE yang konsisten (misal: DELETE_ADMIN)
+           await createLog(tx, currentUserId, "Hapus Admin", `Menghapus admin: ${userToDelete.username}`);
+        }
       });
 
       return res.status(200).json({ message: 'Admin berhasil dihapus' });
@@ -47,13 +51,12 @@ export default async function handler(req, res) {
 
     // === PUT: Edit Admin ===
     if (method === 'PUT') {
-      // Perhatikan: Frontend sekarang mengirim 'role_ids' (array), bukan 'role_id'
       const { username, password, role_ids, currentUserId } = req.body;
 
       await prisma.$transaction(async (tx) => {
         const updateData = { username };
 
-        // Jika password diisi, update password baru. Jika kosong, biarkan.
+        // Jika password diisi, update password baru.
         if (password && password.trim() !== "") {
           const salt = await bcrypt.genSalt(10);
           updateData.password = await bcrypt.hash(password, salt);
@@ -66,7 +69,6 @@ export default async function handler(req, res) {
         });
 
         // 2. Update Roles di tabel Employee
-        // Cari id employee berdasarkan user_id
         const emp = await tx.employee.findFirst({ where: { users_id: userId } });
         
         // Logika update Multi-Role
@@ -75,10 +77,10 @@ export default async function handler(req, res) {
                 where: { id: emp.id },
                 data: {
                     roles: {
-                        // 'set': [] -> Berfungsi untuk menghapus/reset semua role lama
-                        set: [], 
-                        // 'connect': [...] -> Menghubungkan role-role baru yang dipilih
-                        connect: role_ids.map((rid) => ({ id: BigInt(rid) })), 
+                        // PERBAIKAN 3: Gunakan 'set' dengan array objek ID.
+                        // Ini artinya: "Ganti semua role saat ini dengan daftar role baru ini".
+                        // Prisma otomatis menghapus role lama yang tidak dipilih dan menambah yang baru.
+                        set: role_ids.map((rid) => ({ id: BigInt(rid) }))
                     }
                 }
             });
@@ -87,8 +89,8 @@ export default async function handler(req, res) {
         // 3. Log
         await createLog(
             tx, 
-            BigInt(currentUserId || 1), // Fallback id 1 jika null
-            "UPDATE_ADMIN", 
+            BigInt(currentUserId || 1), 
+            "UPDATE_ADMIN", // Gunakan code yang konsisten
             `Mengupdate data admin: ${username}`
         );
       });

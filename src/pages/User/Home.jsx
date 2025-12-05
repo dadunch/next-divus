@@ -15,9 +15,9 @@ const getSummary = (text) => {
 };
 
 const reasons = [
-    { number: 1, title: 'KONSULTAN BERPENGALAMAN', desc: 'PT Divus diisi oleh para profesional berpengalaman.' },
-    { number: 2, title: 'AHLI PROFESIONAL', desc: 'Tim ahli dari berbagai bidang dengan pendekatan relevan.' },
-    { number: 3, title: 'HASIL TERUKUR & CEPAT', desc: 'Output berkualitas tinggi berdasarkan data dan insight akurat.' },
+    { number: 1, title: 'KONSULTAN BERPENGALAMAN & TERPERCAYA', desc: 'PT Divus diisi oleh para profesional berpengalaman yang memahami kebutuhan bisnis modern. Kami menghadirkan solusi cepat, tepat, dan berorientasi hasil untuk mendukung pertumbuhan perusahaan Anda.' },
+    { number: 2, title: 'AHLI PROFESIONAL DI BERBAGAI BIDANG', desc: 'PT Divus diisi oleh para profesional berpengalaman yang memahami kebutuhan bisnis modern. Kami menghadirkan solusi cepat, tepat, dan berorientasi hasil untuk mendukung pertumbuhan perusahaan Anda.' },
+    { number: 3, title: 'HASIL TERUKUR, CEPAT, & ANDAL', desc: 'PT Divus berkomitmen memberikan output berkualitas tinggi dengan proses yang efisien. Setiap rekomendasi disusun berbasis data dan insights sehingga menghasilkan keputusan bisnis yang lebih akurat dan efektif.' },
 ];
 
 const fadeInUp = {
@@ -374,16 +374,21 @@ export default function Home() {
 
                 {/* MENGAPA PILIH KAMI */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-20 bg-white">
-                    <h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-10">
+                    <h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-15">
                         Mengapa Memilih PT Divus Global Mediacomm?
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
-                        {reasons.map((item) => (
-                            <div key={item.number} className="flex flex-col items-center text-center gap-5">
-                                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
+                        {reasons.map((item, index) => (
+                            <div key={item.number} className="relative flex flex-col items-center text-center gap-5">
+                                {index < reasons.length - 1 && (
+                                    <div className="hidden md:block absolute top-12 left-1/2 h-0.5 bg-zinc-300 z-0" 
+                                         style={{ width: 'calc(100% + 2.5rem)' }}>
+                                    </div>
+                                )}
+                                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center z-10 border-12 border-white ">
                                     <span className="text-4xl font-bold text-green-500">{item.number}</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-zinc-800">{item.title}</h3>
+                                <h3 className="text-xl font-semibold text-zinc-800 line-clamp-2 h-14 overflow-hidden">{item.title}</h3>
                                 <p className="text-zinc-600">{item.desc}</p>
                             </div>
                         ))}

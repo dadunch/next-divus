@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         await createLog(
             tx, 
             userId, 
-            "DELETE_PHOTO", 
+            "Hapus Foto", 
             `Menghapus foto: ${existing.title || 'Tanpa Judul'}`
         );
       });
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         await createLog(
             tx, 
             userId, 
-            "UPDATE_PHOTO", 
+            "Edit Foto", 
             `Mengupdate foto ID ${id}: ${title || 'Tanpa Judul'}`
         );
 

@@ -126,9 +126,9 @@ const Produk = () => {
                                 <span className="mx-2 text-zinc-500">{'>'}</span>
 
                                 {/* Level 2: Kategori (Misal: Layanan) */}
-                                <Link href="/User/Portofolio" className="hover:underline hover:text-green-600 transition-colors">
+                                <span>
                                     Portofolio
-                                </Link>
+                                </span>
 
                                 {/* Separator */}
                                 <span className="mx-2 text-zinc-500">{'>'}</span>
@@ -147,18 +147,18 @@ const Produk = () => {
                 <motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-8">
                     <div className="flex flex-col lg:flex-row gap-12 items-start">
                         <div className="w-full">
-                            <h2 className="text-xl md:text-2xl font-bold text-zinc-800 mb-6 capitalize">
-                                Lebih dari Puluhan instansi dan perusahaan telah mempercayakan berbagai kebutuhan konsultansi, perencanaan, dan pengembangan solusi kepada kami.
+                            <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold  capitalize mb-10">
+                                Produk kami
                             </h2>
                             <p className="text-zinc-800 text-base font-normal leading-loose text-justify">
-                                Kami telah bekerja sama dalam beragam proyek, mulai dari kajian manajemen, bantuan teknis, perencanaan arsitektur, telematika, hingga penyusunan studi dan laporan resmi di berbagai sektor. Dengan layanan yang profesional dan solusi yang disesuaikan, kami membantu klien meningkatkan efektivitas, akurasi perencanaan, serta kualitas pengambilan keputusan.
+                                PT Divus menghadirkan beragam produk yang dirancang untuk mendukung kebutuhan bisnis modern. Melalui pendekatan inovatif, standar kerja yang terukur, dan solusi yang dapat disesuaikan, kami membantu perusahaan meningkatkan efisiensi operasional, akurasi proses, serta kualitas pengambilan keputusan. Setiap produk dikembangkan dengan komitmen pada profesionalisme dan hasil yang berdampak nyata bagi klien
                             </p>
                         </div>
                     </div>
                 </motion.section>
 
                 {/* --- PRODUCT GRID SECTION --- */}
-                <motion.div {...fadeInUp} className="max-w-6xl mx-auto px-6 md:px-12 mb-20 mt-10">
+                <div {...fadeInUp} className="max-w-[1380px] max-w-6xl mx-auto px-6 md:px-12 mb-20 mt-10">
                     {isLoading ? (
                         <div className="flex justify-center py-20">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
@@ -216,7 +216,7 @@ const Produk = () => {
                             })}
                         </div>
                     )}
-                </motion.div>
+                </div>
 
                 {/* CTA SECTION */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">

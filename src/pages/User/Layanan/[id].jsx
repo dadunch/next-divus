@@ -8,17 +8,17 @@ const reasons = [
 	{
 		number: 1,
 		title: 'KONSULTAN BERPENGALAMAN & TERPERCAYA',
-		desc: 'PT Divus diisi oleh para profesional berpengalaman yang memahami kebutuhan bisnis modern.',
+		desc: 'PT Divus diisi oleh para profesional berpengalaman yang memahami kebutuhan bisnis modern. Kami menghadirkan solusi cepat, tepat, dan berorientasi hasil untuk mendukung pertumbuhan perusahaan Anda.',
 	},
 	{
 		number: 2,
 		title: 'AHLI PROFESIONAL DI BERBAGAI BIDANG',
-		desc: 'Tim ahli dari berbagai bidang dengan pendekatan yang relevan dan profesional.',
+		desc: 'PT Divus diisi oleh para profesional berpengalaman yang memahami kebutuhan bisnis modern. Kami menghadirkan solusi cepat, tepat, dan berorientasi hasil untuk mendukung pertumbuhan perusahaan Anda.',
 	},
 	{
 		number: 3,
 		title: 'HASIL TERUKUR, CEPAT, & ANDAL',
-		desc: 'PT Divus berkomitmen memberikan output berkualitas tinggi dengan proses yang efisien.',
+		desc: 'PT Divus berkomitmen memberikan output berkualitas tinggi dengan proses yang efisien. Setiap rekomendasi disusun berbasis data dan insights sehingga menghasilkan keputusan bisnis yang lebih akurat dan efektif.',
 	},
 ];
 
@@ -208,16 +208,21 @@ export default function LayananDetail() {
 					Kenapa harus Kami?
 				</h2>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
-					{reasons.map((item) => (
-						<div key={item.number} className="flex flex-col items-center text-center gap-5">
-							<div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-								<span className="text-4xl font-bold text-green-500">{item.number}</span>
-							</div>
-							<h3 className="text-xl font-semibold text-zinc-800">{item.title}</h3>
-							<p className="text-zinc-600">{item.desc}</p>
-						</div>
-					))}
-				</div>
+                        {reasons.map((item, index) => (
+                            <div key={item.number} className="relative flex flex-col items-center text-center gap-5">
+                                {index < reasons.length - 1 && (
+                                    <div className="hidden md:block absolute top-12 left-1/2 h-0.5 bg-zinc-300 z-0" 
+                                         style={{ width: 'calc(100% + 2.5rem)' }}>
+                                    </div>
+                                )}
+                                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center z-10 border-12 border-white ">
+                                    <span className="text-4xl font-bold text-green-500">{item.number}</span>
+                                </div>
+                                <h3 className="text-xl font-semibold text-zinc-800 line-clamp-2 h-14 overflow-hidden">{item.title}</h3>
+                                <p className="text-zinc-600">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
 			</section>
 
 			{/* CTA SECTION */}

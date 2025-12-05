@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Assets } from '../assets';
+import { faDisplay } from '@fortawesome/free-solid-svg-icons';
+import { serviceCache } from '../utils/serviceCache';
+
 
 function Navbar() {
     // State UI
@@ -16,21 +19,44 @@ function Navbar() {
     const [isLoadingServices, setIsLoadingServices] = useState(true); // State Loading Khusus Layanan
     const router = useRouter();
 
+    // useEffect(() => {
+    //     const fetchServices = async () => {
+    //         setIsLoadingServices(true);
+    //         try {
+    //             const res = await fetch('/api/services');
+    //             const data = await res.json();
+                
+    //             if (res.ok && Array.isArray(data)) {
+    //                 // FORMAT DATA: Gunakan slug dari database untuk path
+    //                 const formattedServices = data.map(service => ({
+    //                     name: service.title,
+    //                     path: '/User/Layanan/' + service.id
+    //                 }));
+    //                 setServicesList(formattedServices);
+    //             }
+    //         } catch (error) {
+    //             console.error("Gagal mengambil data layanan:", error);
+    //         } finally {
+    //             setIsLoadingServices(false);
+    //         }
+    //     };
+
+    //     fetchServices();
+    // }, []);
+
     useEffect(() => {
         const fetchServices = async () => {
             setIsLoadingServices(true);
             try {
-                const res = await fetch('/api/services');
-                const data = await res.json();
+                // Gunakan cache - hanya fetch sekali
+                const data = await serviceCache.fetch();
                 
-                if (res.ok && Array.isArray(data)) {
-                    // FORMAT DATA: Gunakan slug dari database untuk path
-                    const formattedServices = data.map(service => ({
-                        name: service.title,
-                        path: '/User/Layanan/' + service.id
-                    }));
-                    setServicesList(formattedServices);
-                }
+                // FORMAT DATA: Gunakan slug dari database untuk path
+                const formattedServices = data.map(service => ({
+                    name: service.title,
+                    path: '/User/Layanan/' + service.id
+                }));
+                setServicesList(formattedServices);
             } catch (error) {
                 console.error("Gagal mengambil data layanan:", error);
             } finally {
@@ -162,7 +188,7 @@ function Navbar() {
                 </div>
 
                 {/* Right Section: Language & Mobile Toggle */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-6" style={{display:"none"}}>
                     
                     {/* Language Selector */}
                     <div className="relative hidden md:block">

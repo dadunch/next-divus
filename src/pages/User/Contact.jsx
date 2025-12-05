@@ -110,7 +110,7 @@ export default function Contact() {
                     ) : (
                         <div className="flex flex-col gap-6">
                             {/* Alamat */}
-                            <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                            <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg p-5">
                                 <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                     <MapPin className="text-white w-6 h-6 " />
                                 </div>
@@ -125,7 +125,7 @@ export default function Contact() {
                             </div>
 
                             {/* Telepon */}
-                            <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                            <div className="flex items-center gap-4 bg-white rounded-lg shadow-lg p-5">
                                 <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                     <Phone className="text-white w-6 h-6" />
                                 </div>
@@ -143,7 +143,7 @@ export default function Contact() {
                             </div>
 
                             {/* Email */}
-                            <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm border-zinc-300 border-b-4 border-r-2 border-l-2 p-5">
+                            <div className="flex items-center gap-4 bg-white rounded-lg shadow-lg p-5">
                                 <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                                     <Mail className="text-white w-6 h-6" />
                                 </div>
@@ -166,8 +166,10 @@ export default function Contact() {
                 {/* Map (Tetap Hardcode karena biasanya link map embed jarang berubah/disimpan di DB profil sederhana) */}
                 {/* Jika ingin dinamis juga, harus tambah kolom 'map_url' di tabel company_profile */}
                 <motion.div {...fadeInRight} className="flex-1 w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 rounded-xl overflow-hidden border-r-4 border-b-4 shadow-md border-zinc-300 h-[470px]">
+                    {/* <iframe src= width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe> */}
                     <iframe
-                        src="https://www.google.com/maps/place/Divus+Global+Mediacom/@-6.6170559,107.4963877,21z/data=!4m6!3m5!1s0x2e691b42640098b5:0xbede1a67bdddbc3e!8m2!3d-6.6170382!4d107.4963857!16s%2Fg%2F11rx36dmmt?entry=ttu&g_ep=EgoyMDI1MTEyMy4xIKXMDSoASAFQAw%3D%3D" 
+                        src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d253661.99642643647!2d107.44769353643915!3d-6.5885159826770785!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e691b42640098b5%3A0xbede1a67bdddbc3e!2sDivus%20Global%20Mediacom!5e0!3m2!1sid!2sid!4v1764955726940!5m2!1sid!2sid"
+                        // src="https://maps.app.goo.gl/ytZzs7mnQtp2T8m3A"
                         // Ganti src di atas dengan link embed map asli kantor Anda jika ada
                         width="100%"
                         height="100%"

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { Assets } from '../assets';
+import { serviceCache } from '../utils/serviceCache';
+
 
 export default function Footer() {
     // --- STATE UNTUK DATA DATABASE ---
@@ -13,10 +15,15 @@ export default function Footer() {
         const fetchData = async () => {
             try {
                 // 1. Ambil Data Layanan (Ambil 5 teratas)
-                const resServices = await fetch('/api/services');
-                const dataServices = await resServices.json();
-                if (Array.isArray(dataServices)) {
-                    setServicesList(dataServices.slice(0, 5)); 
+                // const resServices = await fetch('/api/services');
+                // const dataServices = await resServices.json();
+                // if (Array.isArray(dataServices)) {
+                //     setServicesList(dataServices.slice(0, 5)); 
+                // }
+
+                const dataService = await serviceCache.fetch();
+                if (Array.isArray(dataService)) {
+                    setServicesList(dataService.slice(0, 5));
                 }
 
                 // 2. Ambil Data Profil Perusahaan (Kontak & Deskripsi)

@@ -115,9 +115,9 @@ export default function Proyek() {
               {/* Separator */}
               <span className="mx-2 text-zinc-500">{'>'}</span>
               {/* Level 2: Kategori (Misal: Layanan) */}
-              <Link href="/User/Portofolio" className="hover:underline hover:text-green-600 transition-colors">
+              <span>
                 Portofolio
-              </Link>
+              </span>
               {/* Separator */}
               <span className="mx-2 text-zinc-500">{'>'}</span>
               {/* Level 3: Halaman Aktif (Merah) */}
@@ -131,18 +131,11 @@ export default function Proyek() {
 
       {/* Section utama */}
       <motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-16">
-        <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold  capitalize">
+        <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold  capitalize mb-10">
           Proyek Referensi
         </h2>
-        <span className="inline-block w-32 md:w-20 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
-        <p className="text-zinc-700 text-base font-normal leading-relaxed">
-          PT Divus Global Mediacomm telah berpengalaman mengerjakan berbagai proyek, mulai dari konsultansi
-        </p>
-        <p className="text-zinc-700 text-base font-normal leading-relaxed">
-        manajemen, studi kelayakan, perencanaan, hingga pengembangan aplikasi dan sistem informasi. Setiap 
-        </p>
         <p className="text-zinc-700 text-base font-normal leading-relaxed mb-12">
-        proyek menjadi bukti komitmen kami dalam memberikan solusi yang tepat sesuai kebutuhan klien.
+          PT Divus Global Mediacomm telah berpengalaman mengerjakan berbagai proyek, mulai dari konsultansi manajemen, studi kelayakan, perencanaan, hingga pengembangan aplikasi dan sistem informasi. Setiap proyek menjadi bukti komitmen kami dalam memberikan solusi yang tepat sesuai kebutuhan klien.
         </p>
         {/* Filter Categories Dinamis */}
         <div className="flex flex-wrap gap-6 mb-8">

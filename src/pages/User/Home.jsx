@@ -4,6 +4,12 @@ import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../../assets';
 import { motion } from 'framer-motion';
+import { serviceCache } from '../../utils/serviceCache';
+import { productCache } from '../../utils/productCache';
+import { projectCache } from '../../utils/projectCache';
+import { clientCache } from '../../utils/clientCache';
+import { heroCache } from '../../utils/heroCache';
+
 
 const getSummary = (text) => {
     if (!text) return "Layanan profesional dari PT Divus.";
@@ -47,37 +53,122 @@ export default function Home() {
     const [loading, setLoading] = useState(true);
 
     const [heroImages, setHeroImages] = useState({
-        img1: Assets.Hero1,
-        img2: Assets.Hero3, 
-        img3: Assets.Hero4 
     });
 
     // --- FETCH DATA ---
+    // useEffect(() => {
+    //     const fetchAllData = async () => {
+    //         try {
+    //             const resService = await fetch('/api/services');
+    //             const dataService = await resService.json();
+    //             if (resService.ok && Array.isArray(dataService)) {
+    //                 setServices(dataService);
+    //             }
+
+    //             const resProd = await fetch('/api/products');
+    //             const dataProd = await resProd.json();
+    //             if (resProd.ok && Array.isArray(dataProd)) {
+    //                 setProducts(dataProd.slice(0, 3));
+    //             }
+
+    //             const resProj = await fetch('/api/projects');
+    //             const dataProj = await resProj.json();
+    //             if (resProj.ok && Array.isArray(dataProj)) {
+    //                 setProjects(dataProj);
+    //             }
+
+    //             try {
+    //                 const resClients = await fetch('/api/clients');
+    //                 const dataClients = await resClients.json();
+    //                 if (resClients.ok && Array.isArray(dataClients)) {
+    //                     const logos = dataClients
+    //                         .map(client => client.client_logo)
+    //                         .filter(logo => logo !== null && logo !== "");
+    //                     setClientLogos(logos);
+    //                 }
+    //             } catch (e) {
+    //                 console.error("Gagal fetch clients:", e);
+    //             }
+
+    //             try {
+    //                     const resDash = await fetch('/api/dashboard');
+    //                     const dataDash = await resDash.json();
+                        
+    //                     if (resDash.ok && dataDash.stats) {
+    //                         setStatsData([
+    //                             // PERBAIKAN: Ubah .year menjadi .years (tambahkan huruf 's')
+    //                             { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
+    //                             { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+    //                             { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+    //                         ]);
+    //                     }
+    //                 } catch (error) {
+    //                     console.warn("Gagal fetch stats dashboard:", error);
+    //                 }
+
+    //             try {
+    //                 const resHero = await fetch('/api/hero'); 
+    //                 if (resHero.ok) {
+    //                     const dataHero = await resHero.json();
+    //                     setHeroImages(prev => ({
+    //                         img1: dataHero.foto1 || prev.img1,
+    //                         img2: dataHero.foto2 || prev.img2,
+    //                         img3: dataHero.foto3 || prev.img3
+    //                     }));
+    //                 }
+    //             } catch (e) {
+    //                 console.log("Gagal load hero assets:", e);
+    //             }
+
+    //         } catch (error) {
+    //             console.error("Gagal mengambil data:", error);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     fetchAllData();
+    // }, []);
+
     useEffect(() => {
         const fetchAllData = async () => {
             try {
-                const resService = await fetch('/api/services');
-                const dataService = await resService.json();
-                if (resService.ok && Array.isArray(dataService)) {
+                // GUNAKAN CACHE untuk hero images
+                try {
+                    const dataHero = await heroCache.fetch();
+                    if (dataHero) {
+                        setHeroImages(prev => ({
+                            img1: dataHero.foto1 || prev.img1,
+                            img2: dataHero.foto2 || prev.img2,
+                            img3: dataHero.foto3 || prev.img3
+                        }));
+                    }
+                } catch (e) {
+                    console.log("Gagal load hero assets:", e);
+                }
+
+                // GUNAKAN CACHE untuk services - tidak fetch ulang
+                const dataService = await serviceCache.fetch();
+                if (Array.isArray(dataService)) {
                     setServices(dataService);
                 }
 
-                const resProd = await fetch('/api/products');
-                const dataProd = await resProd.json();
-                if (resProd.ok && Array.isArray(dataProd)) {
+                // GUNAKAN CACHE untuk products
+                const dataProd = await productCache.fetch();
+                if (Array.isArray(dataProd)) {
                     setProducts(dataProd.slice(0, 3));
                 }
 
-                const resProj = await fetch('/api/projects');
-                const dataProj = await resProj.json();
-                if (resProj.ok && Array.isArray(dataProj)) {
+                // GUNAKAN CACHE untuk projects
+                const dataProj = await projectCache.fetch();
+                if (Array.isArray(dataProj)) {
                     setProjects(dataProj);
                 }
 
+               // GUNAKAN CACHE untuk clients
                 try {
-                    const resClients = await fetch('/api/clients');
-                    const dataClients = await resClients.json();
-                    if (resClients.ok && Array.isArray(dataClients)) {
+                    const dataClients = await clientCache.fetch();
+                    if (Array.isArray(dataClients)) {
                         const logos = dataClients
                             .map(client => client.client_logo)
                             .filter(logo => logo !== null && logo !== "");
@@ -88,34 +179,21 @@ export default function Home() {
                 }
 
                 try {
-                        const resDash = await fetch('/api/dashboard');
-                        const dataDash = await resDash.json();
-                        
-                        if (resDash.ok && dataDash.stats) {
-                            setStatsData([
-                                // PERBAIKAN: Ubah .year menjadi .years (tambahkan huruf 's')
-                                { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
-                                { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-                                { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-                            ]);
-                        }
-                    } catch (error) {
-                        console.warn("Gagal fetch stats dashboard:", error);
+                    const resDash = await fetch('/api/dashboard');
+                    const dataDash = await resDash.json();
+                    
+                    if (resDash.ok && dataDash.stats) {
+                        setStatsData([
+                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
+                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+                        ]);
                     }
-
-                try {
-                    const resHero = await fetch('/api/hero'); 
-                    if (resHero.ok) {
-                        const dataHero = await resHero.json();
-                        setHeroImages(prev => ({
-                            img1: dataHero.foto1 || prev.img1,
-                            img2: dataHero.foto2 || prev.img2,
-                            img3: dataHero.foto3 || prev.img3
-                        }));
-                    }
-                } catch (e) {
-                    console.log("Gagal load hero assets:", e);
+                } catch (error) {
+                    console.warn("Gagal fetch stats dashboard:", error);
                 }
+
+               
 
             } catch (error) {
                 console.error("Gagal mengambil data:", error);
@@ -138,7 +216,7 @@ export default function Home() {
     };
 
     return (
-        <main className="w-full">
+        <main className="w-full" style={{overflowY:"hidden"}}>
             <Head>
                 <title>PT Divus Global Mediacomm</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -270,8 +348,7 @@ export default function Home() {
                         </div>
 
                         <div className="flex flex-wrap justify-center gap-13 lg:gap-15">
-                            {loading && <p>Memuat layanan...</p>}
-                            {!loading && services.map((item, index) => (
+                            {services.map((item, index) => (
                                 <div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start">
                                     <div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md min-h-[350px]">
                                         <div>
@@ -399,11 +476,11 @@ export default function Home() {
                 <motion.section {...fadeInUp} className="bg-white relative overflow-hidden w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
                     <h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
                     <p className="text-center font-medium text-lg text-lime-500 mt-8">Dipercaya oleh 100+ klien dari Nasional Dan Internasional</p>
-                    <div className="relative h-48 overflow-hidden mt-10 w-full">
+                    <div className="relative h-48 overflow-hidden mt-10 w-full" >
                         
                         {/* Marquee Animation */}
                         {clientLogos.length > 0 ? (
-                        <div className="relative w-full overflow-hidden py-10">
+                        <div className="relative w-full overflow-hidden py-10" >
                             <motion.div
                             className="flex gap-16 w-max"
                             animate={{ x: "-50%" }} 
@@ -421,8 +498,8 @@ export default function Home() {
                                     src={logo}
                                     alt="Client Logo"
                                     className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
-                                    loading="lazy"
                                     />
+                                    // loading="lazy"
                                 ))}
                                 </div>
                             ))}

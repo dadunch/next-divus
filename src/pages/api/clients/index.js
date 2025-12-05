@@ -30,19 +30,15 @@ export default async function handler(req, res) {
     try {
       // 1. Konfigurasi Upload
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'client');
-      
-      // Pastikan folder tersedia, jika tidak buat foldernya
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
 
       const form = new IncomingForm({
-        uploadDir: uploadDir,      // Lokasi simpan
-        keepExtensions: true,      // Pertahankan ekstensi (.jpg, .png)
-        maxFileSize: 5 * 1024 * 1024, // Batas file (misal 5MB)
+        uploadDir: uploadDir,      
+        keepExtensions: true,     
+        maxFileSize: 5 * 1024 * 1024, 
         filename: (name, ext, part, form) => {
-          // Rename file agar unik: timestamp_namafile
-          // Hapus spasi di nama file agar aman di URL
           const cleanName = part.originalFilename.replace(/\s+/g, '_');
           return `${Date.now()}_${cleanName}`;
         }
@@ -57,7 +53,6 @@ export default async function handler(req, res) {
       });
 
       // 3. Ambil Data dari Formidable
-      // Formidable v3 kadang mengembalikan array, jadi kita ambil elemen pertama
       const getField = (f) => Array.isArray(f) ? f[0] : f;
       const getFile = (f) => Array.isArray(f) ? f[0] : f;
 
@@ -67,7 +62,7 @@ export default async function handler(req, res) {
 
       // Validasi sederhana
       if (!client_name || !file) {
-        // Jika gagal, hapus file yang terlanjur ter-upload (opsional, good practice)
+        // Jika gagal, hapus file yang terlanjur ter-upload 
         if (file) fs.unlinkSync(file.filepath);
         return res.status(400).json({ message: 'Nama Client dan Logo wajib diisi' });
       }

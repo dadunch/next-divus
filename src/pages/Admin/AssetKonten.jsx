@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+// import React, { useState } from "react";
+import { useState, useEffect } from 'react';
+
 import Head from "next/head";
 import { useSelector } from "react-redux";
 import { Pencil, Trash2, Save } from "lucide-react";
 import { Assets } from "../../assets"; // Pastikan path asset benar
 import Cropper from "react-easy-crop";
 import Swal from "sweetalert2";
+
+import { heroCache } from '../../utils/heroCache';
+
 
 /* ================= PREVIEW (DESAIN ORIGINAL) ================= */
 const createImage = (url) =>
@@ -124,6 +129,7 @@ const AssetKontenPage = () => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  
   // State Preview
   const [images, setImages] = useState({
     img1: null,
@@ -139,6 +145,39 @@ const AssetKontenPage = () => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ============= LOAD DATA AWAL DARI API =============
+  useEffect(() => {
+    const fetchExistingImages = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Gunakan heroCache untuk fetch data
+        const dataHero = await heroCache.fetch();
+        
+        if (dataHero) {
+          setImages({
+            img1: dataHero.foto1 || null,
+            img2: dataHero.foto2 || null,
+            img3: dataHero.foto3 || null,
+          });
+        }
+      } catch (error) {
+        console.error("Gagal load hero assets:", error);
+        Swal.fire({
+          icon: "warning",
+          title: "Peringatan",
+          text: "Gagal memuat gambar yang sudah ada.",
+          confirmButtonColor: "#f59e0b",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExistingImages();
+  }, []);
 
   // LOGIC: Format Nama File
   const getFormattedFileName = (key, originalFile) => {
@@ -215,11 +254,21 @@ const AssetKontenPage = () => {
       });
 
       if (response.ok) {
+        // Clear cache setelah sukses update
+        heroCache.clear();
+        
         Swal.fire({
           icon: "success",
           title: "Berhasil!",
           text: "Perubahan berhasil disimpan.",
           confirmButtonColor: "#16a34a",
+        });
+        
+        // Reset file state setelah berhasil simpan
+        setFiles({
+          img1: null,
+          img2: null,
+          img3: null,
         });
       } else {
         Swal.fire({
@@ -231,14 +280,13 @@ const AssetKontenPage = () => {
       }
 
     } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: "error",
-      title: "Kesalahan!",
-      text: "Terjadi kesalahan koneksi.",
-      confirmButtonColor: "#dc2626",
-    });
-
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Kesalahan!",
+        text: "Terjadi kesalahan koneksi.",
+        confirmButtonColor: "#dc2626",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -285,6 +333,18 @@ const AssetKontenPage = () => {
       </label>
     </div>
   );
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F5F7FB] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins']">
@@ -346,7 +406,7 @@ const AssetKontenPage = () => {
 
           {/* RIGHT: PREVIEW */}
           <div className="col-span-5">
-            <p className="font-semibold mb-2">Preview(homepage)</p>
+            <p className="font-semibold mb-2">Preview (homepage)</p>
             <PreviewSneakPeek images={images} />
 
             <div className="mt-3 flex justify-end">

@@ -146,12 +146,27 @@ export default function Home() {
                 } catch (e) {
                     console.log("Gagal load hero assets:", e);
                 }
+                try {
+                    const resDash = await fetch('/api/dashboard');
+                    const dataDash = await resDash.json();
+                    
+                    if (resDash.ok && dataDash.stats) {
+                        setStatsData([
+                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
+                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+                        ]);
+                    }
+                } catch (error) {
+                    console.warn("Gagal fetch stats dashboard:", error);
+                }
 
                 // GUNAKAN CACHE untuk services - tidak fetch ulang
                 const dataService = await serviceCache.fetch();
                 if (Array.isArray(dataService)) {
                     setServices(dataService);
                 }
+                
 
                 // GUNAKAN CACHE untuk products
                 const dataProd = await productCache.fetch();
@@ -178,20 +193,7 @@ export default function Home() {
                     console.error("Gagal fetch clients:", e);
                 }
 
-                try {
-                    const resDash = await fetch('/api/dashboard');
-                    const dataDash = await resDash.json();
-                    
-                    if (resDash.ok && dataDash.stats) {
-                        setStatsData([
-                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
-                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-                        ]);
-                    }
-                } catch (error) {
-                    console.warn("Gagal fetch stats dashboard:", error);
-                }
+                
 
                
 
@@ -368,7 +370,7 @@ export default function Home() {
                                                 {getSummary(item.description)}
                                             </p>
                                         </div>
-                                        <Link href={`/User/Layanan/${item.slug}`} className="px-6 py-3 bg-green-500 rounded-xl shadow-[0px_2px_5px_0px_rgba(0,0,0,0.14)] hover:bg-green-600 transition-colors text-white text-sm font-bold self-start">
+                                        <Link href={`/User/Layanan/${item.id}`} className="px-6 py-3 bg-green-500 rounded-xl shadow-[0px_2px_5px_0px_rgba(0,0,0,0.14)] hover:bg-green-600 transition-colors text-white text-sm font-bold self-start">
                                             Detail Layanan
                                         </Link>
                                     </div>
@@ -402,7 +404,7 @@ export default function Home() {
 
                             <div className="w-full lg:w-7/12 flex justify-center lg:justify-end items-center">
                                 {activePorto === 'produk' && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
+                                    <a href='/User/Produk' className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
                                         {products.map((item, idx) => (
                                             <div key={idx} className="group relative h-64 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-2 transition-transform duration-300 bg-white">
                                                 <div className="w-full h-full">
@@ -415,10 +417,10 @@ export default function Home() {
                                                 </div>
                                             </div>
                                         ))}
-                                    </div>
+                                    </a>
                                 )}
                                 {activePorto === 'proyek' && (
-                                    <div className="w-full bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20">
+                                    <a href='/User/Proyek' className="w-full bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20">
                                         <div className="overflow-x-auto">
                                             <table className="min-w-full text-sm text-left">
                                                 <thead className="text-xs uppercase bg-[#22c55e] text-white font-bold tracking-wider">
@@ -442,7 +444,7 @@ export default function Home() {
                                                 </tbody>
                                             </table>
                                         </div>
-                                    </div>
+                                    </a>
                                 )}
                             </div>
                         </div>

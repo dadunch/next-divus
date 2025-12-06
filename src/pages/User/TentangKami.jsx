@@ -5,6 +5,9 @@ import { FaWhatsapp, FaDownload } from 'react-icons/fa';
 import { Assets } from '../../assets';
 import { motion } from 'framer-motion';
 
+import { serviceCache } from '../../utils/serviceCache';
+
+
 const fadeInUp = {
   initial: { opacity: 0, y: 50 },
   whileInView: { opacity: 1, y: 0 },
@@ -43,7 +46,7 @@ const getSummary = (text) => {
 // --- DATA STATIS (Fallback untuk Services) ---
 const fallbackSolutions = [
   {
-    title: 'Management Consulting',
+    title: 'Management Consuslting',
     desc: 'Membantu perusahaan dalam menganalisis kelayakan bisnis...',
     icon_url: 'fa-solid fa-briefcase', // Contoh format class icon
   },
@@ -87,15 +90,21 @@ export default function TentangKami() {
         const photosData = await photosRes.json();
         if (photosRes.ok) setPhotos(photosData);
 
-        // 3. Fetch Services
-        const servicesRes = await fetch("/api/services");
-        const servicesData = await servicesRes.json();
+        // // 3. Fetch Services
+        // const servicesRes = await fetch("/api/services");
+        // const servicesData = await servicesRes.json();
 
-        if (servicesRes.ok && Array.isArray(servicesData) && servicesData.length > 0) {
-          setServices(servicesData);
-        } else {
-          setServices(fallbackSolutions);
-        }
+        const dataService = await serviceCache.fetch();
+              if (Array.isArray(dataService)) {
+                  setServices(dataService);
+              }
+
+
+        // if (servicesRes.ok && Array.isArray(servicesData) && servicesData.length > 0) {
+        //   setServices(servicesData);
+        // } else {
+        //   setServices(fallbackSolutions);
+        // }
 
         // 4. Fetch Dashboard Stats (LOGIKA BARU - SEPERTI DI HOME)
         try {
@@ -325,7 +334,7 @@ export default function TentangKami() {
             <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
               <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">Ingin Mengenal jauh Tentang Kami?</h2>
               <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Download Company Profile </p>
-              <a href={company?.brochure_url || "#"} download="Company_Profile.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+              <a href={company?.file_url || "#"} download="Company_Profile.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                 <FaDownload className="text-black w-4 h-4 group-hover:scale-110 transition-transform" />
                 <span className="text-black text-base md:text-lg font-semibold capitalize">Download</span>
               </a>

@@ -63,19 +63,19 @@ export default function Contact() {
             </Head>
 
             <header className="relative w-full">
-                <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
+                <section className="w-full bg-slate-50 py-14 md:py-2 px-10 md:px-6 border-b border-slate-200">
                     <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
                         {/* Logo */}
                         <div className="flex-shrink-0">
                             <img
                                 src={Assets.Hero3}
                                 alt="Logo Divus"
-                                className="w-100 h-100 object-contain"
+                                className=" w-50 md:w-100 h-50 md:h-100 object-contain"
                             />
                         </div>
 
                         {/* Text Content */}
-                        <div className="flex flex-col justify-center">
+                        <div className="flex flex-col md:text-left">
                             <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">
                                 PT Divus Global Mediacomm
                             </h1>
@@ -86,7 +86,7 @@ export default function Contact() {
                     </div>
                 </section>
                 {/* Breadcrumb */}
-                <div className="w-full bg-zinc-300 py-3 mb-4">
+                <div className="w-full bg-zinc-300 px-6 py-3 mb-4">
                     <div className="max-w-7xl mx-auto">
                         <p className="text-zinc-800 text-base">
                             <Link href="/User/Home" className="hover:underline">
@@ -101,7 +101,7 @@ export default function Contact() {
                 
                 {/* Detail Kontak */}
                 <motion.div {...fadeInLeft} className="flex-1 w-full lg:w-2/5">
-                    <h2 className="text-3xl md:text-4xl font-bold text-zinc-800 mb-8 capitalize">
+                    <h2 className="text-2xl md:text-4xl font-bold text-zinc-800 mb-8 capitalize">
                         Informasi Detail Kontak
                     </h2>
 
@@ -111,14 +111,14 @@ export default function Contact() {
                         <div className="flex flex-col gap-6">
                             {/* Alamat */}
                             <div className="flex items-start gap-4 bg-white rounded-lg shadow-lg p-5">
-                                <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <MapPin className="text-white w-6 h-6 " />
+                                <div className="w-10 md:w-12 h-10 md:h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <MapPin className="text-white w-5 md:w-6 h-5 md:h-6 " />
                                 </div>
                                 <div>
-                                    <h3 className="text-zinc-800 text-xl font-semibold capitalize">
+                                    <h3 className="text-zinc-800 text-base md:text-xl font-semibold capitalize">
                                         Alamat
                                     </h3>
-                                    <p className="text-black text-base mt-1 leading-relaxed">
+                                    <p className="text-black text-sm md:text-base mt-1 leading-relaxed">
                                         {company?.address || "Alamat belum tersedia."}
                                     </p>
                                 </div>
@@ -126,16 +126,16 @@ export default function Contact() {
 
                             {/* Telepon */}
                             <div className="flex items-center gap-4 bg-white rounded-lg shadow-lg p-5">
-                                <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <Phone className="text-white w-6 h-6" />
+                                <div className="w-10 md:w-12 h-10 md:h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Phone className="text-white w-5 md:w-6 h-5 md:h-6" />
                                 </div>
                                 <div>
-                                    <h3 className="text-zinc-800 text-xl font-semibold capitalize">
+                                    <h3 className="text-zinc-800 text-base md:text-xl font-semibold capitalize">
                                         Telepon
                                     </h3>
                                     <a
                                         href={company?.phone ? `tel:${company.phone}` : "#"}
-                                        className="text-zinc-800 text-lg hover:text-green-600 transition-colors"
+                                        className="text-zinc-800 text-sm md:text-base hover:text-green-600 transition-colors"
                                     >
                                         {company?.phone || "Nomor belum tersedia"}
                                     </a>
@@ -144,16 +144,16 @@ export default function Contact() {
 
                             {/* Email */}
                             <div className="flex items-center gap-4 bg-white rounded-lg shadow-lg p-5">
-                                <div className="w-12 h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <Mail className="text-white w-6 h-6" />
+                                <div className="w-10 md:w-12 h-10 md:h-12 bg-gradient-to-b from-lime-500 to-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Mail className="text-white w-5 md:w-6 h-5 md:h-6" />
                                 </div>
                                 <div>
-                                    <h3 className="text-zinc-800 text-xl font-semibold capitalize">
+                                    <h3 className="text-zinc-800 text-base md:text-xl font-semibold capitalize">
                                         Email
                                     </h3>
                                     <a
                                         href={company?.email ? `mailto:${company.email}` : "#"}
-                                        className="text-zinc-800 text-lg hover:text-green-600 transition-colors"
+                                        className="text-zinc-800 text-sm md:text-base hover:text-green-600 transition-colors"
                                     >
                                         {company?.email || "Email belum tersedia"}
                                     </a>

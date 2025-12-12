@@ -189,19 +189,19 @@ export default function Proyek() {
 
         {/* Table */}
         <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden mb-8 overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[600px] table-fixed">
             <thead>
               <tr className="bg-zinc-100">
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
+                <th className="w-[25%] px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Customer
                 </th>
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
+                <th className="w-[40%] px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Proyek
                 </th>
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
+                <th className="w-[20%] px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Bidang
                 </th>
-                <th className="px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
+                <th className="w-[15%] px-4 py-3 text-left text-zinc-800 text-sm font-semibold border-b border-zinc-700">
                   Tahun
                 </th>
               </tr>
@@ -209,31 +209,40 @@ export default function Proyek() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-8">Loading data...</td>
+                  <td colSpan="4" className="text-center py-8 h-[500px] align-middle">Loading data...</td>
                 </tr>
               ) : paginatedProyek.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-8">Tidak ada proyek ditemukan.</td>
+                  <td colSpan="4" className="text-center py-8 h-[500px] align-middle">Tidak ada proyek ditemukan.</td>
                 </tr>
               ) : (
-                paginatedProyek.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50 border-b border-zinc-200">
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
-                      {/* Ambil Nama Client dari relasi */}
-                      {item.client?.client_name || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
-                      {item.project_name}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
-                      {/* Ambil Bidang dari relasi category */}
-                      {item.category?.bidang || '-'}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-700 text-sm font-normal">
-                      {item.tahun}
-                    </td>
-                  </tr>
-                ))
+                <>
+                  {paginatedProyek.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50 border-b border-zinc-200 h-[50px]">
+                      <td className="px-4 py-3 text-zinc-700 text-sm font-normal truncate whitespace-nowrap">
+                        {item.client?.client_name || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700 text-sm font-normal truncate whitespace-nowrap">
+                        {item.project_name}
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700 text-sm font-normal truncate whitespace-nowrap">
+                        {item.category?.bidang || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700 text-sm font-normal truncate whitespace-nowrap">
+                        {item.tahun}
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Empty Rows to maintain height */}
+                  {paginatedProyek.length < itemsPerPage && Array.from({ length: itemsPerPage - paginatedProyek.length }).map((_, idx) => (
+                    <tr key={`empty-${idx}`} className="border-b border-zinc-200 h-[50px]">
+                      <td className="px-4 py-3">&nbsp;</td>
+                      <td className="px-4 py-3">&nbsp;</td>
+                      <td className="px-4 py-3">&nbsp;</td>
+                      <td className="px-4 py-3">&nbsp;</td>
+                    </tr>
+                  ))}
+                </>
               )}
             </tbody>
           </table>
@@ -241,30 +250,39 @@ export default function Proyek() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-6">
-            <button
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex items-center justify-center gap-4 md:gap-6 mt-8"
+          >
+            <motion.button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="w-10 h-10 bg-zinc-700 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+              className="w-10 h-10 bg-zinc-700 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              whileHover={{ scale: 1.1, backgroundColor: '#475569' }} // Tailwind slate-600
+              whileTap={{ scale: 0.9 }}
             >
               <FaChevronLeft className="text-white w-5 h-5" />
-            </button>
+            </motion.button>
 
-            <div className="flex flex-col items-center gap-1">
-              <div className="min-w-[90px] h-10 px-4 py-2 bg-white rounded-md border-2 border-zinc-800 flex items-center justify-center mt-6">
-                <span className="text-zinc-800 text-base font-medium">{currentPage}</span>
+            <div className="flex items-center gap-2">
+              <div className="min-w-[40px] h-10 px-3 bg-lime-500 rounded-full flex items-center justify-center shadow-md">
+                <span className="text-white text-base font-semibold">{currentPage}</span>
               </div>
-              <span className="text-zinc-600 text-sm font-medium">Dari {totalPages}</span>
+              <span className="text-zinc-600 text-base font-medium">dari {totalPages}</span>
             </div>
 
-            <button
+            <motion.button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="w-10 h-10 bg-zinc-700 rounded-lg flex items-center justify-center hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+              className="w-10 h-10 bg-zinc-700 rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              whileHover={{ scale: 1.1, backgroundColor: '#475569' }} // Tailwind slate-600
+              whileTap={{ scale: 0.9 }}
             >
               <FaChevronLeft className="text-white w-5 h-5 rotate-180" />
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         )}
       </motion.section>
       {/* CTA SECTION */}

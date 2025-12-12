@@ -155,7 +155,7 @@ export default function TentangKami() {
 
       <header className="relative w-full">
         {/* Hero Banner */}
-        <section className="w-full bg-slate-50 py-14 md:py-2 px-2 md:px-6 border-b border-slate-200">
+        <section className="w-full bg-slate-50 py-14 md:py-2 px-10 md:px-6 border-b border-slate-200">
           <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
             <div className="flex-shrink-0">
               <img src={company?.logo_url || Assets.Hero3} alt="Logo Divus" className="w-50 md:w-100 h-50 md:h-100 object-contain" />
@@ -168,7 +168,7 @@ export default function TentangKami() {
         </section>
 
         {/* Breadcrumb */}
-        <div className="w-full bg-zinc-300 py-3 px-4 md:px-6 mb-4 ">
+        <div className="w-full bg-zinc-300 py-3 px-6 mb-4 ">
           <div className="max-w-7xl mx-auto">
             <p className="text-zinc-800 text-base">
               <Link href="/User/Home" className="hover:underline">Beranda</Link>
@@ -219,7 +219,7 @@ export default function TentangKami() {
               </div>
             </motion.div>
 
-            <motion.div {...fadeInRight} className="w-full lg:w-5/12 px-4 sm:px-6">
+            <motion.div {...fadeInRight} className="w-full lg:w-5/12 px-6">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold leading-tight z-10 relative">Tentang Perusahaan</h2>
               <p className='text-sm text-justify leading-loose mt-4 whitespace-pre-line text-gray-700'>
                 {company?.description || "Deskripsi perusahaan belum tersedia."}

@@ -44,7 +44,7 @@ export default function Proyek() {
       } catch (error) {
         console.error("Error:", error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     fetchCompany();

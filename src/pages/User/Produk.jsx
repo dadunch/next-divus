@@ -18,6 +18,7 @@ const Produk = () => {
     // --- STATE ---
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [company, setCompany] = useState(null);
 
     // State untuk Modal & Slider
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -39,6 +40,19 @@ const Produk = () => {
             }
         };
         fetchProducts();
+        const fetchCompany = async () => {
+            try {
+                const res = await fetch('/api/company');
+                if (!res.ok) throw new Error("Gagal mengambil data");
+                const data = await res.json();
+                setCompany(data);
+            } catch (error) {
+                console.error("Error:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCompany();
     }, []);
 
     // --- 2. HELPER PARSE GAMBAR ---
@@ -80,7 +94,7 @@ const Produk = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white overflow-hidden">
             <Head>
                 <title>Portofolio Produk - PT Divus Global Mediacomm</title>
             </Head>
@@ -89,32 +103,20 @@ const Produk = () => {
                 {/* Header Section Sesuai Permintaan */}
                 <header className="relative w-full">
                     {/* Hero Banner */}
-                    <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
+                    <section className="w-full bg-slate-50 py-14 md:py-2 px-10 md:px-6 border-b border-slate-200">
                         <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
-                            {/* Logo */}
                             <div className="flex-shrink-0">
-                                <img
-                                    src={Assets.Hero3}
-                                    alt="Logo Divus"
-                                    className="w-100 h-100 object-contain"
-                                />
+                                <img src={company?.logo_url || Assets.Hero3} alt="Logo Divus" className="w-50 md:w-100 h-50 md:h-100 object-contain" />
                             </div>
-
-                            {/* Text Content */}
                             <div className="flex flex-col justify-center">
-                                <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">
-                                    PT Divus Global Mediacomm
-                                </h1>
-                                <p className="text-zinc-500 text-base md:text-xl font-medium italic">
-                                    - Produk
-                                </p>
+                                <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">{company?.company_name || "PT Divus Global Mediacomm"}</h1>
+                                <p className="text-zinc-500 text-base md:text-xl font-medium italic">- Produk</p>
                             </div>
                         </div>
                     </section>
 
-
                     {/* Breadcrumb */}
-                    <div className="w-full bg-zinc-300 py-3 mb-4">
+                    <div className="w-full bg-zinc-300 px-6 py-3 mb-4">
                         <div className="max-w-7xl mx-auto">
                             <p className="text-zinc-800 text-base">
                                 {/* Level 1: Beranda */}
@@ -147,10 +149,10 @@ const Produk = () => {
                 <motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-8">
                     <div className="flex flex-col lg:flex-row gap-12 items-start">
                         <div className="w-full">
-                            <h2 className="text-zinc-800 text-3xl md:text-4xl font-bold  capitalize mb-10">
+                            <h2 className="text-zinc-800 text-2xl md:text-4xl font-bold  capitalize mb-5 md:mb-10">
                                 Produk kami
                             </h2>
-                            <p className="text-zinc-800 text-base font-normal leading-loose text-justify">
+                            <p className="text-zinc-800 text-sm md:text-base font-normal leading-loose text-justify">
                                 PT Divus menghadirkan beragam produk yang dirancang untuk mendukung kebutuhan bisnis modern. Melalui pendekatan inovatif, standar kerja yang terukur, dan solusi yang dapat disesuaikan, kami membantu perusahaan meningkatkan efisiensi operasional, akurasi proses, serta kualitas pengambilan keputusan. Setiap produk dikembangkan dengan komitmen pada profesionalisme dan hasil yang berdampak nyata bagi klien
                             </p>
                         </div>
@@ -158,7 +160,7 @@ const Produk = () => {
                 </motion.section>
 
                 {/* --- PRODUCT GRID SECTION --- */}
-                <div {...fadeInUp} className="max-w-[1380px] max-w-6xl mx-auto px-6 md:px-12 mb-20 mt-10">
+                <div {...fadeInUp} className="max-w-[1380px] mx-auto px-6 md:px-12 mb-20 mt-10">
                     {isLoading ? (
                         <div className="flex justify-center py-20">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
@@ -239,7 +241,7 @@ const Produk = () => {
                             {/* Content layer */}
                             <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
                                 {/* Judul */}
-                                <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">
+                                <h2 className="text-white text-2xl md:text-4xl font-bold capitalize leading-tight z-10 ">
                                     PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
                                     terpercaya untuk bisnis Anda!
                                 </h2>

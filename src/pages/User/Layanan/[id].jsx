@@ -3,6 +3,14 @@ import Link from 'next/link';
 import { Assets } from '../../../assets';
 import { FaWhatsapp, FaDownload } from 'react-icons/fa';
 import { useRouter } from 'next/router';
+import { motion } from 'framer-motion';
+
+const fadeInUp = {
+    initial: { opacity: 0, y: 50 },
+    whileInView: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeOut" },
+    viewport: { once: false, amount: 0.2 }
+};
 
 const reasons = [
 	{
@@ -136,7 +144,7 @@ export default function LayananDetail() {
 
 				{/* Breadcrumb */}
 				<div className="w-full bg-zinc-300 py-3 mb-4">
-					<div className="max-w-7xl mx-auto px-6">
+					<div className="max-w-7xl mx-auto px-6 md:px-0">
 						<p className="text-zinc-800 text-base">
 							<Link href="/User/Home" className="hover:underline hover:text-green-600 transition-colors">
 								Beranda
@@ -153,7 +161,7 @@ export default function LayananDetail() {
 			</header>
 
 			{/* TENTANG KAMI SECTION */}
-			<section className="max-w-[1440px] mx-auto px-6 md:px-20 py-12 flex flex-col lg:flex-row lg:items-center gap-10">
+			<motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-12 flex flex-col lg:flex-row lg:items-center gap-10">
 				<div className="w-full lg:w-1/2 flex justify-center">
 					<div className="w-full md:w-[635px] h-80 md:h-96 overflow-hidden rounded-2xl shadow-lg bg-gray-100 relative">
 						{serviceData.image_url ? (
@@ -180,17 +188,17 @@ export default function LayananDetail() {
 
 					<Link 
 						href="/User/Contact" 
-						className="inline-flex justify-start items-center px-5 py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors"
+						className="inline-flex justify-start items-center px-4 md:px-5 py-2 md:py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors"
 					>
-						<span className="text-white text-base font-semibold leading-6">
+						<span className="text-white text-sm md:text-base font-semibold leading-6">
 							Konsultasi Sekarang
 						</span>
 					</Link>
 				</div>
-			</section>
+			</motion.section>
 
 			{/* Highlights - SUB SERVICES */}
-			<section className="max-w-[1440px] mx-auto px-6 md:px-20 py-12">
+			<motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-12">
 				<h2 className="text-lime-500 text-lg md:text-2xl text-center font-medium capitalize mb-4">
 					Kembangkan Bisnis Anda Bersama Kami
 				</h2>
@@ -205,14 +213,14 @@ export default function LayananDetail() {
 						Hubungi kami untuk detail lebih lanjut.
 					</p>
 				)}
-			</section>
+			</motion.section>
 
 			{/* MENGAPA PILIH KAMI */}
-			<section className="px-6 md:px-20 py-20 bg-white">
+			<motion.section {...fadeInUp} className="px-6 md:px-20 py-20 bg-white">
 				<p className='text-lime-500 text-lg md:text-xl text-center font-medium leading-tight mb-4'>
 					Alasan Anda Menggunakan Layanan Kami
 				</p>
-				<h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-10">
+				<h2 className="text-center text-2xl md:text-4xl font-bold text-zinc-800 mb-10">
 					Kenapa harus Kami?
 				</h2>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
@@ -224,20 +232,20 @@ export default function LayananDetail() {
 									style={{ width: 'calc(100% + 2.5rem)' }}
 								/>
 							)}
-							<div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center z-10 border-12 border-white">
-								<span className="text-4xl font-bold text-green-500">{item.number}</span>
+							<div className="w-20 md:w-24 h-20 md:h-24 bg-gray-100 rounded-full flex items-center justify-center z-10 border-12 border-white">
+								<span className="text-3xl md:text-4xl font-bold text-green-500">{item.number}</span>
 							</div>
-							<h3 className="text-xl font-semibold text-zinc-800 line-clamp-2 h-14 overflow-hidden">
+							<h3 className="text-lg md:text-xl font-semibold text-zinc-800 line-clamp-2 h-14 overflow-hidden">
 								{item.title}
 							</h3>
-							<p className="text-zinc-600">{item.desc}</p>
+							<p className="text-sm md:text-base text-zinc-600">{item.desc}</p>
 						</div>
 					))}
 				</div>
-			</section>
+			</motion.section>
 
 			{/* CTA SECTION */}
-			<section className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
+			<motion.section {...fadeInUp} className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
 				<div className="max-w-7xl mx-auto">
 					<div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
 						<div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
@@ -252,7 +260,7 @@ export default function LayananDetail() {
 							/>
 						</div>
 						<div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-							<h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10">
+							<h2 className="text-white text-2xl md:text-4xl font-bold capitalize leading-tight z-10">
 								PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!
 							</h2>
 							<p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">
@@ -270,7 +278,7 @@ export default function LayananDetail() {
 						</div>
 					</div>
 				</div>
-			</section>
+			</motion.section>
 
 			{/* WA Button */}
 			<a 

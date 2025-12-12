@@ -38,9 +38,9 @@ export default function Home() {
     const [services, setServices] = useState([]);
     const [products, setProducts] = useState([]);
     const [projects, setProjects] = useState([]);
-    
+
     // State Logo Klien (Dinamis dari Database)
-    const [clientLogos, setClientLogos] = useState([]); 
+    const [clientLogos, setClientLogos] = useState([]);
 
     // State Statistik
     const [statsData, setStatsData] = useState([
@@ -93,7 +93,7 @@ export default function Home() {
     //             try {
     //                     const resDash = await fetch('/api/dashboard');
     //                     const dataDash = await resDash.json();
-                        
+
     //                     if (resDash.ok && dataDash.stats) {
     //                         setStatsData([
     //                             // PERBAIKAN: Ubah .year menjadi .years (tambahkan huruf 's')
@@ -149,10 +149,10 @@ export default function Home() {
                 try {
                     const resDash = await fetch('/api/dashboard');
                     const dataDash = await resDash.json();
-                    
+
                     if (resDash.ok && dataDash.stats) {
                         setStatsData([
-                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
+                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' },
                             { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
                             { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
                         ]);
@@ -166,7 +166,7 @@ export default function Home() {
                 if (Array.isArray(dataService)) {
                     setServices(dataService);
                 }
-                
+
 
                 // GUNAKAN CACHE untuk products
                 const dataProd = await productCache.fetch();
@@ -180,7 +180,7 @@ export default function Home() {
                     setProjects(dataProj);
                 }
 
-               // GUNAKAN CACHE untuk clients
+                // GUNAKAN CACHE untuk clients
                 try {
                     const dataClients = await clientCache.fetch();
                     if (Array.isArray(dataClients)) {
@@ -193,9 +193,9 @@ export default function Home() {
                     console.error("Gagal fetch clients:", e);
                 }
 
-                
 
-               
+
+
 
             } catch (error) {
                 console.error("Gagal mengambil data:", error);
@@ -227,20 +227,20 @@ export default function Home() {
             <div className="max-w-[1440px] mx-auto">
 
                 {/* HERO SECTION */}
-                <section className="pt-24 pb-16 px-6 md:px-20 relative overflow-hidden bg-gray-100 md:bg-white">
+                <section className="pt-24 pb-16 px-6 md:px-20 relative overflow-x-hidden bg-gray-100 md:bg-white">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-11">
                         <motion.div initial={{ opacity: 0, x: -100 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                             viewport={{ once: false, amount: 0.2 }}
                             className="w-full md:w-1/2 flex flex-col justify-start items-start gap-4 z-10">
-                            <p className="text-lime-500 text-xl font-medium mt-20">
+                            <p className="text-lime-500 text-lg md:text-xl font-medium mt-20">
                                 PT Divus Global Mediacomm
                             </p>
-                            <h1 className="text-zinc-800 text-3xl lg:text-4xl font-semibold leading-tight">
+                            <h1 className="text-zinc-800 text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">
                                 Tingkatkan Strategi dan Solusi Bisnis Anda!
                             </h1>
-                            <p className="text-zinc-800 text-base font-normal leading-6 text-justify">
+                            <p className="text-zinc-800 text-sm md:text-base font-normal leading-6 text-justify">
                                 PT Divus menyediakan layanan management consulting, riset,
                                 laporan, corporate identity, serta Report dan jurnal guna
                                 membantu perusahaan mencapai strategi dan tujuan bisnis secara
@@ -249,10 +249,10 @@ export default function Home() {
 
                             <Link
                                 href="/User/TentangKami"
-                                className="inline-flex justify-start items-center px-6 py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors mt-10"
+                                className="inline-flex justify-start items-center px-5 py-3 md:px-6 md:py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors mt-10"
                             >
                                 <FaWhatsapp size={24} className="text-white mr-2" />
-                                <span className="text-white text-base font-bold leading-6">
+                                <span className="text-white text-sm md:text-base font-bold leading-6">
                                     Hubungi Kami
                                 </span>
                             </Link>
@@ -274,22 +274,22 @@ export default function Home() {
                         </motion.div>
 
                         <motion.div initial={{ opacity: 0, x: 100 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        viewport={{ once: false, amount: 0.2 }}
-                        className="w-full md:w-1/2 relative flex justify-center items-center mt-12 md:mt-0">
+                            whileInView={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            viewport={{ once: false, amount: 0.2 }}
+                            className="w-full md:w-1/2 relative flex justify-center items-center mt-12 md:mt-0">
                             <div className="relative w-full max-w-[550px] aspect-[5/4] sm:aspect-[4/3]">
-                                <img className="absolute left-10 top-13 w-[2000px] object-contain z-0 pointer-events-none opacity-90" 
-                                    src={Assets.Hero3} 
-                                    alt="Dekorasi" 
+                                <img className="absolute left-10 top-13 w-[2000px] object-contain z-0 pointer-events-none opacity-90"
+                                    src={Assets.Hero3}
+                                    alt="Dekorasi"
                                 />
-                                <img  className="aspect-square object-cover top-4 absolute right-3 w-[57%] rounded-2xl object-cover shadow-lg z" 
-                                    src={heroImages.img1} 
-                                    alt="Office Meeting" 
+                                <img className="aspect-square object-cover top-4 absolute right-3 w-[57%] rounded-2xl object-cover shadow-lg z"
+                                    src={heroImages.img1}
+                                    alt="Office Meeting"
                                 />
-                                <img className="aspect-square object-cover absolute bottom-15 left-0 w-[47%] rounded-2xl object-cover z-20" 
-                                    src={heroImages.img2} 
-                                    alt="Team Discussion" 
+                                <img className="aspect-square object-cover absolute bottom-15 left-0 w-[47%] rounded-2xl object-cover z-20"
+                                    src={heroImages.img2}
+                                    alt="Team Discussion"
                                 />
                             </div>
                         </motion.div>
@@ -299,7 +299,7 @@ export default function Home() {
                 {/* STATS + CLIENT LOGO (DIHAPUS AGAR TIDAK DUPLIKAT) */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-12 md:py-16">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                        <h2 className="text-zinc-500 text-xl font-semibold leading-6 w-64 text-center md:text-left">
+                        <h2 className="text-zinc-500 text-lg md:text-xl font-semibold leading-6 w-64 text-center md:text-left">
                             Dipercaya Oleh Mitra Internasional
                         </h2>
                         <div className="flex gap-8 justify-center">
@@ -308,7 +308,7 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="mt-10 w-full relative flex justify-center">
-                        <div className="w-full h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
+                        <div className="w-full h-6 md:h-12 bg-gradient-to-r from-lime-500 to-green-500 rounded-[20px]"></div>
                     </div>
                 </motion.section>
 
@@ -321,8 +321,8 @@ export default function Home() {
                         <p className="text-zinc-800 text-base font-normal leading-6 text-justify">
                             PT Divus Global Mediacomm adalah perusahaan konsultan yang bergerak di bidang manajemen, komunikasi korporat, dan desain grafis.
                         </p>
-                        <Link href="/User/TentangKami" className="inline-flex justify-start items-center px-5 py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
-                            <span className="text-white text-base font-semibold leading-6">Tentang Kami</span>
+                        <Link href="/User/TentangKami" className="inline-flex justify-start items-center px-3 md:px-5 py-2 md:py-3 bg-green-500 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
+                            <span className="text-white text-sm md:text-base font-medium leading-6">Tentang Kami</span>
                         </Link>
                     </div>
                     <div className="w-full lg:w-1/2 flex justify-center">
@@ -332,16 +332,16 @@ export default function Home() {
                     </div>
                 </motion.section>
 
-				{/* LAYANAN */}
-				<section className="px-6 md:px-10 py-16 md:py-20 bg-gray-50 overflow-hidden">
-					<div className="max-w-[1440px] mx-auto px-6 md:px-10">
-						<div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
-							<div className="w-full lg:w-1/2 relative">
-								<h2 className="text-zinc-800 text-2xl md:text-3xl font-semibold leading-tight z-10 relative">
-									Solusi Tepat untuk Meningkatkan Efektivitas Strategi Bisnis.
-									<span className="inline-block ml-3 w-32 md:w-48 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
-								</h2>
-							</div>
+                {/* LAYANAN */}
+                <section className="px-0 md:px-10 py-16 md:py-20 bg-gray-50 overflow-hidden">
+                    <div className="max-w-[1440px] mx-auto px-6 md:px-10">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-10 mb-16">
+                            <div className="w-full lg:w-1/2 relative">
+                                <h2 className="text-zinc-800 text-2xl md:text-3xl font-semibold leading-tight z-10 relative">
+                                    Solusi Tepat untuk Meningkatkan Efektivitas Strategi Bisnis.
+                                    <span className="inline-block ml-3 w-32 md:w-48 h-2 bg-gradient-to-r from-lime-500 to-green-500 rounded-full align-middle"></span>
+                                </h2>
+                            </div>
                             <div className="w-full lg:w-5/12">
                                 <p className="text-zinc-600 text-base md:text-lg font-normal leading-relaxed text-justify lg:text-left">
                                     PT Divus menyediakan layanan management consulting, riset, laporan, corporate identity, serta Report dan jurnal guna membantu perusahaan mencapai strategi dan tujuan bisnis secara optimal.
@@ -381,12 +381,12 @@ export default function Home() {
                 </section>
 
                 {/* PORTOFOLIO SECTION */}
-                <motion.section {...fadeInUp} className="px-4 md:px-20 py-20 bg-white">
+                <motion.section {...fadeInUp} className="px-6 md:px-20 py-20 bg-white">
                     <div className="w-full rounded-3xl overflow-hidden relative shadow-lg bg-gradient-to-b from-[#4ade80] to-[#84cc16]">
                         <div className="flex flex-col lg:flex-row items-center lg:items-start p-8 md:p-14 gap-10">
                             <div className="w-full lg:w-5/12 flex flex-col items-start gap-6 text-white z-10">
-                                <h2 className="text-3xl md:text-4xl font-bold">Portofolio Kami</h2>
-                                <p className="text-base md:text-lg font-medium leading-relaxed text-justify lg:text-left opacity-95">
+                                <h2 className="text-3xl md:text-4xl font-semibold md:font-bold">Portofolio Kami</h2>
+                                <p className="text-base md:text-lg font-normal md:font-medium leading-relaxed text-justify lg:text-left opacity-95">
                                     {activePorto === 'produk'
                                         ? "Lihat produk-produk unggulan yang telah kami kembangkan untuk mendukung bisnis klien kami."
                                         : "Daftar proyek dan kolaborasi strategis yang telah kami selesaikan dengan berbagai mitra."
@@ -453,75 +453,78 @@ export default function Home() {
 
                 {/* MENGAPA PILIH KAMI */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-20 bg-white">
-                    <h2 className="text-center text-3xl md:text-4xl font-bold text-zinc-800 mb-15">
+                    <h2 className="text-center text-2xl md:text-4xl font-semibold md:font-bold text-zinc-800 mb-15">
                         Mengapa Memilih PT Divus Global Mediacomm?
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto overflow-x-hidden">
                         {reasons.map((item, index) => (
                             <div key={item.number} className="relative flex flex-col items-center text-center gap-5">
                                 {index < reasons.length - 1 && (
-                                    <div className="hidden md:block absolute top-12 left-1/2 h-0.5 bg-zinc-300 z-0" 
-                                         style={{ width: 'calc(100% + 2.5rem)' }}>
+                                    <div className="hidden md:block absolute top-12 left-1/2 h-0.5 bg-zinc-300 z-0"
+                                        style={{ width: '100%', maxWidth: '100%' }}>
                                     </div>
                                 )}
                                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center z-10 border-12 border-white ">
-                                    <span className="text-4xl font-bold text-green-500">{item.number}</span>
+                                    <span className="md:text-4xl text-3xl font-bold text-green-500">{item.number}</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-zinc-800 line-clamp-2 h-14 overflow-hidden">{item.title}</h3>
-                                <p className="text-zinc-600">{item.desc}</p>
+                                <h3 className="text-lg md:text-xl font-semibold text-zinc-800 line-clamp-2 h-14 overflow-hidden">{item.title}</h3>
+                                <p className="text-zinc-600 text-sm md:text-base">{item.desc}</p>
                             </div>
                         ))}
                     </div>
                 </motion.section>
 
-                {/* --- KLIEN KAMI (DINAMIS DARI DATABASE) --- */}
-                <motion.section {...fadeInUp} className="bg-white relative overflow-hidden w-screen relative left-[50%] right-[50%] -ml-[50vw] -mr-[50vw]">
-                    <h2 className="text-center text-zinc-800 text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
-                    <p className="text-center font-medium text-lg text-lime-500 mt-8">Dipercaya oleh 100+ klien dari Nasional Dan Internasional</p>
-                    <div className="relative h-48 overflow-hidden mt-10 w-full" >
-                        
-                        {/* Marquee Animation */}
-                        {clientLogos.length > 0 ? (
+            </div>
+
+            {/* --- KLIEN KAMI (DINAMIS DARI DATABASE) --- */}
+            <motion.section {...fadeInUp} className="bg-white relative overflow-hidden w-full">
+                <h2 className="text-center text-zinc-800 text-2xl md:text-4xl font-semibold mb-8 mt-12">Klien Kami</h2>
+                <p className="text-center font-medium text-base md:text-lg text-lime-500 mt-8">Dipercaya oleh 100+ klien dari Nasional Dan Internasional</p>
+                <div className="relative h-48 overflow-hidden mt-10 w-full" >
+
+                    {/* Marquee Animation */}
+                    {clientLogos.length > 0 ? (
                         <div className="relative w-full overflow-hidden py-10" >
                             <motion.div
-                            className="flex gap-16 w-max"
-                            animate={{ x: "-50%" }} 
-                            transition={{
-                                ease: "linear",
-                                duration: 20,
-                                repeat: Infinity,
-                            }}
+                                className="flex gap-16 w-max"
+                                animate={{ x: "-50%" }}
+                                transition={{
+                                    ease: "linear",
+                                    duration: 20,
+                                    repeat: Infinity,
+                                }}
                             >
-                            {[...Array(2)].map((_, groupIndex) => (
-                                <div key={groupIndex} className="flex gap-16 items-center">
-                                {clientLogos.map((logo, i) => (
-                                    <motion.img
-                                    key={i}
-                                    src={logo}
-                                    alt="Client Logo"
-                                    className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
-                                    />
-                                    // loading="lazy"
+                                {[...Array(2)].map((_, groupIndex) => (
+                                    <div key={groupIndex} className="flex gap-16 items-center">
+                                        {clientLogos.map((logo, i) => (
+                                            <motion.img
+                                                key={i}
+                                                src={logo}
+                                                alt="Client Logo"
+                                                className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
+                                            />
+                                            // loading="lazy"
+                                        ))}
+                                    </div>
                                 ))}
-                                </div>
-                            ))}
                             </motion.div>
                         </div>
-                        ) : (
+                    ) : (
                         <p className="text-center w-full text-gray-400 italic mt-10">
                             Belum ada logo klien di database.
                         </p>
-                        )}
-                    </div>
-                </motion.section>
+                    )}
+                </div>
+            </motion.section>
 
+            <div className="max-w-[1440px] mx-auto">
                 <motion.section {...fadeInUp} className="px-4 md:px-20 py-20 bg-white">
                     <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
                         <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
                             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url(${Assets.Banner1})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         </div>
                         <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-                            <h2 className="text-white text-3xl md:text-4xl font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
+                            <h2 className="text-white text-2xl md:text-4xl font-semibold md:font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
                             <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
                             <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                                 <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />

@@ -81,8 +81,8 @@ export default function Footer() {
 
                     {/* Kolom 2: Layanan */}
                     <div>
-                        <h4 className="text-white/90 text-xl font-semibold ml-12 capitalize leading-7 pt-12 mb-4">Layanan</h4>
-                        <div className="flex flex-col space-y-2 ml-12">
+                        <h4 className="text-white/90 text-xl font-semibold ml-0 md:ml-12 capitalize leading-7 pt-12 mb-4">Layanan</h4>
+                        <div className="flex flex-col space-y-2 ml-0 md:ml-12">
                             {servicesList.length > 0 ? (
                                 servicesList.map(service => (
                                     <Link 

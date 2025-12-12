@@ -155,10 +155,10 @@ export default function TentangKami() {
 
       <header className="relative w-full">
         {/* Hero Banner */}
-        <section className="w-full bg-slate-50 py-14 md:py-2 px-6 border-b border-slate-200">
+        <section className="w-full bg-slate-50 py-14 md:py-2 px-2 md:px-6 border-b border-slate-200">
           <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
             <div className="flex-shrink-0">
-              <img src={company?.logo_url || Assets.Hero3} alt="Logo Divus" className="w-100 h-100 object-contain" />
+              <img src={company?.logo_url || Assets.Hero3} alt="Logo Divus" className="w-50 md:w-100 h-50 md:h-100 object-contain" />
             </div>
             <div className="flex flex-col justify-center">
               <h1 className="text-zinc-800 text-xl md:text-3xl font-bold leading-tight">{company?.company_name || "PT Divus Global Mediacomm"}</h1>
@@ -168,7 +168,7 @@ export default function TentangKami() {
         </section>
 
         {/* Breadcrumb */}
-        <div className="w-full bg-zinc-300 py-3 mb-4 ">
+        <div className="w-full bg-zinc-300 py-3 px-4 md:px-6 mb-4 ">
           <div className="max-w-7xl mx-auto">
             <p className="text-zinc-800 text-base">
               <Link href="/User/Home" className="hover:underline">Beranda</Link>
@@ -179,18 +179,18 @@ export default function TentangKami() {
       </header>
 
       {/* PROFIL PERUSAHAAN */}
-      <motion.section {...fadeInUp} className="max-w-7xl mx-auto  py-16">
+      <motion.section {...fadeInUp} className="max-w-7xl mx-auto py-16">
         {isLoading && !company ? (
           <div className="text-center py-10">Memuat Profil...</div>
         ) : (
           <div className="flex flex-col lg:flex-row justify-between items-start gap-10 lg:gap-16">
-            <motion.div {...fadeInLeft} className="w-full lg:w-1/2 relative">
+            <motion.div {...fadeInLeft} className="w-full lg:w-1/2 relative px-6 md:px-0">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold leading-tight z-10 relative">Profile Perusahaan</h2>
               <p className='text-lg sm:text-xl md:text-2xl font-medium leading-tight mt-4'>{company?.company_name || "PT Divus Global Mediacomm"}</p>
 
               <div className="mt-6 space-y-4">
                 <div>
-                  <p className='text-sm text-justify leading-relaxed pb-2'>
+                  <p className='text-sm text-left leading-relaxed pb-2'>
                     <span className="font-semibold">Nama Perusahaan :</span> {company?.company_name || "-"}
                   </p>
                   <div className="w-full border-b border-gray-200"></div>
@@ -219,7 +219,7 @@ export default function TentangKami() {
               </div>
             </motion.div>
 
-            <motion.div {...fadeInRight} className="w-full lg:w-5/12">
+            <motion.div {...fadeInRight} className="w-full lg:w-5/12 px-4 sm:px-6">
               <h2 className="text-base sm:text-lg md:text-xl font-semibold leading-tight z-10 relative">Tentang Perusahaan</h2>
               <p className='text-sm text-justify leading-loose mt-4 whitespace-pre-line text-gray-700'>
                 {company?.description || "Deskripsi perusahaan belum tersedia."}
@@ -284,7 +284,7 @@ export default function TentangKami() {
           <div className="flex flex-col lg:flex-row justify-center items-center gap-10 mb-16">
             <div className="w-full relative text-center">
               <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10 hidden md:flex"></div>
-              <p className='text-lime-500 text-lg md:text-xl text-center font-normal whitespace-nowrap leading-tight mt-4'>
+              <p className='text-lime-500 text-base md:text-xl text-center font-normal md:whitespace-normal leading-tight mt-4'>
                 Experienced, able to maintain quality and professionalism
               </p>
               <h2 className="text-zinc-800 text-2xl md:text-3xl text-center font-semibold leading-tight z-10 relative mt-6">

@@ -13,9 +13,9 @@ function Navbar() {
     const [isLangOpen, setIsLangOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState('ID');
     const [activeDropdown, setActiveDropdown] = useState(null);
-    
+
     // State Data & Fallback
-    const [servicesList, setServicesList] = useState([]); 
+    const [servicesList, setServicesList] = useState([]);
     const [isLoadingServices, setIsLoadingServices] = useState(true); // State Loading Khusus Layanan
     const router = useRouter();
 
@@ -25,7 +25,7 @@ function Navbar() {
     //         try {
     //             const res = await fetch('/api/services');
     //             const data = await res.json();
-                
+
     //             if (res.ok && Array.isArray(data)) {
     //                 // FORMAT DATA: Gunakan slug dari database untuk path
     //                 const formattedServices = data.map(service => ({
@@ -50,7 +50,7 @@ function Navbar() {
             try {
                 // Gunakan cache - hanya fetch sekali
                 const data = await serviceCache.fetch();
-                
+
                 // FORMAT DATA: Gunakan slug dari database untuk path
                 const formattedServices = data.map(service => ({
                     name: service.title,
@@ -82,15 +82,15 @@ function Navbar() {
     // Definisi Menu
     const navItems = [
         { name: "Beranda", path: "/User/Home" },
-        { 
-            name: "Layanan", 
-            path: "#", 
+        {
+            name: "Layanan",
+            path: "#",
             isDropdown: true,
             subItems: getLayananSubItems() // Gunakan fungsi logic di atas
         },
-        { 
-            name: "Portofolio", 
-            path: "#", 
+        {
+            name: "Portofolio",
+            path: "#",
             isDropdown: true,
             subItems: [
                 { name: "Produk", path: "/User/Produk" },
@@ -115,15 +115,15 @@ function Navbar() {
 
     return (
         <nav className="w-full h-24 fixed top-0 left-0 z-50 bg-white shadow-sm">
-            
+
             <div className="max-w-[1440px] mx-auto h-full flex items-center justify-between px-6 md:px-[90px]">
-                
+
                 {/* Logo */}
                 <div className="flex items-center h-full">
                     <Link href="/User/Home">
                         <img className="w-auto h-14 cursor-pointer hover:opacity-90 transition-opacity"
-                             src={Assets.Logo}
-                             alt="DMUS Logo"
+                            src={Assets.Logo}
+                            alt="DMUS Logo"
                         />
                     </Link>
                 </div>
@@ -134,28 +134,26 @@ function Navbar() {
                         <div key={index} className="relative group">
                             {item.isDropdown ? (
                                 // --- TIPE DROPDOWN ---
-                                <button 
+                                <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setActiveDropdown(activeDropdown === item.name ? null : item.name);
                                     }}
-                                    className={`flex items-center gap-1 transition-colors duration-200 hover:text-[#88C63F] ${
-                                        activeDropdown === item.name ? 'text-[#88C63F]' : ''
-                                    }`}
+                                    className={`flex items-center gap-1 transition-colors duration-200 hover:text-[#88C63F] ${activeDropdown === item.name ? 'text-[#88C63F]' : ''
+                                        }`}
                                 >
                                     {item.name}
-                                    <ChevronDown 
-                                        size={16} 
-                                        className={`transition-transform duration-200 ${activeDropdown === item.name ? 'rotate-180' : ''}`} 
+                                    <ChevronDown
+                                        size={16}
+                                        className={`transition-transform duration-200 ${activeDropdown === item.name ? 'rotate-180' : ''}`}
                                     />
                                 </button>
                             ) : (
                                 // --- TIPE LINK BIASA ---
-                                <Link 
-                                    href={item.path} 
-                                    className={`transition-colors duration-200 hover:text-[#88C63F] ${
-                                        router.pathname === item.path ? "text-[#88C63F]" : ""
-                                    }`}
+                                <Link
+                                    href={item.path}
+                                    className={`transition-colors duration-200 hover:text-[#88C63F] ${router.pathname === item.path ? "text-[#88C63F]" : ""
+                                        }`}
                                 >
                                     {item.name}
                                 </Link>
@@ -188,40 +186,7 @@ function Navbar() {
                 </div>
 
                 {/* Right Section: Language & Mobile Toggle */}
-                <div className="flex items-center gap-6" style={{display:"none"}}>
-                    
-                    {/* Language Selector */}
-                    <div className="relative hidden md:block">
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsLangOpen(!isLangOpen);
-                            }}
-                            className="bg-[#2D2D39] text-white text-sm font-semibold px-5 py-2.5 rounded-full flex items-center gap-2 hover:bg-black transition-colors shadow-md"
-                        >
-                            {currentLang} 
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-
-                        {isLangOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-24 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
-                                {['ID', 'EN'].map(lang => (
-                                    <button 
-                                        key={lang}
-                                        onClick={() => handleLangChange(lang)}
-                                        className={`w-full text-center text-sm font-medium py-2 hover:bg-gray-50 ${
-                                            currentLang === lang ? 'text-[#88C63F]' : 'text-gray-600'
-                                        }`}
-                                    >
-                                        {lang}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
+                <div className="flex items-center gap-6">
                     {/* Hamburger Menu */}
                     <button
                         onClick={() => setIsOpen(!isOpen)}
@@ -241,8 +206,11 @@ function Navbar() {
                                 {item.isDropdown ? (
                                     // Mobile Dropdown
                                     <div>
-                                        <button 
-                                            onClick={() => setActiveDropdown(activeDropdown === item.name ? null : item.name)}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveDropdown(activeDropdown === item.name ? null : item.name);
+                                            }}
                                             className="flex items-center justify-between w-full py-3 text-lg font-medium text-zinc-800 hover:text-[#88C63F]"
                                         >
                                             {item.name}
@@ -269,38 +237,17 @@ function Navbar() {
                                     </div>
                                 ) : (
                                     // Mobile Link Biasa
-                                    <Link 
-                                        href={item.path} 
+                                    <Link
+                                        href={item.path}
                                         onClick={() => setIsOpen(false)}
-                                        className={`block py-3 text-lg font-medium transition-colors ${
-                                            router.pathname === item.path ? 'text-[#88C63F]' : 'text-zinc-800 hover:text-[#88C63F]'
-                                        }`}
+                                        className={`block py-3 text-lg font-medium transition-colors ${router.pathname === item.path ? 'text-[#88C63F]' : 'text-zinc-800 hover:text-[#88C63F]'
+                                            }`}
                                     >
                                         {item.name}
                                     </Link>
                                 )}
                             </div>
                         ))}
-                    </div>
-                    
-                    {/* Mobile Language */}
-                    <div className="px-6 mt-6 border-t pt-6">
-                        <p className="text-sm text-gray-400 mb-2">Bahasa</p>
-                        <div className="flex gap-3">
-                            {['ID', 'EN'].map(lang => (
-                                <button
-                                    key={lang}
-                                    onClick={() => handleLangChange(lang)}
-                                    className={`px-4 py-2 rounded-full text-sm font-medium border ${
-                                        currentLang === lang 
-                                            ? 'bg-[#2D2D39] text-white border-[#2D2D39]' 
-                                            : 'bg-white text-gray-600 border-gray-300'
-                                    }`}
-                                >
-                                    {lang}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
             )}

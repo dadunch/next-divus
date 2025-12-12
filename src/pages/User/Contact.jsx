@@ -165,7 +165,7 @@ export default function Contact() {
 
                 {/* Map (Tetap Hardcode karena biasanya link map embed jarang berubah/disimpan di DB profil sederhana) */}
                 {/* Jika ingin dinamis juga, harus tambah kolom 'map_url' di tabel company_profile */}
-                <motion.div {...fadeInRight} className="flex-1 w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 rounded-xl overflow-hidden border-r-4 border-b-4 shadow-md border-zinc-300 h-[470px]">
+                <motion.div {...fadeInRight} className="flex-1 w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 rounded-xl overflow-hidden md:border-r-4 md:border-b-4 border-b-0 shadow-md border-zinc-300 h-full md:h-[470px]">
                     {/* <iframe src= width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe> */}
                     <iframe
                         src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d253661.99642643647!2d107.44769353643915!3d-6.5885159826770785!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e691b42640098b5%3A0xbede1a67bdddbc3e!2sDivus%20Global%20Mediacom!5e0!3m2!1sid!2sid!4v1764955726940!5m2!1sid!2sid"

@@ -218,7 +218,7 @@ export default function Home() {
     };
 
     return (
-        <main className="w-full" style={{overflowY:"hidden"}}>
+        <main className="w-full">
             <Head>
                 <title>PT Divus Global Mediacomm</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />

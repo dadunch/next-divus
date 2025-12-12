@@ -327,7 +327,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
       {isOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={() => setIsOpen(false)}></div>
+          <div className="fixed inset-0 bg-transparent"  onClick={() => setIsOpen(false)}></div>
           <div className="relative w-[280px] bg-white shadow-2xl flex flex-col h-full">
             <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500">X</button>
             <div className="pt-10 pb-8 flex justify-center">

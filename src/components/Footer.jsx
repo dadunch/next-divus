@@ -115,7 +115,7 @@ export default function Footer() {
                 {/* Bagian Bawah Footer (Copyright) */}
                 <div className="pt-8 text-center">
                     <p className="text-zinc-200 text-base md:text-xl light capitalize leading-7">
-                        Copyright © {new Date().getFullYear()} {companyData?.company_name || "PT Divus Global Mediacomm"}. All rights reserved.
+                        Copyright © {new Date().getFullYear()} {companyData?.company_name || "PT Divus Global Mediacomm"}
                     </p>
                 </div>
             </div>

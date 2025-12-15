@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { Plus, Search, Settings, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Settings, Pencil, Trash2, ArrowUpDown } from "lucide-react";
 import Swal from "sweetalert2";
 
 // Import Layout
-import AdminLayouts from "../../../layouts/AdminLayouts";
+// import AdminLayouts from "../../../layouts/AdminLayouts"; // Uncomment jika perlu
 
 // Import Modals
 import AddClientModal from "../../../components/Modals/AddClientModal";
@@ -15,18 +15,21 @@ import EditClientModal from "../../../components/Modals/EditClientModal";
 const ClientPage = () => {
   const router = useRouter();
 
-  // 1. Ambil User dari Redux (Penting untuk Log Aktivitas)
-  const { user } = useSelector((state) => state.auth);
+  // 1. Ambil User dari Redux
+  const { user } = useSelector((state) => state.auth || {});
 
   // 2. State Data & UI
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // --- STATE BARU UNTUK SORTING ---
+  const [sortOrder, setSortOrder] = useState("az"); // Default: A-Z
 
   // State Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null); // Data client yang sedang diedit
+  const [selectedClient, setSelectedClient] = useState(null);
 
   // 3. Fungsi Fetch Data
   const fetchClients = async () => {
@@ -56,10 +59,26 @@ const ClientPage = () => {
     item.client_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // --- LOGIKA SORTING (BARU) ---
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    switch (sortOrder) {
+      case "az": // Nama A-Z
+        return a.client_name.localeCompare(b.client_name);
+      case "za": // Nama Z-A
+        return b.client_name.localeCompare(a.client_name);
+      case "most_projects": // Proyek Terbanyak
+        return (b.projects?.length || 0) - (a.projects?.length || 0);
+      case "least_projects": // Proyek Paling Sedikit
+        return (a.projects?.length || 0) - (b.projects?.length || 0);
+      default:
+        return 0;
+    }
+  });
+
   // 5. Handle Tombol Edit Diklik
   const handleEditClick = (client) => {
-    setSelectedClient(client); // Simpan data client ke state
-    setIsEditModalOpen(true); // Buka modal
+    setSelectedClient(client);
+    setIsEditModalOpen(true);
   };
 
   // 6. Handle Delete
@@ -80,7 +99,7 @@ const ClientPage = () => {
           const res = await fetch(`/api/clients/${id}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user?.id }), // Kirim User ID untuk Log
+            body: JSON.stringify({ userId: user?.id }),
           });
 
           if (res.ok) {
@@ -106,23 +125,7 @@ const ClientPage = () => {
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="relative w-1/3">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-          
+            <Search className="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
@@ -157,13 +160,32 @@ const ClientPage = () => {
             </p>
           </div>
 
-          <button
-            className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            <Plus size={20} />
-            <span>Tambah Client</span>
-          </button>
+          <div className="flex gap-3">
+             {/* --- DROPDOWN SORTING (BARU) --- */}
+             <div className="relative">
+                <select 
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm font-medium"
+                >
+                    <option value="az">Nama (A-Z)</option>
+                    <option value="za">Nama (Z-A)</option>
+                    <option value="most_projects">Proyek Terbanyak</option>
+                    <option value="least_projects">Proyek Paling Sedikit</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <ArrowUpDown size={16} />
+                </div>
+             </div>
+
+            <button
+                className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
+                onClick={() => setIsAddModalOpen(true)}
+            >
+                <Plus size={20} />
+                <span>Tambah Client</span>
+            </button>
+          </div>
         </div>
 
         {/* Table */}
@@ -202,7 +224,7 @@ const ClientPage = () => {
                     Sedang memuat data...
                   </td>
                 </tr>
-              ) : filteredClients.length === 0 ? (
+              ) : sortedClients.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
@@ -212,7 +234,8 @@ const ClientPage = () => {
                   </td>
                 </tr>
               ) : (
-                filteredClients.map((client, index) => (
+                // Menggunakan sortedClients untuk map
+                sortedClients.map((client, index) => (
                   <tr
                     key={client.id}
                     className="hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
@@ -297,8 +320,8 @@ const ClientPage = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSuccess={fetchClients}
-        clientData={selectedClient} // Kirim data client lama ke modal
-        userId={user?.id} // Kirim ID User login untuk Log Aktivitas
+        clientData={selectedClient} 
+        userId={user?.id}
       />
     </div>
   );

@@ -5,9 +5,12 @@ import Swal from 'sweetalert2';
 const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) => {
   // State Data
   const [categories, setCategories] = useState([]);
+  
+  // PERBAIKAN 1: Tambahkan client_id di sini
   const [formData, setFormData] = useState({
     project_name: '',
     category_id: '',
+    client_id: '', 
     tahun: new Date().getFullYear()
   });
 
@@ -17,6 +20,7 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
   
   const dropdownRef = useRef(null);
 
+  // 1. Load Kategori saat modal dibuka
   useEffect(() => {
     if (isOpen) {
       fetch('/api/categories')
@@ -26,16 +30,20 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     }
   }, [isOpen]);
 
+  // 2. Load Data Project ke Form saat projectData berubah
   useEffect(() => {
     if (projectData) {
       setFormData({
         project_name: projectData.project_name || '',
         category_id: projectData.category_id || '',
+        // PERBAIKAN 2: Pastikan client_id diambil dari data lama
+        client_id: projectData.client_id || '', 
         tahun: projectData.tahun || new Date().getFullYear()
       });
     }
   }, [projectData]);
 
+  // 3. Handle klik di luar dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -46,14 +54,16 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // --- LOGIKA SIMPAN ---
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validasi input
     if (!formData.project_name || !formData.category_id || !formData.tahun) {
       Swal.fire({
         icon: 'warning',
         title: 'Data Belum Lengkap',
-        text: 'Mohon isi semua form.',
+        text: 'Mohon isi nama proyek, kategori, dan tahun.',
         confirmButtonColor: '#F59E0B',
         customClass: { popup: 'font-["Poppins"] rounded-xl' }
       });
@@ -63,16 +73,28 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
     setIsSubmitting(true);
 
     try {
+      // PERBAIKAN 3: Buat Payload yang tipe datanya aman (String/Int)
+      const payload = {
+        project_name: formData.project_name,
+        // Konversi ID ke String agar aman dikirim JSON
+        category_id: String(formData.category_id),
+        client_id: String(formData.client_id), 
+        userId: String(userId),
+        // Konversi Tahun ke Integer
+        tahun: parseInt(formData.tahun), 
+      };
+
       const res = await fetch(`/api/projects/${projectData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          userId: userId
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Gagal menyimpan");
+      // Cek jika server error
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Gagal menyimpan perubahan");
+      }
 
       Swal.fire({
         icon: 'success',
@@ -83,15 +105,15 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
         customClass: { popup: 'font-["Poppins"] rounded-xl' }
       });
       
-      onSuccess();
+      onSuccess(); // Refresh data di halaman induk
       handleClose();
 
     } catch (error) {
-      console.error(error);
+      console.error("Error Submit:", error);
       Swal.fire({
         icon: 'error',
         title: 'Gagal',
-        text: 'Terjadi kesalahan saat menyimpan data.',
+        text: error.message || 'Terjadi kesalahan server.',
         confirmButtonColor: '#EF4444',
         customClass: { popup: 'font-["Poppins"] rounded-xl' }
       });
@@ -106,6 +128,7 @@ const EditProjectModal = ({ isOpen, onClose, onSuccess, projectData, userId }) =
   };
 
   const getSelectedCategoryLabel = () => {
+    // Pakai == biar aman (string vs number)
     const selected = categories.find(c => c.id == formData.category_id);
     return selected ? selected.bidang : "Pilih Bidang...";
   };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AddProductModal from "../../components/Modals/AddProductModul";
 import EditProductModal from "../../components/Modals/EditProductModal";
 import Swal from "sweetalert2";
-import { Search, Plus, Trash2, Eye, Package, Pencil } from "lucide-react";
+import { Search, Plus, Trash2, Eye, Package, Pencil, ArrowUpDown } from "lucide-react";
 import { useSelector } from "react-redux";
 
 const Produk = () => {
@@ -11,6 +11,9 @@ const Produk = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // --- STATE BARU UNTUK SORTING ---
+  const [sortOrder, setSortOrder] = useState("newest"); // Default: Tahun Terbaru
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -74,9 +77,26 @@ const Produk = () => {
     }
   };
 
+  // --- LOGIKA FILTERING ---
   const filteredProducts = products.filter((item) =>
     item.nama_produk?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // --- LOGIKA SORTING (BARU) ---
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortOrder) {
+      case "az": // Abjad A-Z
+        return a.nama_produk.localeCompare(b.nama_produk);
+      case "za": // Abjad Z-A
+        return b.nama_produk.localeCompare(a.nama_produk);
+      case "newest": // Tahun Terbaru
+        return b.tahun - a.tahun; 
+      case "oldest": // Tahun Terlama
+        return a.tahun - b.tahun;
+      default:
+        return 0;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
@@ -84,20 +104,7 @@ const Produk = () => {
       <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="relative w-1/3">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="h-5 w-5 text-gray-400" />
           </div>
           <input
             type="text"
@@ -130,26 +137,46 @@ const Produk = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
-          >
-            <Plus size={20} />
-            <span>Tambah Produk</span>
-          </button>
+          <div className="flex gap-3">
+             {/* --- DROPDOWN SORTING (BARU) --- */}
+             <div className="relative">
+                <select 
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm font-medium"
+                >
+                    <option value="newest">Tahun Terbaru</option>
+                    <option value="oldest">Tahun Terlama</option>
+                    <option value="az">Abjad A-Z</option>
+                    <option value="za">Abjad Z-A</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <ArrowUpDown size={16} />
+                </div>
+             </div>
+
+            <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
+            >
+                <Plus size={20} />
+                <span>Tambah Produk</span>
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
           <div className="text-center text-gray-500 py-20">
             Memuat data produk...
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : sortedProducts.length === 0 ? (
           <div className="text-center text-gray-500 py-20">
             Produk tidak ditemukan.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((item) => {
+            {/* Menggunakan sortedProducts bukan filteredProducts */}
+            {sortedProducts.map((item) => {
               const images = getImages(item.foto_produk);
               const cover = images[0];
 
@@ -169,7 +196,7 @@ const Produk = () => {
                       </div>
                     )}
 
-                    <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1 rounded-lg text-xs font-bold">
+                    <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
                       {item.tahun}
                     </div>
 
@@ -198,7 +225,7 @@ const Produk = () => {
 
                   {/* CONTENT */}
                   <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 mb-1 truncate">
+                    <h3 className="font-bold text-gray-900 mb-1 truncate" title={item.nama_produk}>
                       {item.nama_produk}
                     </h3>
                     <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">
@@ -210,7 +237,7 @@ const Produk = () => {
                         setDetailData(item);
                         setShowDetailModal(true);
                       }}
-                      className="w-full bg-[#2D2D39] hover:bg-black text-white py-2 rounded-lg text-xs flex items-center justify-center gap-2"
+                      className="w-full bg-[#2D2D39] hover:bg-black text-white py-2 rounded-lg text-xs flex items-center justify-center gap-2 transition-colors"
                     >
                       <Eye size={14} />
                       Lihat Detail
@@ -263,14 +290,16 @@ const Produk = () => {
                 onClick={() => setShowDetailModal(false)}
                 className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X size={24} className="text-gray-500" />
               </button>
 
               <h2 className="text-3xl font-bold mb-2 text-gray-900">
                 {detailData.nama_produk}
               </h2>
+
+              <div className="inline-block bg-gray-100 px-3 py-1 rounded-md text-sm font-semibold text-gray-700 mb-4">
+                 Tahun: {detailData.tahun}
+              </div>
 
               <p className="text-gray-600 mb-6 leading-relaxed">
                 {detailData.deskripsi || "Tidak ada deskripsi"}
@@ -280,13 +309,15 @@ const Produk = () => {
                 {getImages(detailData.foto_produk).map((img, i) => (
                   <div
                     key={i}
-                    className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden"
+                    className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group"
                   >
                     <img
                       src={img}
                       alt={`Detail ${i}`}
                       className="w-full h-full object-contain rounded-xl"
                     />
+                     {/* Overlay Zoom Icon (Opsional) */}
+                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all pointer-events-none"></div>
                   </div>
                 ))}
               </div>
@@ -297,5 +328,23 @@ const Produk = () => {
     </div>
   );
 };
+
+// Helper component for X icon in modal
+const X = ({ size, className }) => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+    </svg>
+);
 
 export default Produk;

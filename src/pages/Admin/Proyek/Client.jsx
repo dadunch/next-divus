@@ -22,7 +22,7 @@ const ClientPage = () => {
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // --- STATE BARU UNTUK SORTING ---
   const [sortOrder, setSortOrder] = useState("az"); // Default: A-Z
 
@@ -122,8 +122,8 @@ const ClientPage = () => {
       </Head>
 
       {/* TOP BAR */}
-      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
-        <div className="relative w-1/3">
+      <header className="bg-[#1E1E2D] px-4 md:px-8 py-4 flex flex-row justify-between items-center shadow-md sticky top-0 z-30 gap-4">
+        <div className="relative flex-1 md:max-w-2xl">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
@@ -132,9 +132,10 @@ const ClientPage = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-11 pr-4 py-2.5 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm"
-            placeholder="Cari nama client.."
+            placeholder="Cari client..."
           />
         </div>
+
         <div className="flex items-center gap-4">
           <div className="text-right hidden md:block">
             <p className="text-sm font-medium text-white">
@@ -150,40 +151,40 @@ const ClientPage = () => {
       {/* MAIN CONTENT */}
       <div className="px-8 pt-8">
         {/* Page Header */}
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-black mb-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">
               Client / Customer
             </h1>
-            <p className="text-gray-500 italic font-medium">
+            <p className="text-gray-500 italic text-sm md:text-lg font-medium">
               Kelola Daftar Client & Partner
             </p>
           </div>
 
           <div className="flex gap-3">
-             {/* --- DROPDOWN SORTING (BARU) --- */}
-             <div className="relative">
-                <select 
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm font-medium"
-                >
-                    <option value="az">Nama (A-Z)</option>
-                    <option value="za">Nama (Z-A)</option>
-                    <option value="most_projects">Proyek Terbanyak</option>
-                    <option value="least_projects">Proyek Paling Sedikit</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <ArrowUpDown size={16} />
-                </div>
-             </div>
+            {/* --- DROPDOWN SORTING (BARU) --- */}
+            <div className="relative">
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C] cursor-pointer text-sm font-medium"
+              >
+                <option value="az">Nama (A-Z)</option>
+                <option value="za">Nama (Z-A)</option>
+                <option value="most_projects">Proyek Terbanyak</option>
+                <option value="least_projects">Proyek Paling Sedikit</option>
+              </select>
+              <div className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500">
+                <ArrowUpDown size={16} />
+              </div>
+            </div>
 
             <button
-                className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
-                onClick={() => setIsAddModalOpen(true)}
+              className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
+              onClick={() => setIsAddModalOpen(true)}
             >
-                <Plus size={20} />
-                <span>Tambah Client</span>
+              <Plus size={20} />
+              <span>Tambah Client</span>
             </button>
           </div>
         </div>
@@ -320,7 +321,7 @@ const ClientPage = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSuccess={fetchClients}
-        clientData={selectedClient} 
+        clientData={selectedClient}
         userId={user?.id}
       />
     </div>

@@ -14,7 +14,7 @@ const ICON_MAP = {
       <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
     </svg>
   ),
-  "#Layanan": ( 
+  "#Layanan": (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
     </svg>
@@ -46,9 +46,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const router = useRouter();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  
+
   const [menuItems, setMenuItems] = useState([]);
-  const [servicesMenu, setServicesMenu] = useState([]); 
+  const [servicesMenu, setServicesMenu] = useState([]);
   const [openMenus, setOpenMenus] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -60,8 +60,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       if (res.ok && Array.isArray(data)) {
         const formattedServices = data.map(service => ({
           name: service.title,
-          path: `/Admin/Layanan/${service.id}`, 
-          isDynamic: true 
+          path: `/Admin/Layanan/${service.id}`,
+          isDynamic: true
         }));
         setServicesMenu(formattedServices);
       }
@@ -72,16 +72,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   // 2. USE EFFECT untuk EVENT LISTENER
   useEffect(() => {
-    fetchServices(); 
+    fetchServices();
 
     const handleRefresh = () => {
-        console.log("Sidebar mendeteksi perubahan, merefresh menu...");
-        fetchServices();
+      console.log("Sidebar mendeteksi perubahan, merefresh menu...");
+      fetchServices();
     };
 
     window.addEventListener('refreshSidebar', handleRefresh);
     return () => {
-        window.removeEventListener('refreshSidebar', handleRefresh);
+      window.removeEventListener('refreshSidebar', handleRefresh);
     };
   }, []);
 
@@ -94,7 +94,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       // Cek apakah user punya array roles (Login Baru)
       if (user?.roles && Array.isArray(user.roles)) {
         roleIds = user.roles.map(r => r.id);
-      } 
+      }
       // Fallback: Cek apakah user punya roleId tunggal (Login Lama / Redux Lama)
       else if (user?.roleId || user?.role_id) {
         roleIds = [user.roleId || user.role_id];
@@ -102,7 +102,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
       // Jika tidak ada role sama sekali, stop.
       if (roleIds.length === 0) {
-        setIsLoading(false); 
+        setIsLoading(false);
         return;
       }
 
@@ -114,13 +114,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         // atau loop request jika API backend belum diupdate.
         // Di sini saya asumsikan API backend bisa terima 'role_ids'
         const res = await fetch(`/api/roles/permissions?role_ids=${idsParam}`);
-        const data = await res.json(); 
+        const data = await res.json();
 
         if (res.ok) {
           // Flattening array of permissions jika API mengembalikan nested arrays karena multi-role
           // (Tergantung implementasi backend Anda nanti)
           const rawMenus = Array.isArray(data) ? data.map(item => item.menu).flat() : [];
-          
+
           // Hilangkan duplikat menu (karena multiple role bisa punya akses ke menu yg sama)
           const uniqueMenus = Array.from(new Map(rawMenus.map(m => [m.id, m])).values());
 
@@ -135,7 +135,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           const children = normalizedMenus.filter(m => m.parent_id);
 
           const structuredMenu = parents.map(parent => {
-            
+
             // 1. Ambil anak-anak default dari database
             let myChildren = children
               .filter(child => child.parent_id === parent.id && !child.nama_menu.toLowerCase().includes('tambah layanan'))
@@ -146,15 +146,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
             // 2. Logika Khusus: LAYANAN
             if (parent.nama_menu === 'Layanan' || parent.url === '#Layanan') {
-               myChildren = [
-                 ...myChildren,     
-                 ...servicesMenu,
-                 { name: '+ Tambah Layanan', path: '/Admin/LayananProduk', isSpecial: true } 
-               ];
+              myChildren = [
+                ...myChildren,
+                ...servicesMenu,
+                { name: '+ Tambah Layanan', path: '/Admin/LayananProduk', isSpecial: true }
+              ];
             }
 
             // 3. Logika Khusus: PERUSAHAAN
-             if (
+            if (
               parent.nama_menu === "Perusahaan" ||
               parent.url === "#Perusahaan"
             ) {
@@ -168,14 +168,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
             // 4. Logika Khusus: PORTOFOLIO
             if (
-                parent.nama_menu === "Portofolio" || 
-                parent.url === "#Portofolio"
-              ) {
-                myChildren = [
-                  { name: "Produk", path: "/Admin/Produk" },
-                  { name: "Client", path: "/Admin/Proyek/Client" },  
-                ];
-              }
+              parent.nama_menu === "Portofolio" ||
+              parent.url === "#Portofolio"
+            ) {
+              myChildren = [
+                { name: "Produk", path: "/Admin/Produk" },
+                { name: "Client", path: "/Admin/Proyek/Client" },
+              ];
+            }
 
             return {
               name: parent.nama_menu,
@@ -187,12 +187,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
           // Tambahkan Dashboard jika belum ada
           if (!structuredMenu.find(m => m.path === '/Admin/Dashboard')) {
-             structuredMenu.unshift({
-               name: "Beranda",
-               path: "/Admin/Dashboard",
-               icon: ICON_MAP["/Admin/Dashboard"],
-               subItems: []
-             });
+            structuredMenu.unshift({
+              name: "Beranda",
+              path: "/Admin/Dashboard",
+              icon: ICON_MAP["/Admin/Dashboard"],
+              subItems: []
+            });
           }
 
           setMenuItems(structuredMenu);
@@ -205,7 +205,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     };
 
     fetchMenus();
-  }, [user, servicesMenu]); 
+  }, [user, servicesMenu]);
 
   // --- (SISANYA KE BAWAH TETAP SAMA) ---
   const toggleMenu = (menuName) => {
@@ -260,7 +260,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               <div className="mt-2 pl-6 space-y-1">
                 {item.subItems.map((sub, subIndex) => {
                   const isSubActive = router.asPath === sub.path;
-                  const isSpecialBtn = sub.isSpecial; 
+                  const isSpecialBtn = sub.isSpecial;
 
                   return (
                     <Link
@@ -268,18 +268,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                       href={sub.path}
                       className={`
                         flex items-center px-6 py-2.5 rounded-lg text-sm font-['Poppins'] transition-colors 
-                        ${isSpecialBtn 
-                            ? 'mt-3 bg-gray-100 text-gray-700 justify-center font-bold hover:bg-gray-200 shadow-sm' 
-                            : (isSubActive 
-                                ? 'text-[#39B54A] font-semibold' 
-                                : 'text-gray-500 hover:text-gray-700')
+                        ${isSpecialBtn
+                          ? 'mt-3 bg-gray-100 text-gray-700 justify-center font-bold hover:bg-gray-200 shadow-sm'
+                          : (isSubActive
+                            ? 'text-[#39B54A] font-semibold'
+                            : 'text-gray-500 hover:text-gray-700')
                         }
                       `}
                     >
                       {!isSpecialBtn && (
                         <span className={`w-1.5 h-1.5 rounded-full mr-3 ${isSubActive ? 'bg-[#39B54A]' : 'bg-gray-300'}`}></span>
                       )}
-                      
+
                       {sub.name}
                     </Link>
                   );
@@ -310,12 +310,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         </div>
         <nav className="flex-1 px-5 overflow-y-auto scrollbar-hide">
           {isLoading ? (
-             <div className="space-y-4 mt-4 px-2">
-               <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
-               <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
-             </div>
+            <div className="space-y-4 mt-4 px-2">
+              <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
+              <div className="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
+            </div>
           ) : (
-             menuItems.map((item, idx) => renderMenuItem(item, idx))
+            menuItems.map((item, idx) => renderMenuItem(item, idx))
           )}
         </nav>
         <div className="p-6 mt-auto border-t border-gray-100 bg-white">
@@ -325,25 +325,114 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         </div>
       </div>
 
-      {isOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-transparent"  onClick={() => setIsOpen(false)}></div>
-          <div className="relative w-[280px] bg-white shadow-2xl flex flex-col h-full">
-            <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500">X</button>
-            <div className="pt-10 pb-8 flex justify-center">
-              <img src={Assets?.Logo} alt="DIVUS Logo" className="w-32" />
-            </div>
-            <nav className="flex-1 px-5 overflow-y-auto">
-              {menuItems.map((item, idx) => renderMenuItem(item, idx))}
-            </nav>
-            <div className="p-6 mt-auto border-t">
-              <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-['Poppins'] font-medium text-white bg-[#FF3B3B] hover:bg-[#e63535]">
-                <span>Log out</span>
-              </button>
-            </div>
+      {/* MOBILE SIDEBAR WRAPPER (Always mounted for transitions) */}
+      <div className={`lg:hidden fixed inset-0 z-50 flex ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
+
+        {/* OVERLAY: Fade In/Out */}
+        <div
+          className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setIsOpen(false)}
+        ></div>
+
+        {/* DRAWER: Slide In/Out */}
+        <div className={`relative w-[280px] bg-white shadow-2xl flex flex-col h-full transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+
+          {/* CLOSE BUTTON: Fixed Dimensions & Centered */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          <div className="pt-10 pb-8 flex justify-center">
+            <img src={Assets?.Logo} alt="DIVUS Logo" className="w-32" />
+          </div>
+
+          <nav className="flex-1 px-5 overflow-y-auto scrollbar-hide">
+            {menuItems.map((item, idx) => {
+              // Render Menu Item for Mobile (Duplicate logic but with onClick close)
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const isActiveParent = router.pathname === item.path || (hasSubItems && item.subItems.some(sub => router.asPath === sub.path || router.pathname === sub.path));
+              const isExpanded = openMenus[item.name] || isActiveParent;
+
+              return (
+                <div key={idx} className="mb-3">
+                  {hasSubItems ? (
+                    <div>
+                      {/* Parent Toggle */}
+                      <button
+                        onClick={() => toggleMenu(item.name)}
+                        className={`w-full flex items-center justify-between px-6 py-3.5 rounded-xl font-['Poppins'] font-medium transition-all duration-200 
+                            ${isActiveParent ? 'bg-gradient-to-r from-[#94E93F] to-[#39B54A] text-white shadow-lg shadow-green-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}
+                          `}
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className={isActiveParent ? 'text-white' : 'text-gray-400'}>{item.icon}</span>
+                          <span className="text-[15px]">{item.name}</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Sub Items */}
+                      <div className={`mt-2 pl-6 space-y-1 transition-all duration-300 ${isExpanded ? 'block' : 'hidden'}`}>
+                        {item.subItems.map((sub, subIndex) => {
+                          const isSubActive = router.asPath === sub.path;
+                          const isSpecialBtn = sub.isSpecial;
+
+                          return (
+                            <Link
+                              key={subIndex}
+                              href={sub.path}
+                              onClick={() => !isSpecialBtn && setIsOpen(false)} // CLOSE SIDEBAR ON CLICK
+                              className={`
+                                  flex items-center px-6 py-2.5 rounded-lg text-sm font-['Poppins'] transition-colors 
+                                  ${isSpecialBtn
+                                  ? 'mt-3 bg-gray-100 text-gray-700 justify-center font-bold hover:bg-gray-200 shadow-sm'
+                                  : (isSubActive
+                                    ? 'text-[#39B54A] font-semibold'
+                                    : 'text-gray-500 hover:text-gray-700')
+                                }
+                                `}
+                            >
+                              {!isSpecialBtn && (
+                                <span className={`w-1.5 h-1.5 rounded-full mr-3 ${isSubActive ? 'bg-[#39B54A]' : 'bg-gray-300'}`}></span>
+                              )}
+                              {sub.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    // Single Link
+                    <Link
+                      href={item.path}
+                      onClick={() => setIsOpen(false)} // CLOSE SIDEBAR ON CLICK
+                      className={`flex items-center gap-4 px-6 py-3.5 rounded-xl font-['Poppins'] font-medium transition-all duration-200 
+                          ${router.pathname === item.path ? 'bg-gradient-to-r from-[#94E93F] to-[#39B54A] text-white shadow-lg shadow-green-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}
+                        `}
+                    >
+                      {item.icon}
+                      <span className="text-[15px]">{item.name}</span>
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          <div className="p-6 mt-auto">
+            <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-['Poppins'] font-medium text-white bg-[#FF3B3B] hover:bg-[#e63535]">
+              <span>Log out</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 };

@@ -231,7 +231,7 @@ const DashboardAdmin = () => {
       </Head>
 
       {/* TOP BAR */}
-      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+      <header className="bg-[#1E1E2D] px-4 md:px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="relative w-1/3 mx-auto md:mx-0">
         </div>
         <div className="flex items-center gap-4">
@@ -246,18 +246,17 @@ const DashboardAdmin = () => {
         </div>
       </header>
 
-      <div className="px-8 pt-8">
+      <div className="px-4 md:px-8 pt-6 md:pt-8 mb-20 lg:mb-0">
         {/* HEADER & FILTER WAKTU */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Dashboard Overview</h1>
-          <div className="relative" ref={timeDropdownRef}>
+        <div className="flex flex-row justify-between items-center mb-6 md:mb-8">
+          <h1 className="text-base md:text-3xl font-bold text-black truncate mr-2">Dashboard Overview</h1>
+          <div className="relative shrink-0" ref={timeDropdownRef}>
             <button
               onClick={() => setOpenTimeDropdown(!openTimeDropdown)}
-              className={`bg-white px-5 py-2.5 rounded-lg shadow-sm border flex items-center gap-3 cursor-pointer transition-all duration-200 ${
-                openTimeDropdown
+              className={`bg-white px-2 md:px-5 py-2.5 rounded-lg shadow-sm border flex items-center gap-1 md:gap-3 cursor-pointer transition-all duration-200 ${openTimeDropdown
                   ? "border-green-500 ring-2 ring-green-500/10"
                   : "border-gray-200 hover:border-green-500"
-              }`}
+                }`}
             >
               <span className="text-sm font-medium text-gray-600">Filter:</span>
               <span className="text-sm font-bold text-[#27D14C]">
@@ -265,9 +264,8 @@ const DashboardAdmin = () => {
               </span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-4 w-4 text-gray-400 transition-transform ${
-                  openTimeDropdown ? "rotate-180" : ""
-                }`}
+                className={`h-4 w-4 text-gray-400 transition-transform ${openTimeDropdown ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -289,11 +287,10 @@ const DashboardAdmin = () => {
                       setTimeFilter(opt);
                       setOpenTimeDropdown(false);
                     }}
-                    className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${
-                      timeFilter === opt
+                    className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${timeFilter === opt
                         ? "bg-green-50 text-[#27D14C]"
                         : "text-gray-600"
-                    }`}
+                      }`}
                   >
                     {opt}
                   </button>
@@ -339,11 +336,10 @@ const DashboardAdmin = () => {
             <div className="relative mt-4 sm:mt-0" ref={chartDropdownRef}>
               <button
                 onClick={() => setOpenChartDropdown(!openChartDropdown)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 shadow-sm ${
-                  openChartDropdown
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 shadow-sm ${openChartDropdown
                     ? "border-[#27D14C] ring-2 ring-[#27D14C]/10 bg-white"
                     : "border-gray-200 bg-white hover:border-[#27D14C]"
-                }`}
+                  }`}
               >
                 <span className="text-sm font-medium text-gray-600">
                   Tampilkan:
@@ -353,9 +349,8 @@ const DashboardAdmin = () => {
                 </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-4 w-4 text-gray-400 ml-2 transition-transform ${
-                    openChartDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 text-gray-400 ml-2 transition-transform ${openChartDropdown ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -377,11 +372,10 @@ const DashboardAdmin = () => {
                         setSelectedChart(key);
                         setOpenChartDropdown(false);
                       }}
-                      className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${
-                        selectedChart === key
+                      className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${selectedChart === key
                           ? "bg-green-50 text-[#27D14C]"
                           : "text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]"
-                      }`}
+                        }`}
                     >
                       {chartConfig[key].label}
                     </button>
@@ -454,8 +448,8 @@ const DashboardAdmin = () => {
                         selectedChart === "mitra"
                           ? "Total Mitra"
                           : selectedChart === "produk"
-                          ? "Total Produk"
-                          : "Total Proyek",
+                            ? "Total Produk"
+                            : "Total Proyek",
                       angle: -90,
                       position: "insideLeft",
                       fill: "#6B7280",
@@ -550,11 +544,10 @@ const DashboardAdmin = () => {
             <div className="relative w-full md:w-auto" ref={actionDropdownRef}>
               <button
                 onClick={() => setOpenActionDropdown(!openActionDropdown)}
-                className={`w-full md:w-48 flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all duration-200 ${
-                  openActionDropdown
+                className={`w-full md:w-48 flex items-center justify-between px-4 py-2.5 rounded-lg border transition-all duration-200 ${openActionDropdown
                     ? "border-[#27D14C] ring-2 ring-[#27D14C]/10 bg-white"
                     : "border-gray-300 bg-white hover:border-gray-400"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <svg
@@ -572,20 +565,18 @@ const DashboardAdmin = () => {
                     />
                   </svg>
                   <span
-                    className={`text-sm font-medium ${
-                      actionFilter !== "Semua Aksi"
+                    className={`text-sm font-medium ${actionFilter !== "Semua Aksi"
                         ? "text-[#27D14C]"
                         : "text-gray-700"
-                    }`}
+                      }`}
                   >
                     {actionFilter}
                   </span>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-4 w-4 text-gray-400 transition-transform ${
-                    openActionDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 text-gray-400 transition-transform ${openActionDropdown ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -607,11 +598,10 @@ const DashboardAdmin = () => {
                         setActionFilter(opt);
                         setOpenActionDropdown(false);
                       }}
-                      className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${
-                        actionFilter === opt
+                      className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${actionFilter === opt
                           ? "bg-green-50 text-[#27D14C]"
                           : "text-gray-600 hover:bg-gray-50 hover:text-[#27D14C]"
-                      }`}
+                        }`}
                     >
                       {opt}
                     </button>
@@ -654,13 +644,13 @@ const DashboardAdmin = () => {
 
                       const badgeClass =
                         actionTextLC.includes("hapus") ||
-                        actionTextLC.includes("delete")
+                          actionTextLC.includes("delete")
                           ? "bg-red-100 text-red-600"
                           : actionTextLC.includes("edit") ||
                             actionTextLC.includes("update") ||
                             actionTextLC.includes("ubah")
-                          ? "bg-yellow-100 text-yellow-600"
-                          : "bg-green-100 text-green-600";
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-green-100 text-green-600";
 
                       return (
                         <tr
@@ -710,7 +700,7 @@ const DashboardAdmin = () => {
             {/* ===== PAGINATION (DI BAWAH TABEL, TIDAK SCROLL) ===== */}
             {filteredLogs.length > 0 && (
               <div className="flex flex-col md:flex-row justify-between items-center pt-8 mt-6 border-t border-gray-100 px-4 md:px-8">
-                <span className="text-sm text-gray-500 mb-5 md:mb-0">
+                <span className="text-sm text-gray-500 mb-4 md:mb-0">
                   Menampilkan{" "}
                   <span className="font-bold text-gray-900">
                     {indexOfFirstItem + 1}
@@ -726,24 +716,23 @@ const DashboardAdmin = () => {
                   data
                 </span>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 md:gap-3 mb-4 flex-wrap justify-center">
                   <button
                     onClick={() => paginate(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className={`w-11 h-11 rounded-xl text-lg font-bold transition-all duration-200
-            ${
-              currentPage === 1
-                ? "border border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                : "border border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
-            }`}
+                    className={`w-8 h-8 md:w-11 md:h-11 rounded-lg md:rounded-xl text-sm md:text-lg font-bold transition-all duration-200
+            ${currentPage === 1
+                        ? "border border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                        : "border border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
+                      }`}
                   >
                     ‹
                   </button>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       let pNum;
-                      
+
                       if (totalPages <= 5) {
                         // Jika total halaman <= 5, tampilkan semua
                         pNum = i + 1;
@@ -762,12 +751,11 @@ const DashboardAdmin = () => {
                         <button
                           key={pNum}
                           onClick={() => paginate(pNum)}
-                          className={`w-11 h-11 rounded-xl text-sm font-bold transition-all duration-200
-                  ${
-                    currentPage === pNum
-                      ? "bg-[#27D14C] text-white shadow-lg"
-                      : "border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-[#27D14C] hover:border-[#27D14C]"
-                  }`}
+                          className={`w-8 h-8 md:w-11 md:h-11 rounded-lg md:rounded-xl text-xs md:text-sm font-bold transition-all duration-200
+                  ${currentPage === pNum
+                              ? "bg-[#27D14C] text-white shadow-lg"
+                              : "border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-[#27D14C] hover:border-[#27D14C]"
+                            }`}
                         >
                           {pNum}
                         </button>
@@ -778,12 +766,11 @@ const DashboardAdmin = () => {
                   <button
                     onClick={() => paginate(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className={`w-11 h-11 rounded-xl text-lg font-bold transition-all duration-200
-            ${
-              currentPage === totalPages
-                ? "border border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
-                : "border border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
-            }`}
+                    className={`w-8 h-8 md:w-11 md:h-11 rounded-lg md:rounded-xl text-sm md:text-lg font-bold transition-all duration-200
+            ${currentPage === totalPages
+                        ? "border border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed"
+                        : "border border-gray-200 text-gray-600 hover:border-[#27D14C] hover:text-[#27D14C] hover:bg-green-50"
+                      }`}
                   >
                     ›
                   </button>

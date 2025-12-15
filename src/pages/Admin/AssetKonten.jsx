@@ -129,7 +129,7 @@ const AssetKontenPage = () => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  
+
   // State Preview
   const [images, setImages] = useState({
     img1: null,
@@ -152,10 +152,10 @@ const AssetKontenPage = () => {
     const fetchExistingImages = async () => {
       try {
         setIsLoading(true);
-        
+
         // Gunakan heroCache untuk fetch data
         const dataHero = await heroCache.fetch();
-        
+
         if (dataHero) {
           setImages({
             img1: dataHero.foto1 || null,
@@ -256,14 +256,14 @@ const AssetKontenPage = () => {
       if (response.ok) {
         // Clear cache setelah sukses update
         heroCache.clear();
-        
+
         Swal.fire({
           icon: "success",
           title: "Berhasil!",
           text: "Perubahan berhasil disimpan.",
           confirmButtonColor: "#16a34a",
         });
-        
+
         // Reset file state setelah berhasil simpan
         setFiles({
           img1: null,
@@ -367,9 +367,9 @@ const AssetKontenPage = () => {
         <h1 className="text-3xl font-bold mb-1">Asset Konten</h1>
         <p className="text-gray-500 italic mb-8">Kelola Asset Konten</p>
 
-        <div className="grid grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* LEFT: INPUTS */}
-          <div className="col-span-7 grid grid-cols-2 gap-10">
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-10">
             <ImageBox label="Main Image 1 (Utama)" imgKey="img1" />
             <ImageBox label="Main Image 2 (Kiri)" imgKey="img2" />
             <ImageBox label="Main Image 3 (Bawah)" imgKey="img3" />
@@ -405,7 +405,7 @@ const AssetKontenPage = () => {
           </div>
 
           {/* RIGHT: PREVIEW */}
-          <div className="col-span-5">
+          <div className="lg:col-span-5">
             <p className="font-semibold mb-2">Preview (homepage)</p>
             <PreviewSneakPeek images={images} />
 

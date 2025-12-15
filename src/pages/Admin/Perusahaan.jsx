@@ -90,7 +90,7 @@ const PerusahaanPage = () => {
       try {
         const res = await fetch("/api/company"); // Pastikan path ini benar
         const data = await res.json();
-        
+
         if (res.ok && data) {
           setForm({
             id: data.id || "",
@@ -110,9 +110,9 @@ const PerusahaanPage = () => {
 
           // Handle Nama PDF dari Database
           if (data.file_url) {
-             // Ambil nama file saja dari path (misal: /uploads/docs/123_file.pdf -> 123_file.pdf)
-             const fileName = data.file_url.split('/').pop();
-             setCompanyPdf(fileName);
+            // Ambil nama file saja dari path (misal: /uploads/docs/123_file.pdf -> 123_file.pdf)
+            const fileName = data.file_url.split('/').pop();
+            setCompanyPdf(fileName);
           }
         }
       } catch (error) {
@@ -199,27 +199,27 @@ const PerusahaanPage = () => {
 
       // 1. Append semua text field
       Object.keys(form).forEach((key) => {
-         const value = form[key];
-         formData.append(key, value !== null && value !== undefined ? value : "");
+        const value = form[key];
+        formData.append(key, value !== null && value !== undefined ? value : "");
       });
 
       // 2. Append Date
       if (selectedDate) {
-         formData.append('established_date', selectedDate.toISOString());
+        formData.append('established_date', selectedDate.toISOString());
       }
 
       // 3. Append User ID
       if (user?.id) {
-         formData.append('userId', user.id);
+        formData.append('userId', user.id);
       }
 
       // 4. Append Files (Kirim File Asli/Binary, bukan Base64)
       if (logoFile) {
-         formData.append('logo_url', logoFile);
+        formData.append('logo_url', logoFile);
       }
-      
+
       if (companyPdfFile) {
-         formData.append('file_url', companyPdfFile);
+        formData.append('file_url', companyPdfFile);
       }
 
       const res = await fetch("/api/company", {
@@ -309,14 +309,11 @@ const PerusahaanPage = () => {
       `}</style>
 
       {/* TOP BAR */}
-      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
-        <div className="relative w-1/3">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            
-          </div>
-         
+      <header className="bg-[#1E1E2D] px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center shadow-md sticky top-0 z-30 gap-3 md:gap-0">
+        <div className="relative w-full md:w-1/3">
+          {/* Placeholder for Search or Title if needed */}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 w-full md:w-auto justify-end">
           <div className="text-right hidden md:block">
             <p className="text-sm font-medium text-white">
               Hi, {user?.username || "Admin"}
@@ -328,23 +325,23 @@ const PerusahaanPage = () => {
         </div>
       </header>
 
-      <div className="px-8 pt-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">
+      <div className="px-4 md:px-8 pt-6 md:pt-8 mb-20 lg:mb-0">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             Informasi Perusahaan
           </h1>
-          <p className="text-gray-500 italic font-medium">
+          <p className="text-gray-500 italic text-sm md:text-base font-medium">
             Kelola Informasi Perusahaan
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-          <h2 className="text-lg font-medium text-gray-700 mb-6 border-b pb-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-8">
+          <h2 className="text-base md:text-lg font-medium text-gray-700 mb-6 border-b pb-4">
             Perbarui detail perusahaan dan informasi kontak
           </h2>
 
           {/* Upload Logo Section */}
-          <div className="flex flex-col md:flex-row gap-8 mb-8 items-start">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 mb-8 items-start">
             <div className="w-40 h-40 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative group shrink-0">
               {logo ? (
                 <img

@@ -76,25 +76,25 @@ const Proyek = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F7FB] px-10 py-8 font-medium font-['Poppins']">
+        <div className="min-h-screen bg-[#F5F7FB] px-4 md:px-10 py-8 font-medium font-['Poppins']">
             {/* Header */}
-            <div className="flex justify-between items-center mb-11">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">Proyek</h1>
-                    <p className="text-gray-600 font-medium">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Proyek</h1>
+                    <p className="text-gray-600 font-medium text-sm md:text-base">
                         Kelola daftar proyek yang sudah dikerjakan
                     </p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-row items-center gap-4 w-full md:w-auto">
                     {/* Search */}
-                    <div className="relative">
+                    <div className="relative flex-1 md:w-auto">
                         <input
                             type="text"
                             placeholder="Cari Proyek..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2.5 h-10 border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
+                            className="w-full md:w-96 pl-10 pr-4 py-2.5 h-10 border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C]"
                         />
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -113,7 +113,7 @@ const Proyek = () => {
                     </div>
 
                     {/* User */}
-                    <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-2">
                         <span className="text-gray-700">Hi, Admin</span>
                         <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white font-bold">
                             A
@@ -121,7 +121,7 @@ const Proyek = () => {
                     </div>
 
                     {/* Register Admin */}
-                    <button className="px-6 py-2 bg-[#27D14C] text-white font-semibold rounded-lg hover:bg-[#20b93f] transition shadow-md">
+                    <button className="px-6 py-2 bg-[#27D14C] text-white font-semibold rounded-lg hover:bg-[#20b93f] transition shadow-md whitespace-nowrap text-center">
                         Register Admin
                     </button>
                 </div>
@@ -131,7 +131,7 @@ const Proyek = () => {
             <div className="flex justify-end mb-8 mt-2">
                 <button
                     onClick={() => setShowFormTambah(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[#1E293B] text-white rounded-lg hover:bg-[#111827] transition"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 px-3 py-2 bg-[#1E293B] text-white rounded-lg hover:bg-[#111827] transition"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

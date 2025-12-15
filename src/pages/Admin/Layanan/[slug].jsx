@@ -98,7 +98,7 @@ const EditLayananPage = () => {
       console.error("Error fetching FA icons:", error);
       setFaError("Gagal memuat icon dari Font Awesome");
       setFaLoading(false);
-      
+
       const defaultIcons = [
         { name: "user", styles: ["solid"] },
         { name: "users", styles: ["solid"] },
@@ -227,7 +227,7 @@ const EditLayananPage = () => {
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     if (file.size > 2 * 1024 * 1024) {
       return Swal.fire("Error", "Ukuran file maksimal 2MB", "error");
     }
@@ -411,11 +411,11 @@ const EditLayananPage = () => {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
       </Head>
 
-      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
+      <header className="bg-[#1E1E2D] px-4 md:px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="text-white font-bold text-lg flex items-center gap-3">
-          <button onClick={() => router.back()} className="hover:bg-gray-700 p-2 rounded-full transition">
-            <ArrowLeft size={20}/>
-          </button>
+          {/* <button onClick={() => router.back()} className="hover:bg-gray-700 p-2 rounded-full transition">
+            <ArrowLeft size={20} />
+          </button> */}
           Edit Layanan
         </div>
         <div className="flex items-center gap-4">
@@ -430,7 +430,7 @@ const EditLayananPage = () => {
         </div>
       </header>
 
-      <div className="px-8 pt-8">
+      <div className="px-4 md:px-8 pt-6 md:pt-8 mb-20 lg:mb-0">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           {/* --- AREA MEDIA (GRID 2 KOLOM: FOTO & ICON) --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -442,7 +442,7 @@ const EditLayananPage = () => {
                   <>
                     <img src={previewFoto} className="w-full h-full object-cover" alt="Preview" />
                     <button onClick={removeFoto} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 transition-all">
-                      <X size={14}/>
+                      <X size={14} />
                     </button>
                   </>
                 ) : (
@@ -483,7 +483,7 @@ const EditLayananPage = () => {
                   <>
                     <i className={`${selectedIcon} text-5xl text-blue-600`}></i>
                     <button onClick={removeIcon} className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600 transition-all">
-                      <X size={14}/>
+                      <X size={14} />
                     </button>
                   </>
                 ) : (
@@ -545,7 +545,7 @@ const EditLayananPage = () => {
                           {item.isNew && <span className="ml-2 text-xs text-green-600">(Baru)</span>}
                         </span>
                         <button onClick={() => hapusLayananItem(idx)} className="text-gray-400 hover:text-red-500">
-                          <Trash2 size={14}/>
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     ))
@@ -582,7 +582,7 @@ const EditLayananPage = () => {
               onClick={handleDelete}
               className="flex items-center gap-2 bg-red-100 text-red-600 hover:bg-red-200 px-6 py-2.5 rounded-lg font-medium text-sm transition-colors"
             >
-              <Trash2 size={18}/> Hapus Layanan
+              <Trash2 size={18} /> Hapus Layanan
             </button>
             <button
               onClick={handleUpdate}
@@ -605,7 +605,7 @@ const EditLayananPage = () => {
                 <p className="text-xs text-gray-500 mt-1">Cari dari 2000+ icon</p>
               </div>
               <button onClick={() => setShowIconModal(false)} className="hover:bg-gray-100 p-2 rounded-lg transition">
-                <X size={24}/>
+                <X size={24} />
               </button>
             </div>
 

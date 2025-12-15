@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AddProductModal from "../../components/Modals/AddProductModul";
 import EditProductModal from "../../components/Modals/EditProductModal";
 import Swal from "sweetalert2";
-import { Search, Plus, Trash2, Eye, Package, Pencil, ArrowUpDown } from "lucide-react";
+import { Search, Plus, Trash2, Eye, Package, Pencil, ArrowUpDown, X } from "lucide-react";
 import { useSelector } from "react-redux";
 
 const Produk = () => {
@@ -11,7 +11,7 @@ const Produk = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // --- STATE BARU UNTUK SORTING ---
   const [sortOrder, setSortOrder] = useState("newest"); // Default: Tahun Terbaru
 
@@ -90,7 +90,7 @@ const Produk = () => {
       case "za": // Abjad Z-A
         return b.nama_produk.localeCompare(a.nama_produk);
       case "newest": // Tahun Terbaru
-        return b.tahun - a.tahun; 
+        return b.tahun - a.tahun;
       case "oldest": // Tahun Terlama
         return a.tahun - b.tahun;
       default:
@@ -101,8 +101,8 @@ const Produk = () => {
   return (
     <div className="min-h-screen bg-[#F5F7FB] font-['Poppins'] pb-10">
       {/* ================= TOP BAR ================= */}
-      <header className="bg-[#1E1E2D] px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
-        <div className="relative w-1/3">
+      <header className="bg-[#1E1E2D] px-4 md:px-8 py-4 flex flex-row justify-between items-center shadow-md sticky top-0 z-30 gap-4">
+        <div className="relative flex-1 md:max-w-2xl">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
@@ -128,39 +128,39 @@ const Produk = () => {
       </header>
 
       {/* ================= MAIN CONTENT ================= */}
-      <div className="px-8 pt-8">
-        <div className="flex justify-between items-end mb-8">
+      <div className="px-4 md:px-8 pt-6 md:pt-8 mb-20 lg:mb-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-black mb-1">Produk</h1>
-            <p className="text-gray-500 italic font-medium">
+            <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">Produk</h1>
+            <p className="text-gray-500 italic text-sm md:text-lg font-medium">
               Kelola Daftar Produk Yang Sudah Dikerjakan
             </p>
           </div>
 
           <div className="flex gap-3">
-             {/* --- DROPDOWN SORTING (BARU) --- */}
-             <div className="relative">
-                <select 
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm font-medium"
-                >
-                    <option value="newest">Tahun Terbaru</option>
-                    <option value="oldest">Tahun Terlama</option>
-                    <option value="az">Abjad A-Z</option>
-                    <option value="za">Abjad Z-A</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                    <ArrowUpDown size={16} />
-                </div>
-             </div>
+            {/* --- DROPDOWN SORTING (BARU) --- */}
+            <div className="relative">
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm font-medium"
+              >
+                <option value="newest">Tahun Terbaru</option>
+                <option value="oldest">Tahun Terlama</option>
+                <option value="az">Abjad A-Z</option>
+                <option value="za">Abjad Z-A</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <ArrowUpDown size={16} />
+              </div>
+            </div>
 
             <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
+              onClick={() => setShowAddModal(true)}
+              className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
             >
-                <Plus size={20} />
-                <span>Tambah Produk</span>
+              <Plus size={20} />
+              <span>Tambah Produk</span>
             </button>
           </div>
         </div>
@@ -298,7 +298,7 @@ const Produk = () => {
               </h2>
 
               <div className="inline-block bg-gray-100 px-3 py-1 rounded-md text-sm font-semibold text-gray-700 mb-4">
-                 Tahun: {detailData.tahun}
+                Tahun: {detailData.tahun}
               </div>
 
               <p className="text-gray-600 mb-6 leading-relaxed">
@@ -316,8 +316,8 @@ const Produk = () => {
                       alt={`Detail ${i}`}
                       className="w-full h-full object-contain rounded-xl"
                     />
-                     {/* Overlay Zoom Icon (Opsional) */}
-                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all pointer-events-none"></div>
+                    {/* Overlay Zoom Icon (Opsional) */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all pointer-events-none"></div>
                   </div>
                 ))}
               </div>
@@ -328,23 +328,5 @@ const Produk = () => {
     </div>
   );
 };
-
-// Helper component for X icon in modal
-const X = ({ size, className }) => (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-    </svg>
-);
 
 export default Produk;

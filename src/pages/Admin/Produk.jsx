@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AddProductModal from "../../components/Modals/AddProductModul";
 import EditProductModal from "../../components/Modals/EditProductModal";
 import Swal from "sweetalert2";
-import { Search, Plus, Trash2, Eye, Package, Pencil, ArrowUpDown, X } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Trash2,
+  Eye,
+  Package,
+  Pencil,
+  ArrowUpDown,
+  X,
+} from "lucide-react";
 import { useSelector } from "react-redux";
 
 const Produk = () => {
@@ -20,6 +29,9 @@ const Produk = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState(null);
   const [detailData, setDetailData] = useState(null);
+  const [openSortDropdown, setOpenSortDropdown] = useState(false);
+  const sortDropdownRef = useRef(null);
+  
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -37,6 +49,19 @@ const Produk = () => {
 
   useEffect(() => {
     fetchProducts();
+    const handleClickOutside = (event) => {
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(event.target)
+      ) {
+        setOpenSortDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const getImages = (fotoString) => {
@@ -46,6 +71,16 @@ const Produk = () => {
       return Array.isArray(parsed) ? parsed : [fotoString];
     } catch {
       return [fotoString];
+    }
+  };
+
+  const getMediaItems = (mediaString) => {
+    if (!mediaString) return [];
+    try {
+      const parsed = JSON.parse(mediaString);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
   };
 
@@ -131,7 +166,9 @@ const Produk = () => {
       <div className="px-4 md:px-8 pt-6 md:pt-8 mb-20 lg:mb-0">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">Produk</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-black mb-1">
+              Produk
+            </h1>
             <p className="text-gray-500 italic text-sm md:text-lg font-medium">
               Kelola Daftar Produk Yang Sudah Dikerjakan
             </p>
@@ -139,20 +176,51 @@ const Produk = () => {
 
           <div className="flex gap-3">
             {/* --- DROPDOWN SORTING (BARU) --- */}
-            <div className="relative">
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C] cursor-pointer text-sm font-medium"
+            <div className="relative" ref={sortDropdownRef}>
+              <button
+                onClick={() => setOpenSortDropdown(!openSortDropdown)}
+                className="w-full bg-white border border-gray-300 text-gray-700
+py-2.5 pl-4 pr-10 rounded-lg shadow-sm
+cursor-pointer text-sm font-medium text-left
+focus:outline-none focus:ring-2 focus:ring-[#27D14C]
+transition-all duration-200
+hover:border-[#27D14C]"
               >
-                <option value="newest">Tahun Terbaru</option>
-                <option value="oldest">Tahun Terlama</option>
-                <option value="az">Abjad A-Z</option>
-                <option value="za">Abjad Z-A</option>
-              </select>
+                {sortOrder === "newest" && "Tahun Terbaru"}
+                {sortOrder === "oldest" && "Tahun Terlama"}
+                {sortOrder === "az" && "Nama A-Z"}
+                {sortOrder === "za" && "Nama Z-A"}
+              </button>
+
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                 <ArrowUpDown size={16} />
               </div>
+
+              {openSortDropdown && (
+                <div className="absolute left-0 mt-2 w-full  bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  {[
+                    { label: "Tahun Terbaru", value: "newest" },
+                    { label: "Tahun Terlama", value: "oldest" },
+                    { label: "Nama A-Z", value: "az" },
+                    { label: "Nama Z-A", value: "za" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setSortOrder(opt.value);
+                        setOpenSortDropdown(false);
+                      }}
+                      className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${
+                        sortOrder === opt.value
+                          ? "bg-green-50 text-[#27D14C]"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button
@@ -177,8 +245,12 @@ const Produk = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Menggunakan sortedProducts bukan filteredProducts */}
             {sortedProducts.map((item) => {
+              const mediaItems = getMediaItems(item.media_items);
+              const firstMedia = mediaItems[0];
+
+              // fallback ke foto lama
               const images = getImages(item.foto_produk);
-              const cover = images[0];
+              const coverImage = images[0];
 
               return (
                 <div
@@ -187,8 +259,25 @@ const Produk = () => {
                 >
                   {/* IMAGE */}
                   <div className="relative h-48 bg-gray-100 overflow-hidden">
-                    {cover ? (
-                      <img src={cover} className="w-full h-full object-cover" />
+                    {firstMedia ? (
+                      firstMedia.type === "youtube" ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${firstMedia.videoId}`}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <img
+                          src={firstMedia.url}
+                          className="w-full h-full object-cover"
+                        />
+                      )
+                    ) : coverImage ? (
+                      <img
+                        src={coverImage}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 flex-col">
                         <Package size={32} />
@@ -225,7 +314,10 @@ const Produk = () => {
 
                   {/* CONTENT */}
                   <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 mb-1 truncate" title={item.nama_produk}>
+                    <h3
+                      className="font-bold text-gray-900 mb-1 truncate"
+                      title={item.nama_produk}
+                    >
                       {item.nama_produk}
                     </h3>
                     <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">
@@ -306,21 +398,46 @@ const Produk = () => {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {getImages(detailData.foto_produk).map((img, i) => (
-                  <div
-                    key={i}
-                    className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group"
-                  >
-                    <img
-                      src={img}
-                      alt={`Detail ${i}`}
-                      className="w-full h-full object-contain rounded-xl"
-                    />
-                    {/* Overlay Zoom Icon (Opsional) */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all pointer-events-none"></div>
-                  </div>
-                ))}
-              </div>
+  {/* MEDIA BARU (foto + youtube) */}
+  {getMediaItems(detailData.media_items).length > 0 &&
+    getMediaItems(detailData.media_items).map((media, i) => (
+      <div
+        key={i}
+        className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden group"
+      >
+        {media.type === "youtube" ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${media.videoId}`}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <img
+            src={media.url}
+            alt={`Detail ${i}`}
+            className="w-full h-full object-contain rounded-xl"
+          />
+        )}
+      </div>
+    ))}
+
+  {/* FALLBACK PRODUK LAMA (hanya foto) */}
+  {getMediaItems(detailData.media_items).length === 0 &&
+    getImages(detailData.foto_produk).map((img, i) => (
+      <div
+        key={`old-${i}`}
+        className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden"
+      >
+        <img
+          src={img}
+          alt={`Detail ${i}`}
+          className="w-full h-full object-contain rounded-xl"
+        />
+      </div>
+    ))}
+</div>
+
             </div>
           </div>
         )}

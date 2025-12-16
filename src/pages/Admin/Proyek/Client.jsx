@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { Plus, Search, Settings, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Settings,
+  Pencil,
+  Trash2,
+  ArrowUpDown,
+} from "lucide-react";
 import Swal from "sweetalert2";
 
 // Import Layout
@@ -30,6 +37,8 @@ const ClientPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [openSortDropdown, setOpenSortDropdown] = useState(false);
+    const sortDropdownRef = useRef(null);
 
   // 3. Fungsi Fetch Data
   const fetchClients = async () => {
@@ -52,6 +61,19 @@ const ClientPage = () => {
 
   useEffect(() => {
     fetchClients();
+    const handleClickOutside = (event) => {
+    if (
+      sortDropdownRef.current &&
+      !sortDropdownRef.current.contains(event.target)
+    ) {
+      setOpenSortDropdown(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
   }, []);
 
   // 4. Filter Pencarian
@@ -163,21 +185,57 @@ const ClientPage = () => {
 
           <div className="flex gap-3">
             {/* --- DROPDOWN SORTING (BARU) --- */}
-            <div className="relative">
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C] cursor-pointer text-sm font-medium"
+            <div className="relative" ref={sortDropdownRef}>
+              <button
+                onClick={() => setOpenSortDropdown(!openSortDropdown)}
+                className="w-full bg-white border border-gray-300 text-gray-700
+                              py-2.5 pl-4 pr-10 rounded-lg shadow-sm
+                              cursor-pointer text-sm font-medium text-left
+                              focus:outline-none focus:ring-2 focus:ring-[#27D14C]
+                              transition-all duration-200
+                              hover:border-[#27D14C]"
               >
-                <option value="az">Nama (A-Z)</option>
-                <option value="za">Nama (Z-A)</option>
-                <option value="most_projects">Proyek Terbanyak</option>
-                <option value="least_projects">Proyek Paling Sedikit</option>
-              </select>
-              <div className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500">
+                {sortOrder === "az" && "Abjad A-Z"}
+                {sortOrder === "za" && "Abjad Z-A"}
+                {sortOrder === "most_projects" && "Proyek Terbanyak"}
+                {sortOrder === "least_projects" && "Proyek Paling Sedikit"}
+                
+              </button>
+
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                 <ArrowUpDown size={16} />
               </div>
+
+              {openSortDropdown && (
+                <div className="absolute left-1/2 -translate-x-1/2 mt-1 min-w-[190px] w-full bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+
+                  {[
+                    { label: "Abjad A-Z", value: "az" },
+                    { label: "Abjad Z-A", value: "za" },
+                    { label: "Proyek Terbanyak", value: "most_projects" },
+                    { label: "Proyek Paling Sedikit", value: "least_projects" },
+                    
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setSortOrder(opt.value);
+                        setOpenSortDropdown(false);
+                      }}
+                      className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${
+                        sortOrder === opt.value
+                          ? "bg-green-50 text-[#27D14C]"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            
 
             <button
               className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"

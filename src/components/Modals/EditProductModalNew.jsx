@@ -4,7 +4,7 @@ import { X, Image as ImageIcon, Trash2, Youtube, Plus } from "lucide-react";
 import Swal from "sweetalert2";
 import Cropper from "react-easy-crop";
 
-const EditProductModal  = ({ isOpen, onClose, onSuccess, productData }) => {
+const EditProjectModal  = ({ isOpen, onClose, onSuccess, projectData, userId }) => {
   const { user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -639,4 +639,4 @@ const EditProductModal  = ({ isOpen, onClose, onSuccess, productData }) => {
   );
 };
 
-export default EditProductModal;
+export default EditProjectModal;

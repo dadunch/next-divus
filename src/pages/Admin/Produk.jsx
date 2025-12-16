@@ -143,7 +143,7 @@ const Produk = () => {
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm font-medium"
+                className="appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#27D14C] cursor-pointer text-sm font-medium"
               >
                 <option value="newest">Tahun Terbaru</option>
                 <option value="oldest">Tahun Terlama</option>

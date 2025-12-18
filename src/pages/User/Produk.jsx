@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
-import { X, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { Assets } from '../../assets';
 
@@ -48,22 +48,42 @@ const Produk = () => {
                 setCompany(data);
             } catch (error) {
                 console.error("Error:", error);
-            } finally {
-                setIsLoading(false);
             }
         };
         fetchCompany();
     }, []);
 
-    // --- 2. HELPER PARSE GAMBAR ---
-    const getImages = (fotoString) => {
-        if (!fotoString) return [];
-        try {
-            const parsed = JSON.parse(fotoString);
-            return Array.isArray(parsed) ? parsed : [fotoString];
-        } catch (e) {
-            return [fotoString];
+    // --- 2. HELPER PARSE MEDIA ---
+    const getMediaItems = (product) => {
+        if (!product) return [];
+
+        if (product.media_items) {
+            try {
+                const items = typeof product.media_items === 'string' 
+                    ? JSON.parse(product.media_items) 
+                    : product.media_items;
+                
+                return items.map(item => ({
+                    type: item.type || 'image',
+                    url: item.url || item,
+                    videoId: item.videoId,
+                    preview: item.type === 'youtube' 
+                        ? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`
+                        : (item.url || item)
+                }));
+            } catch (e) { console.error(e); }
         }
+
+        if (product.foto_produk) {
+            try {
+                const parsed = JSON.parse(product.foto_produk);
+                const urls = Array.isArray(parsed) ? parsed : [product.foto_produk];
+                return urls.map(url => ({ type: 'image', url, preview: url }));
+            } catch (e) {
+                return [{ type: 'image', url: product.foto_produk, preview: product.foto_produk }];
+            }
+        }
+        return [];
     };
 
     // --- 3. MODAL HANDLERS ---
@@ -83,14 +103,14 @@ const Produk = () => {
     // --- 4. SLIDER LOGIC ---
     const nextSlide = (e) => {
         e.stopPropagation();
-        const images = getImages(selectedProduct?.foto_produk);
-        setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+        const media = getMediaItems(selectedProduct);
+        setCurrentImageIndex((prev) => (prev === media.length - 1 ? 0 : prev + 1));
     };
 
     const prevSlide = (e) => {
         e.stopPropagation();
-        const images = getImages(selectedProduct?.foto_produk);
-        setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+        const media = getMediaItems(selectedProduct);
+        setCurrentImageIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
     };
 
     return (
@@ -100,9 +120,7 @@ const Produk = () => {
             </Head>
 
             <main>
-                {/* Header Section Sesuai Permintaan */}
                 <header className="relative w-full">
-                    {/* Hero Banner */}
                     <section className="w-full bg-slate-50 py-14 md:py-2 px-10 md:px-6 border-b border-slate-200">
                         <div className="max-w-4xl mx-auto flex flex-row items-center justify-center gap-6 md:gap-10 mt-12">
                             <div className="flex-shrink-0">
@@ -115,45 +133,29 @@ const Produk = () => {
                         </div>
                     </section>
 
-                    {/* Breadcrumb */}
                     <div className="w-full bg-zinc-300 px-6 py-3 mb-4">
                         <div className="max-w-7xl mx-auto">
                             <p className="text-zinc-800 text-base">
-                                {/* Level 1: Beranda */}
                                 <Link href="/User/Home" className="hover:underline hover:text-green-600 transition-colors">
                                     Beranda
                                 </Link>
-
-                                {/* Separator */}
                                 <span className="mx-2 text-zinc-500">{'>'}</span>
-
-                                {/* Level 2: Kategori (Misal: Layanan) */}
-                                <span>
-                                    Portofolio
-                                </span>
-
-                                {/* Separator */}
+                                <span>Portofolio</span>
                                 <span className="mx-2 text-zinc-500">{'>'}</span>
-
-                                {/* Level 3: Halaman Aktif (Merah) */}
-                                <span className="text-red-600 font-medium">
-                                    Produk
-                                </span>
+                                <span className="text-red-600 font-medium">Produk</span>
                             </p>
                         </div>
                     </div>
                 </header>
 
-
-                {/* --- PROFIL SECTION --- */}
                 <motion.section {...fadeInUp} className="max-w-[1440px] mx-auto px-6 md:px-20 py-8">
                     <div className="flex flex-col lg:flex-row gap-12 items-start">
                         <div className="w-full">
-                            <h2 className="text-zinc-800 text-2xl md:text-4xl font-bold  capitalize mb-5 md:mb-10">
+                            <h2 className="text-zinc-800 text-2xl md:text-4xl font-bold capitalize mb-5 md:mb-10">
                                 Produk kami
                             </h2>
                             <p className="text-zinc-800 text-sm md:text-base font-normal leading-loose text-justify">
-                                PT Divus menghadirkan beragam produk yang dirancang untuk mendukung kebutuhan bisnis modern. Melalui pendekatan inovatif, standar kerja yang terukur, dan solusi yang dapat disesuaikan, kami membantu perusahaan meningkatkan efisiensi operasional, akurasi proses, serta kualitas pengambilan keputusan. Setiap produk dikembangkan dengan komitmen pada profesionalisme dan hasil yang berdampak nyata bagi klien
+                                PT Divus menghadirkan beragam produk yang dirancang untuk mendukung kebutuhan bisnis modern.
                             </p>
                         </div>
                     </div>
@@ -170,49 +172,66 @@ const Produk = () => {
                             <p className="text-gray-400">Belum ada produk yang dipublikasikan.</p>
                         </div>
                     ) : (
-                        // Menggunakan flex-wrap dan justify-center untuk menengahkan grid
-                        <div className="flex flex-wrap justify-center gap-6">
+                        // MASONRY LAYOUT
+                        <div className="columns-1 sm:columns-2 lg:columns-4 gap-6 space-y-6">
                             {products.map((item) => {
-                                const images = getImages(item.foto_produk);
-                                const coverImage = images.length > 0 ? images[0] : null;
+                                const media = getMediaItems(item);
+                                const coverMedia = media.length > 0 ? media[0] : null;
+                                const isYoutube = coverMedia?.type === 'youtube';
 
                                 return (
                                     <motion.div
                                         key={item.id}
                                         whileHover={{ y: -5 }}
-                                        // Mengatur lebar elemen agar responsif dan turun ke bawah jika tidak muat
-                                        className="group cursor-pointer relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.33%-16px)] lg:w-[calc(25%-18px)]"
+                                        // Hapus 'bg-white', 'border', 'shadow' agar terlihat menyatu (gallery style)
+                                        // Atau gunakan shadow-sm yang sangat halus
+                                        className="break-inside-avoid mb-6 group cursor-pointer relative rounded-xl overflow-hidden w-full shadow-sm hover:shadow-2xl transition-all duration-300"
                                         onClick={() => openModal(item)}
                                     >
-                                        <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
-                                            {/* GAMBAR UTAMA */}
-                                            {coverImage ? (
+                                        <div className={`w-full bg-gray-200 relative overflow-hidden ${isYoutube ? 'aspect-video' : ''}`}>
+                                            
+                                            {coverMedia ? (
                                                 <img
-                                                    src={coverImage}
+                                                    src={coverMedia.preview}
                                                     alt={item.nama_produk}
-                                                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-                                                    onError={(e) => e.target.src = "https://placehold.co/400x600?text=No+Image"}
+                                                    // Gunakan block w-full untuk menghilangkan whitespace bawah default img
+                                                    className={`w-full block transition-transform duration-700 ease-in-out group-hover:scale-110 ${isYoutube ? 'h-full object-cover' : 'h-auto'}`}
+                                                    onError={(e) => {
+                                                        if (isYoutube && e.target.src.includes('maxresdefault')) {
+                                                            e.target.src = e.target.src.replace('maxresdefault', 'hqdefault');
+                                                        } else {
+                                                            e.target.src = "https://placehold.co/400x600?text=No+Image";
+                                                        }
+                                                    }}
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-sm p-4 text-center">
+                                                <div className="w-full aspect-square flex flex-col items-center justify-center text-gray-400 text-sm p-4 text-center">
                                                     <span>No Image</span>
                                                 </div>
                                             )}
 
-                                            {/* OVERLAY HOVER GRID */}
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-center justify-center">
-                                                <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-zinc-900 px-5 py-2 rounded-full text-sm font-bold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-xl tracking-wide">
-                                                    Lihat Foto
-                                                </span>
+                                            {/* OVERLAY HOVER YANG LEBIH CLEAN */}
+                                            {/* Gradient halus saat hover agar teks terlihat jelas */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
+                                                {/* Nama produk dipindah ke Hover Overlay */}
+                                                <h3 className="text-white font-bold text-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                                    {item.nama_produk}
+                                                </h3>
+                                                <p className="text-gray-300 text-xs translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
+                                                    {item.tahun}
+                                                </p>
                                             </div>
 
-                                            {/* INDIKATOR JUMLAH FOTO */}
-                                            {images.length > 1 && (
-                                                <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md border border-white/10">
-                                                    +{images.length - 1}
+                                            {media.length > 1 && (
+                                                <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded-md">
+                                                    +{media.length - 1}
                                                 </div>
                                             )}
                                         </div>
+                                        
+                                        {/* BAGIAN BAWAH (Title/Deskripsi) DIHAPUS 
+                                            Agar murni hanya gambar gallery
+                                        */}
                                     </motion.div>
                                 );
                             })}
@@ -220,13 +239,10 @@ const Produk = () => {
                     )}
                 </div>
 
-                {/* CTA SECTION */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
                     <div className="max-w-7xl mx-auto">
                         <div className="w-full rounded-3xl overflow-hidden relative shadow-xl">
-                            {/* Background layer for gradient and image */}
                             <div className="absolute inset-0 bg-gradient-to-b from-green-500 to-lime-500">
-                                {/* Background image 1 with low opacity */}
                                 <div
                                     className="absolute inset-0 opacity-10 pointer-events-none"
                                     style={{
@@ -237,21 +253,11 @@ const Produk = () => {
                                     }}
                                 ></div>
                             </div>
-
-                            {/* Content layer */}
                             <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
-                                {/* Judul */}
                                 <h2 className="text-white text-2xl md:text-4xl font-bold capitalize leading-tight z-10 ">
                                     PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
                                     terpercaya untuk bisnis Anda!
                                 </h2>
-
-                                {/* Subjudul */}
-                                <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">
-                                    Hubungi kami dan dapatkan panduan dari konsultan berpengalaman
-                                </p>
-
-                                {/* Tombol CTA */}
                                 <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                                     <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
                                     <span className="text-black text-base md:text-lg font-semibold capitalize">
@@ -263,6 +269,8 @@ const Produk = () => {
                     </div>
                 </motion.section>
             </main>
+
+            {/* MODAL (Tidak Berubah) */}
             <AnimatePresence>
                 {isModalOpen && selectedProduct && (
                     <motion.div
@@ -272,7 +280,7 @@ const Produk = () => {
                         className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-4"
                         onClick={closeModal}
                     >
-                        <motion.div
+                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
@@ -288,25 +296,43 @@ const Produk = () => {
 
                             <div className="w-full md:w-3/4 bg-black/40 backdrop-blur-md relative flex items-center justify-center h-[50vh] md:h-full overflow-hidden group">
                                 {(() => {
-                                    const images = getImages(selectedProduct.foto_produk);
+                                    const media = getMediaItems(selectedProduct);
+                                    const currentItem = media[currentImageIndex];
+
                                     return (
                                         <>
                                             <AnimatePresence mode="wait">
-                                                <motion.img
+                                                <motion.div
                                                     key={currentImageIndex}
-                                                    src={images[currentImageIndex]}
-                                                    alt={`Slide ${currentImageIndex}`}
                                                     initial={{ opacity: 0, x: 20 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     exit={{ opacity: 0, x: -50 }}
                                                     transition={{ duration: 0.3 }}
-                                                    className="w-full h-full object-contain"
-                                                    onError={(e) => e.target.src = "https://placehold.co/800x600?text=Gagal+Muat"}
-                                                />
+                                                    className="w-full h-full flex items-center justify-center"
+                                                >
+                                                    {currentItem?.type === 'youtube' ? (
+                                                        <iframe
+                                                            width="100%"
+                                                            height="100%"
+                                                            src={`https://www.youtube.com/embed/${currentItem.videoId}?autoplay=1&rel=0`}
+                                                            title="YouTube video player"
+                                                            frameBorder="0"
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                            allowFullScreen
+                                                            className="w-full h-full"
+                                                        ></iframe>
+                                                    ) : (
+                                                        <img
+                                                            src={currentItem?.url}
+                                                            alt={`Slide ${currentImageIndex}`}
+                                                            className="w-full h-full object-contain"
+                                                            onError={(e) => e.target.src = "https://placehold.co/800x600?text=Gagal+Muat"}
+                                                        />
+                                                    )}
+                                                </motion.div>
                                             </AnimatePresence>
 
-                                            {/* Navigasi Slider */}
-                                            {images.length > 1 && (
+                                            {media.length > 1 && (
                                                 <>
                                                     <button
                                                         onClick={prevSlide}
@@ -320,10 +346,8 @@ const Produk = () => {
                                                     >
                                                         <ChevronRight size={28} />
                                                     </button>
-
-                                                    {/* Dots */}
                                                     <div className="absolute bottom-6 flex gap-2 justify-center w-full">
-                                                        {images.map((_, idx) => (
+                                                        {media.map((_, idx) => (
                                                             <div
                                                                 key={idx}
                                                                 onClick={() => setCurrentImageIndex(idx)}
@@ -341,7 +365,6 @@ const Produk = () => {
                                 })()}
                             </div>
 
-                            {/* === KANAN: DETAIL (PUTIH SOLID) === */}
                             <div className="w-full md:w-1/4 bg-white flex flex-col h-[50vh] md:h-full border-l border-gray-100">
                                 <div className="p-6 md:p-8 overflow-y-auto flex-1">
                                     <div className="mb-6">
@@ -379,9 +402,7 @@ const Produk = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Floating WA */}
-            <a
+             <a
                 href="https://wa.me/6285220203453"
                 target="_blank"
                 rel="noopener noreferrer"

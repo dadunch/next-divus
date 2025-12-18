@@ -14,7 +14,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
   });
 
   // Array media yang bisa campuran foto dan youtube
-  // Format: { type: 'image'|'youtube', data: file|url, preview: url }
+  // Format: { type: 'image'|'youtube', data: file|url, preview: url, videoId: string }
   const [mediaItems, setMediaItems] = useState([]);
 
   // CROPPER STATE
@@ -183,6 +183,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
       {
         type: "youtube",
         data: youtubeLinkInput,
+        // Preview URL default (maxres)
         preview: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
         videoId: videoId,
       },
@@ -290,7 +291,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
         deskripsi: formData.deskripsi,
         tahun: formData.tahun,
 
-        // 🔥 backend lama (foto saja)
         foto_produk: JSON.stringify(
           processedMedia.filter((m) => m.type === "image").map((m) => m.url)
         ),
@@ -355,7 +355,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                     </div>
 
                     {/* Preview */}
-                    <div className="w-20 h-20 rounded overflow-hidden border flex-shrink-0">
+                    <div className="w-20 h-20 rounded overflow-hidden border flex-shrink-0 relative">
                       {item.type === "image" ? (
                         <img
                           src={item.preview}
@@ -363,9 +363,20 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                           alt="Preview"
                         />
                       ) : (
-                        <div className="w-full h-full bg-red-100 flex items-center justify-center">
-                          <Youtube className="text-red-600" size={32} />
-                        </div>
+                        <>
+                          <img
+                            src={item.preview}
+                            className="w-full h-full object-cover"
+                            alt="YouTube Thumbnail"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <Youtube className="text-white drop-shadow-md" size={28} />
+                          </div>
+                        </>
                       )}
                     </div>
 
@@ -439,19 +450,15 @@ const AddProductModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               )}
 
-              <p className="text-xs text-gray-500 mt-2">
-                Anda bisa mencampur foto dan video YouTube dalam urutan apapun
-                <div className="flex justify-between">
-                  <span>Rasio</span>{" "}
-                  <span className="font-medium">1 : 1, 4 : 3, 16 : 9</span>
+              <div className="text-xs text-gray-500 mt-2">
+                <p className="mb-1">
+                  Anda bisa mencampur foto dan video YouTube dalam urutan apapun.
+                </p>
+                <div className="flex justify-between w-full max-w-xs text-xs text-gray-400">
+                   <span>Format: JPG/PNG</span>
+                   <span>Max Size: 10MB</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Format</span> <span>JPG / PNG</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Maks</span> <span>10 MB</span>
-                </div>
-              </p>
+              </div>
             </div>
 
             {/* FORM FIELDS */}

@@ -93,8 +93,9 @@ model product {
   created_at  DateTime @default(now()) @db.Timestamptz(6)
   nama_produk String?  @db.VarChar
   foto_produk String?
-  tahun       BigInt?
+  tahun       Int?
   deskripsi   String?
+  media_items Json?
 }
 
 model projects {

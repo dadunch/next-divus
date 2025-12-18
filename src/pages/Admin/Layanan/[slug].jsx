@@ -61,6 +61,7 @@ const EditLayananPage = () => {
   const [showIconModal, setShowIconModal] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddingSub, setIsAddingSub] = useState(false); // State baru untuk loading tombol tambah sub layanan
 
   // Font Awesome Search State
   const [faIcons, setFaIcons] = useState([]);
@@ -144,39 +145,19 @@ const EditLayananPage = () => {
         setServiceId(detail.id);
         setNamaLayanan(detail.title);
 
+        // Logic parsing deskripsi lama (TIDAK BERUBAH)
         let rawDescription = detail.description || "";
         let rawShortDesc = detail.short_description || "";
         let fullTextToCheck = rawDescription + "\n" + rawShortDesc;
 
-        let fetchedSubServices = Subdetail.map(item => ({
+        // Kita gunakan data dari API sub_services sebagai sumber utama kebenaran
+        const fetchedSubServices = Subdetail.map(item => ({
           id: item.id,
           sub_services: item.sub_services,
-          isNew: false
+          isNew: false // Karena sudah dari DB, bukan new
         }));
 
-        const serviceRegex = /(?:\*\*|)?Layanan yang ditawarkan(?:\*\*|)?(?:[:.]|\s)([\s\S]*)/i;
-        const serviceMatch = fullTextToCheck.match(serviceRegex);
-        if (serviceMatch) {
-          const listText = serviceMatch[1];
-          rawDescription = rawDescription.replace(serviceMatch[0], "").trim();
-          rawShortDesc = rawShortDesc.replace(serviceMatch[0], "").trim();
-          const lines = listText.split('\n');
-          lines.forEach(line => {
-            const cleanLine = line.replace(/^[\s-•\d.]+/, '').trim();
-            if (cleanLine && !cleanLine.toLowerCase().includes("ringkasan")) {
-              const alreadyExists = fetchedSubServices.some(
-                item => item.sub_services.toLowerCase() === cleanLine.toLowerCase()
-              );
-              if (!alreadyExists) {
-                fetchedSubServices.push({
-                  sub_services: cleanLine,
-                  isNew: true
-                });
-              }
-            }
-          });
-        }
-
+        // Parsing regex hanya sebagai fallback atau cleaning deskripsi
         const summaryRegex = /(?:\*\*|)?Ringkasan(?:\*\*|)?(?:[:.]|\s)([\s\S]*?)(?=\n\n|$)/i;
         const summaryMatch = rawDescription.match(summaryRegex);
         let finalShortDesc = rawShortDesc;
@@ -187,16 +168,17 @@ const EditLayananPage = () => {
         }
         finalDescription = finalDescription.replace(/(?:\*\*|)?Ringkasan(?:\*\*|)?(?:[:.]|\s)/i, "").trim();
 
+        // Bersihkan list layanan dari deskripsi agar tidak duplikat visual
+        const serviceRegex = /(?:\*\*|)?Layanan yang ditawarkan(?:\*\*|)?(?:[:.]|\s)([\s\S]*)/i;
+        const serviceMatch = finalDescription.match(serviceRegex);
+        if (serviceMatch) {
+             finalDescription = finalDescription.replace(serviceMatch[0], "").trim();
+        }
+
         setDeskripsi(finalDescription);
         setDeskripsiSingkat(finalShortDesc);
         setLayananDitawarkan(fetchedSubServices);
-
-        const originalFromDB = Subdetail.map(item => ({
-          id: item.id,
-          sub_services: item.sub_services,
-          isNew: false
-        }));
-        setOriginalLayanan(originalFromDB);
+        setOriginalLayanan(fetchedSubServices); // Sync original state
 
         if (detail.image_url) {
           setFoto(detail.image_url);
@@ -268,17 +250,106 @@ const EditLayananPage = () => {
     setSelectedIcon("");
   };
 
-  const tambahLayananItem = () => {
+  // === PERUBAHAN UTAMA: TAMBAH LANGSUNG KE DB ===
+  const tambahLayananItem = async () => {
     if (!inputLayanan.trim()) return;
-    setLayananDitawarkan([...layananDitawarkan, { sub_services: inputLayanan.trim(), isNew: true }]);
-    setInputLayanan("");
+    if (!serviceId) {
+        return Swal.fire("Error", "ID Layanan tidak ditemukan. Mohon refresh halaman.", "error");
+    }
+
+    setIsAddingSub(true); // Set loading state
+    try {
+        const payload = {
+            services_id: serviceId,
+            sub_services: inputLayanan.trim(),
+            userId: user?.id
+        };
+
+        const res = await fetch(`/api/sub_services`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Update state lokal agar UI langsung berubah
+            const newItem = {
+                id: data.id || Date.now(), // Fallback ID jika API tidak return ID
+                sub_services: inputLayanan.trim(),
+                isNew: false // Karena sudah masuk DB
+            };
+            
+            setLayananDitawarkan([...layananDitawarkan, newItem]);
+            setOriginalLayanan([...originalLayanan, newItem]); // Update original juga agar sync
+            setInputLayanan(""); // Reset input
+            
+            // Opsional: Tampilkan toast kecil sukses
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            });
+            Toast.fire({
+                icon: 'success',
+                title: 'Sub layanan ditambahkan'
+            });
+
+        } else {
+            throw new Error(data.message || "Gagal menyimpan sub layanan");
+        }
+    } catch (error) {
+        console.error("Error add sub service:", error);
+        Swal.fire("Gagal", error.message, "error");
+    } finally {
+        setIsAddingSub(false);
+    }
   };
 
-  const hapusLayananItem = (idx) => {
-    setLayananDitawarkan(layananDitawarkan.filter((_, i) => i !== idx));
+  // === PERUBAHAN UTAMA: HAPUS LANGSUNG DARI DB ===
+  const hapusLayananItem = async (idx, item) => {
+    Swal.fire({
+        title: 'Hapus Item?',
+        text: "Item ini akan langsung dihapus dari database!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            // Jika item baru (belum ada ID DB), hapus dari state saja
+            if (!item.id) {
+                setLayananDitawarkan(layananDitawarkan.filter((_, i) => i !== idx));
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/sub_services/${item.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user?.id })
+                });
+
+                if (res.ok) {
+                    setLayananDitawarkan(layananDitawarkan.filter((_, i) => i !== idx));
+                    setOriginalLayanan(originalLayanan.filter(ori => ori.id !== item.id));
+                    Swal.fire("Terhapus!", "Sub layanan telah dihapus.", "success");
+                } else {
+                    throw new Error("Gagal menghapus dari server");
+                }
+            } catch (error) {
+                console.error("Error delete sub service:", error);
+                Swal.fire("Error", error.message, "error");
+            }
+        }
+    });
   };
 
-  // === UPDATE DATA ===
+  // === UPDATE DATA UTAMA (Tanpa Sub Services) ===
   const handleUpdate = async () => {
     if (!namaLayanan.trim()) {
       return Swal.fire("Error", "Nama wajib diisi", "error");
@@ -312,53 +383,12 @@ const EditLayananPage = () => {
         throw new Error("Gagal update layanan utama");
       }
 
-      // Handle Sub Layanan
-      const itemsToDelete = originalLayanan.filter(original =>
-        !layananDitawarkan.some(current => current.id === original.id)
-      );
-
-      const itemsToInsert = layananDitawarkan.filter(item => item.isNew === true);
-
-      // Delete sub layanan
-      for (const item of itemsToDelete) {
-        if (!item.id) continue;
-        try {
-          const resDelete = await fetch(`/api/sub_services/${item.id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user?.id })
-          });
-          if (!resDelete.ok) {
-            console.error(`Gagal menghapus sub layanan ID ${item.id}`);
-          }
-        } catch (error) {
-          console.error(`Error deleting sub service ${item.id}:`, error);
-        }
-      }
-
-      // Insert sub layanan baru
-      for (const item of itemsToInsert) {
-        try {
-          const resInsert = await fetch(`/api/sub_services`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              services_id: serviceId,
-              sub_services: item.sub_services,
-              userId: user?.id
-            })
-          });
-          if (!resInsert.ok) {
-            console.error(`Gagal menambahkan sub layanan: ${item.sub_services}`);
-          }
-        } catch (error) {
-          console.error(`Error inserting sub service:`, error);
-        }
-      }
+      // KITA TIDAK LAGI PERLU MENGURUS SUB SERVICES DI SINI
+      // KARENA SUDAH DITANGANI OLEH FUNGSI TAMBAH/HAPUS LANGSUNG
 
       Swal.fire({
         title: "Berhasil",
-        text: "Layanan dan sub layanan berhasil diperbarui!",
+        text: "Informasi layanan utama berhasil diperbarui!",
         icon: "success"
       }).then(() => {
         fetchData();
@@ -413,9 +443,6 @@ const EditLayananPage = () => {
 
       <header className="bg-[#1E1E2D] px-4 md:px-8 py-4 flex justify-between items-center shadow-md sticky top-0 z-30">
         <div className="text-white font-bold text-lg flex items-center gap-3">
-          {/* <button onClick={() => router.back()} className="hover:bg-gray-700 p-2 rounded-full transition">
-            <ArrowLeft size={20} />
-          </button> */}
           Edit Layanan
         </div>
         <div className="flex items-center gap-4">
@@ -458,7 +485,6 @@ const EditLayananPage = () => {
                 {previewFoto ? "Ganti Foto" : "Upload Foto"}
               </button>
 
-              {/* Size Chart */}
               <div className="mt-2 text-xs text-gray-500 space-y-1">
                 <div className="flex justify-between">
                   <span>Rasio</span>
@@ -517,6 +543,12 @@ const EditLayananPage = () => {
             {/* List Layanan */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Poin-poin Layanan yang Ditawarkan</label>
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-4 text-xs flex items-start gap-2">
+                 <i className="fa-solid fa-circle-info mt-0.5"></i>
+                 <span>
+                    Perubahan pada daftar layanan di bawah ini akan <strong>langsung disimpan</strong> ke database.
+                 </span>
+              </div>
               <div>
                 <div className="flex gap-0 h-11 mb-4">
                   <input
@@ -524,28 +556,38 @@ const EditLayananPage = () => {
                     placeholder="Masukkan poin layanan..."
                     value={inputLayanan}
                     onChange={(e) => setInputLayanan(e.target.value)}
-                    className="w-full bg-gray-100 border border-transparent outline-none focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-lg px-4 py-3 text-gray-800 transition-all"
-                    onKeyPress={(e) => e.key === 'Enter' && tambahLayananItem()}
+                    disabled={isAddingSub} // Disable saat proses tambah
+                    className="w-full bg-gray-100 border border-transparent outline-none focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 rounded-lg px-4 py-3 text-gray-800 transition-all disabled:opacity-50"
+                    onKeyPress={(e) => e.key === 'Enter' && !isAddingSub && tambahLayananItem()}
                   />
                   <button
                     onClick={tambahLayananItem}
-                    className="bg-[#1E293B] text-white px-6 text-sm font-medium rounded-r-lg hover:bg-black transition flex items-center gap-2 whitespace-nowrap"
+                    disabled={isAddingSub || !inputLayanan.trim()} // Disable jika kosong atau loading
+                    className="bg-[#1E293B] text-white px-6 text-sm font-medium rounded-r-lg hover:bg-black transition flex items-center gap-2 whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    <Plus size={16} /> Tambah Layanan
+                    {isAddingSub ? (
+                        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    ) : (
+                        <Plus size={16} />
+                    )}
+                    {isAddingSub ? 'Menambah...' : 'Tambah'}
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {layananDitawarkan.length === 0 ? (
                     <p className="text-xs text-gray-400 italic text-center">Belum ada Layanan.</p>
                   ) : (
                     layananDitawarkan.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-white px-4 py-2 rounded border shadow-sm">
-                        <span className="text-sm text-gray-700">
+                      <div key={item.id || idx} className="flex justify-between items-center bg-white px-4 py-3 rounded border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
+                        <span className="text-sm text-gray-700 font-medium">
                           • {item.sub_services}
-                          {item.isNew && <span className="ml-2 text-xs text-green-600">(Baru)</span>}
                         </span>
-                        <button onClick={() => hapusLayananItem(idx)} className="text-gray-400 hover:text-red-500">
-                          <Trash2 size={14} />
+                        <button 
+                            onClick={() => hapusLayananItem(idx, item)} 
+                            className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all"
+                            title="Hapus permanen"
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     ))
@@ -589,7 +631,7 @@ const EditLayananPage = () => {
               disabled={isSubmitting}
               className="flex items-center gap-2 bg-[#1E293B] hover:bg-[#0F172A] text-white px-8 py-3 rounded-lg font-medium text-sm transition-all shadow-lg disabled:opacity-50"
             >
-              {isSubmitting ? 'Menyimpan...' : <><Save size={18} /> Simpan Perubahan</>}
+              {isSubmitting ? 'Menyimpan...' : <><Save size={18} /> Simpan Perubahan Utama</>}
             </button>
           </div>
         </div>
@@ -717,4 +759,4 @@ const EditLayananPage = () => {
   );
 };
 
-export default EditLayananPage
+export default EditLayananPage;

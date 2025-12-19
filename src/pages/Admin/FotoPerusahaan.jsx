@@ -175,10 +175,7 @@ const Foto = () => {
                       src={item.image_url}
                       alt={item.title}
                       className="w-full h-full object-cover"
-                      onError={(e) =>
-                        (e.target.src =
-                          "https://placehold.co/400?text=No+Image")
-                      }
+                      onError={(e) => (e.target.src = "https://placehold.co/400?text=Error+Load+Image")}
                     />
                   ) : (
                     <div className="flex flex-col items-center text-gray-400">

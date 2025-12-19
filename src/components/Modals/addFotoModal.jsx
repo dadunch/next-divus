@@ -11,6 +11,7 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
   const [preview, setPreview] = useState(null);
   const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // CROP STATE
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -90,46 +91,62 @@ const AddFotoModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   /* ================= SUBMIT ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  
+  try {
     if (!imageFile) {
-      Swal.fire("Error", "Foto wajib diunggah", "error");
-      return;
+      throw new Error("Silakan pilih dan potong (crop) foto terlebih dahulu.");
     }
 
-    try {
-      setIsSubmitting(true);
+    const formData = new FormData();
+    const baseName = title.trim() ? title.trim() : "image1";
+    
+    // Sesuaikan key "file" agar sama dengan yang dibaca di upload-photo.js
+    formData.append("file", imageFile, `${baseName}.jpg`);
 
-      const base64image = await toBase64(imageFile);
-      const bodyData = {
-        title,
-        image_url: base64image,
-        userId: user?.id || 1,
-      };
+    // 1. Kirim ke API Upload Fisik (Path diperbarui)
+    // Jalur sesuai lokasi file: src/pages/api/photos/upload-photo.js
+    const uploadRes = await fetch("/api/photos/upload-photo", {
+      method: "POST",
+      body: formData,
+    });
 
-      const res = await fetch("/api/photos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData),
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        Swal.fire("Berhasil", "Foto berhasil ditambahkan", "success");
-        resetState();
-        onSuccess();
-        onClose();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (err) {
-      Swal.fire("Error", err.message, "error");
-    } finally {
-      setIsSubmitting(false);
+    const contentType = uploadRes.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+       throw new Error("Endpoint API tidak ditemukan atau server belum direstart.");
     }
-  };
 
+    const uploadData = await uploadRes.json();
+    if (!uploadRes.ok) throw new Error(uploadData.error || "Gagal mengunggah file.");
+
+    // 2. Simpan URL path ke Database via index.js di folder yang sama
+    const res = await fetch("/api/photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: title || "Tanpa Judul",
+        image_url: uploadData.url, // URL dari hasil upload-photo.js
+        userId: user?.id || 1
+      }),
+    });
+
+    if (res.ok) {
+      Swal.fire("Berhasil", "Foto berhasil disimpan.", "success");
+      onSuccess();
+      onClose();
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Gagal menyimpan ke database.");
+    }
+  } catch (error) {
+    console.error("Error Detail:", error);
+    Swal.fire("Error", error.message, "error");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   /* ================= AUTO RESET SAAT MODAL TUTUP ================= */
   useEffect(() => {
     if (!isOpen) resetState();

@@ -74,15 +74,19 @@ const Produk = () => {
     }
   };
 
-  const getMediaItems = (mediaString) => {
-    if (!mediaString) return [];
-    try {
-      const parsed = JSON.parse(mediaString);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
+  const getMediaItems = (mediaData) => {
+  if (!mediaData) return [];
+  // Jika sudah berupa array/object (hasil dari Prisma Json field)
+  if (Array.isArray(mediaData)) return mediaData;
+  if (typeof mediaData === 'object') return [mediaData];
+  
+  try {
+    const parsed = JSON.parse(mediaData);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return [];
+  }
+};
 
   const handleDelete = async (id, namaProduk) => {
     const result = await Swal.fire({
@@ -261,21 +265,28 @@ const Produk = () => {
                   <div className="relative h-48 bg-gray-100 overflow-hidden">
                     {firstMedia ? (
                       firstMedia.type === "youtube" ? (
-                        <iframe
-                          src={`https://www.youtube.com/embed/${firstMedia.videoId}`}
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
+                        <div className="w-full h-full relative">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${firstMedia.videoId}`}
+                            className="w-full h-full border-0"
+                            title={item.nama_produk}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                          {/* Overlay transparan mutlak diperlukan agar tombol edit/hapus bisa di-hover */}
+                          <div className="absolute inset-0 z-10 bg-transparent"></div>
+                        </div>
                       ) : (
                         <img
                           src={firstMedia.url}
+                          alt={item.nama_produk}
                           className="w-full h-full object-cover"
                         />
                       )
                     ) : coverImage ? (
                       <img
                         src={coverImage}
+                        alt={item.nama_produk}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -285,27 +296,25 @@ const Produk = () => {
                       </div>
                     )}
 
-                    <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
+                    {/* Badge Tahun - Pastikan z-index lebih tinggi (z-20) */}
+                    <div className="absolute bottom-3 left-3 bg-white/90 px-3 py-1 rounded-lg text-xs font-bold shadow-sm z-20">
                       {item.tahun}
                     </div>
 
-                    {/* TOMBOL EDIT & DELETE */}
-                    <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                    {/* Tombol Edit/Delete - Pastikan z-index paling tinggi (z-30) agar tidak tertutup video */}
+                    <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-30">
                       <button
                         onClick={() => {
                           setEditData(item);
                           setShowEditModal(true);
                         }}
                         className="p-2 bg-white rounded-lg shadow hover:bg-blue-50"
-                        title="Edit Produk"
                       >
                         <Pencil size={16} className="text-blue-600" />
                       </button>
-
                       <button
                         onClick={() => handleDelete(item.id, item.nama_produk)}
                         className="p-2 bg-white rounded-lg shadow hover:bg-red-50"
-                        title="Hapus Produk"
                       >
                         <Trash2 size={16} className="text-red-500" />
                       </button>

@@ -180,11 +180,11 @@ const Produk = () => {
               <button
                 onClick={() => setOpenSortDropdown(!openSortDropdown)}
                 className="w-full bg-white border border-gray-300 text-gray-700
-py-2.5 pl-4 pr-10 rounded-lg shadow-sm
-cursor-pointer text-sm font-medium text-left
-focus:outline-none focus:ring-2 focus:ring-[#27D14C]
-transition-all duration-200
-hover:border-[#27D14C]"
+                py-2.5 pl-4 pr-10 rounded-lg shadow-sm
+                cursor-pointer text-sm font-medium text-left
+                focus:outline-none focus:ring-2 focus:ring-[#27D14C]
+                transition-all duration-200
+                hover:border-[#27D14C]"
               >
                 {sortOrder === "newest" && "Tahun Terbaru"}
                 {sortOrder === "oldest" && "Tahun Terlama"}

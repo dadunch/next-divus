@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaChevronDown } from 'react-icons/fa';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { Assets } from '../../assets';
@@ -25,6 +25,11 @@ const Produk = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    // State untuk Filter Kategori (Fixing ReferenceError)
+    const [selectedCategory, setSelectedCategory] = useState("Semua");
+    const [categories, setCategories] = useState(["Semua"]);
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
     // --- 1. FETCH DATA ---
     useEffect(() => {
         const fetchProducts = async () => {
@@ -33,6 +38,12 @@ const Produk = () => {
                 if (!res.ok) throw new Error("Gagal mengambil data");
                 const data = await res.json();
                 setProducts(data);
+
+                // Extract categories if available (Safe check)
+                const uniqueCategories = ['Semua', ...new Set(data.map(item => item.category?.bidang).filter(Boolean))];
+                if (uniqueCategories.length > 1) {
+                    setCategories(uniqueCategories);
+                }
             } catch (error) {
                 console.error("Error:", error);
             } finally {
@@ -59,15 +70,15 @@ const Produk = () => {
 
         if (product.media_items) {
             try {
-                const items = typeof product.media_items === 'string' 
-                    ? JSON.parse(product.media_items) 
+                const items = typeof product.media_items === 'string'
+                    ? JSON.parse(product.media_items)
                     : product.media_items;
-                
+
                 return items.map(item => ({
                     type: item.type || 'image',
                     url: item.url || item,
                     videoId: item.videoId,
-                    preview: item.type === 'youtube' 
+                    preview: item.type === 'youtube'
                         ? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`
                         : (item.url || item)
                 }));
@@ -112,6 +123,13 @@ const Produk = () => {
         const media = getMediaItems(selectedProduct);
         setCurrentImageIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
     };
+
+    // --- 5. FILTER LOGIC ---
+    const filteredProducts = products.filter((item) => {
+        if (selectedCategory === 'Semua') return true;
+        // Safe check for category match (Currently product has no category, so this safety is needed)
+        return item.category?.bidang === selectedCategory;
+    });
 
     return (
         <div className="min-h-screen bg-white overflow-hidden">
@@ -160,6 +178,58 @@ const Produk = () => {
                         </div>
                     </div>
                 </motion.section>
+                <div className="max-w-[1440px] mx-auto px-6 md:px-20 mb-10">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="relative w-full md:w-72 z-20">
+                                <button
+                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                    className="w-full py-3 px-4 bg-zinc-700 rounded-[10px] flex items-center justify-between gap-2 text-sm relative transition-all hover:bg-zinc-800"
+                                >
+                                    <span className="text-white text-base font-medium leading-6">
+                                        {selectedCategory === 'Semua' ? 'Semua Kategori' : selectedCategory}
+                                    </span>
+                                    <FaChevronDown className="text-white w-4 h-4" />
+                                </button>
+
+                                <AnimatePresence>
+                                    {showCategoryDropdown && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute mt-2 w-full bg-white rounded-xl shadow-xl z-20 border border-zinc-100 overflow-hidden max-h-60 overflow-y-auto"
+                                        >
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedCategory("Semua");
+                                                    setShowCategoryDropdown(false);
+                                                }}
+                                                className="w-full text-left px-5 py-3 text-zinc-700 text-sm font-medium hover:bg-zinc-50 hover:text-green-600 transition-colors border-b border-zinc-50"
+                                            >
+                                                Semua Kategori
+                                            </button>
+                                            {categories.filter(c => c !== 'Semua').map((cat, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => {
+                                                        setSelectedCategory(cat);
+                                                        setShowCategoryDropdown(false);
+                                                    }}
+                                                    className="w-full text-left px-5 py-3 text-zinc-700 text-sm font-medium hover:bg-zinc-50 hover:text-green-600 transition-colors border-b border-zinc-50 last:border-0"
+                                                >
+                                                    {cat}
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                            <p className="text-zinc-500 text-sm">
+                                Menampilkan <span className="text-zinc-800 font-medium">{filteredProducts.length}</span> produk
+                            </p>
+                        
+                    </div>
+                </div>
 
                 {/* --- PRODUCT GRID SECTION --- */}
                 <div {...fadeInUp} className="max-w-[1380px] mx-auto px-6 md:px-12 mb-20 mt-10">
@@ -174,7 +244,7 @@ const Produk = () => {
                     ) : (
                         // MASONRY LAYOUT
                         <div className="columns-1 sm:columns-2 lg:columns-4 gap-6 space-y-6">
-                            {products.map((item) => {
+                            {filteredProducts.map((item) => {
                                 const media = getMediaItems(item);
                                 const coverMedia = media.length > 0 ? media[0] : null;
                                 const isYoutube = coverMedia?.type === 'youtube';
@@ -189,7 +259,7 @@ const Produk = () => {
                                         onClick={() => openModal(item)}
                                     >
                                         <div className={`w-full bg-gray-200 relative overflow-hidden ${isYoutube ? 'aspect-video' : ''}`}>
-                                            
+
                                             {coverMedia ? (
                                                 <img
                                                     src={coverMedia.preview}
@@ -228,7 +298,7 @@ const Produk = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         {/* BAGIAN BAWAH (Title/Deskripsi) DIHAPUS 
                                             Agar murni hanya gambar gallery
                                         */}
@@ -280,7 +350,7 @@ const Produk = () => {
                         className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-4"
                         onClick={closeModal}
                     >
-                         <motion.div
+                        <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
@@ -402,7 +472,7 @@ const Produk = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-             <a
+            <a
                 href="https://wa.me/6285220203453"
                 target="_blank"
                 rel="noopener noreferrer"

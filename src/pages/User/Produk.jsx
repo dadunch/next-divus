@@ -25,10 +25,14 @@ const Produk = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    // State untuk Filter Kategori (Fixing ReferenceError)
+    // State untuk Filter Kategori & Sorting
     const [selectedCategory, setSelectedCategory] = useState("Semua");
     const [categories, setCategories] = useState(["Semua"]);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+    // Sort State
+    const [sortBy, setSortBy] = useState('newest');
+    const [showSortDropdown, setShowSortDropdown] = useState(false);
 
     // --- 1. FETCH DATA ---
     useEffect(() => {
@@ -124,12 +128,27 @@ const Produk = () => {
         setCurrentImageIndex((prev) => (prev === 0 ? media.length - 1 : prev - 1));
     };
 
-    // --- 5. FILTER LOGIC ---
+    // --- 5. FILTER & SORT LOGIC ---
     const filteredProducts = products.filter((item) => {
         if (selectedCategory === 'Semua') return true;
-        // Safe check for category match (Currently product has no category, so this safety is needed)
+        // Safe check for category match
         return item.category?.bidang === selectedCategory;
     });
+
+    const sortedProducts = [...filteredProducts].sort((a, b) => {
+        if (sortBy === 'newest') return (parseInt(b.tahun) || 0) - (parseInt(a.tahun) || 0);
+        if (sortBy === 'oldest') return (parseInt(a.tahun) || 0) - (parseInt(b.tahun) || 0);
+        if (sortBy === 'a-z') return (a.nama_produk || "").localeCompare(b.nama_produk || "");
+        if (sortBy === 'z-a') return (b.nama_produk || "").localeCompare(a.nama_produk || "");
+        return 0;
+    });
+
+    const sortOptions = [
+        { label: 'Tahun Terbaru', value: 'newest' },
+        { label: 'Tahun Terlama', value: 'oldest' },
+        { label: 'A-Z', value: 'a-z' },
+        { label: 'Z-A', value: 'z-a' },
+    ];
 
     return (
         <div className="min-h-screen bg-white overflow-hidden">
@@ -180,54 +199,51 @@ const Produk = () => {
                 </motion.section>
                 <div className="max-w-[1440px] mx-auto px-6 md:px-20 mb-10">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="relative w-full md:w-72 z-20">
+                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto z-20">
+                            {/* SORT DROPDOWN */}
+                            <div className="relative w-full sm:w-72">
                                 <button
-                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                                    className="w-full py-3 px-4 bg-zinc-700 rounded-[10px] flex items-center justify-between gap-2 text-sm relative transition-all hover:bg-zinc-800"
+                                    onClick={() => {
+                                        setShowSortDropdown(!showSortDropdown);
+                                        setShowCategoryDropdown(false);
+                                    }}
+                                    className="w-full py-3 px-4 bg-gray-700 rounded-[10px] flex items-center justify-between gap-2 text-sm relative transition-all hover:border-zinc-400"
                                 >
                                     <span className="text-white text-base font-medium leading-6">
-                                        {selectedCategory === 'Semua' ? 'Semua Kategori' : selectedCategory}
+                                        {sortOptions.find(opt => opt.value === sortBy)?.label || 'Urutkan'}
                                     </span>
-                                    <FaChevronDown className="text-white w-4 h-4" />
+                                    <FaChevronDown className="text-zinc-500 w-4 h-4" />
                                 </button>
 
                                 <AnimatePresence>
-                                    {showCategoryDropdown && (
+                                    {showSortDropdown && (
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: 10 }}
-                                            className="absolute mt-2 w-full bg-white rounded-xl shadow-xl z-20 border border-zinc-100 overflow-hidden max-h-60 overflow-y-auto"
+                                            className="absolute mt-2 w-full bg-white rounded-xl shadow-xl z-30 border border-zinc-100 overflow-hidden"
                                         >
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedCategory("Semua");
-                                                    setShowCategoryDropdown(false);
-                                                }}
-                                                className="w-full text-left px-5 py-3 text-zinc-700 text-sm font-medium hover:bg-zinc-50 hover:text-green-600 transition-colors border-b border-zinc-50"
-                                            >
-                                                Semua Kategori
-                                            </button>
-                                            {categories.filter(c => c !== 'Semua').map((cat, index) => (
+                                            {sortOptions.map((option) => (
                                                 <button
-                                                    key={index}
+                                                    key={option.value}
                                                     onClick={() => {
-                                                        setSelectedCategory(cat);
-                                                        setShowCategoryDropdown(false);
+                                                        setSortBy(option.value);
+                                                        setShowSortDropdown(false);
                                                     }}
-                                                    className="w-full text-left px-5 py-3 text-zinc-700 text-sm font-medium hover:bg-zinc-50 hover:text-green-600 transition-colors border-b border-zinc-50 last:border-0"
+                                                    className={`w-full text-left px-5 py-3 text-sm font-medium transition-colors border-b border-zinc-50 last:border-0 ${sortBy === option.value ? 'bg-zinc-50 text-green-600' : 'text-zinc-700 hover:bg-zinc-50 hover:text-green-600'
+                                                        }`}
                                                 >
-                                                    {cat}
+                                                    {option.label}
                                                 </button>
                                             ))}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
                             </div>
-                            <p className="text-zinc-500 text-sm">
-                                Menampilkan <span className="text-zinc-800 font-medium">{filteredProducts.length}</span> produk
-                            </p>
-                        
+                        </div>
+                        <p className="text-zinc-500 text-sm">
+                            Menampilkan <span className="text-zinc-800 font-medium">{sortedProducts.length}</span> produk
+                        </p>
                     </div>
                 </div>
 
@@ -244,7 +260,7 @@ const Produk = () => {
                     ) : (
                         // MASONRY LAYOUT
                         <div className="columns-1 sm:columns-2 lg:columns-4 gap-6 space-y-6">
-                            {filteredProducts.map((item) => {
+                            {sortedProducts.map((item) => {
                                 const media = getMediaItems(item);
                                 const coverMedia = media.length > 0 ? media[0] : null;
                                 const isYoutube = coverMedia?.type === 'youtube';
@@ -328,7 +344,7 @@ const Produk = () => {
                                     PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" />
                                     terpercaya untuk bisnis Anda!
                                 </h2>
-                                <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+                                <a href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                                     <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
                                     <span className="text-black text-base md:text-lg font-semibold capitalize">
                                         Konsultasi Sekarang
@@ -458,9 +474,7 @@ const Produk = () => {
 
                                 <div className="p-6 border-t border-gray-100 bg-gray-50">
                                     <a
-                                        href="https://wa.me/62812345678"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                        href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" 
                                         className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-200"
                                     >
                                         <FaWhatsapp size={18} />

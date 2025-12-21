@@ -248,7 +248,7 @@ export default function Home() {
                             </p>
 
                             <Link
-                                href="/User/TentangKami"
+                                href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" 
                                 className="inline-flex justify-start items-center px-5 py-3 md:px-6 md:py-4 bg-green-500 rounded-xl shadow-lg hover:bg-green-600 transition-colors mt-10"
                             >
                                 <FaWhatsapp size={24} className="text-white mr-2" />
@@ -526,7 +526,7 @@ export default function Home() {
                         <div className="relative px-6 py-16 md:py-20 text-center flex flex-col items-center justify-center gap-6">
                             <h2 className="text-white text-2xl md:text-4xl font-semibold md:font-bold capitalize leading-tight z-10 ">PT Divus Global Medicom siap menjadi solusi <br className="hidden md:block" /> terpercaya untuk bisnis Anda!</h2>
                             <p className="text-white text-lg md:text-xl font-normal capitalize leading-snug max-w-4xl z-10">Hubungi kami dan dapatkan panduan dari konsultan berpengalaman</p>
-                            <a href="https://wa.me/62812345678" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
+                            <a href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group">
                                 <FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />
                                 <span className="text-black text-base md:text-lg font-semibold capitalize">
                                     Konsultasi Sekarang

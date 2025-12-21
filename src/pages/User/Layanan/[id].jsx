@@ -267,7 +267,7 @@ export default function LayananDetail() {
 								Hubungi kami dan dapatkan panduan dari konsultan berpengalaman
 							</p>
 							<a 
-								href="https://wa.me/62812345678" 
+								href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" 
 								className="mt-4 inline-flex justify-center items-center gap-3 px-6 py-3 bg-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all duration-300 z-10 group"
 							>
 								<FaWhatsapp className="text-green-600 w-6 h-6 group-hover:scale-110 transition-transform" />

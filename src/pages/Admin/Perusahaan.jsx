@@ -80,7 +80,7 @@ const PerusahaanPage = () => {
           blob,
           url: URL.createObjectURL(blob),
         });
-      }, "image/jpeg");
+      }, "image/png");
     });
   };
 
@@ -153,7 +153,7 @@ const PerusahaanPage = () => {
   const selesaiCrop = async () => {
     const { blob, url } = await getCroppedImg(tempImage, croppedAreaPixels);
     const croppedFile = new File([blob], "logo-cropped.jpg", {
-      type: "image/jpeg",
+      type: "image/png",
     });
 
     setLogo(url);
@@ -376,7 +376,7 @@ const PerusahaanPage = () => {
                 Upload Logo
               </button>
               <p className="text-xs text-gray-400 mt-2">
-                JPG/PNG hingga 2MB <br /> *Ukuran disarankan persegi (1:1)
+                PNG hingga 2MB <br /> *Ukuran disarankan persegi (1:1)
               </p>
             </div>
           </div>

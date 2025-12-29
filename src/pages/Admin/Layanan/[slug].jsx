@@ -383,8 +383,7 @@ const EditLayananPage = () => {
         throw new Error("Gagal update layanan utama");
       }
 
-      // KITA TIDAK LAGI PERLU MENGURUS SUB SERVICES DI SINI
-      // KARENA SUDAH DITANGANI OLEH FUNGSI TAMBAH/HAPUS LANGSUNG
+      window.dispatchEvent(new Event('refreshSidebar')); 
 
       Swal.fire({
         title: "Berhasil",
@@ -418,6 +417,9 @@ const EditLayananPage = () => {
             body: JSON.stringify({ userId: user?.id })
           });
           if (res.ok) {
+
+            window.dispatchEvent(new Event('refreshSidebar')); 
+
             Swal.fire("Terhapus!", "Layanan telah dihapus.", "success")
               .then(() => router.push('/Admin/Dashboard'));
           } else {

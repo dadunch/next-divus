@@ -238,7 +238,7 @@ export default function TentangKami() {
       <motion.section {...fadeInUp} className="w-full py-6 px-6 bg-white">
         <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10 hidden md:flex"></div>
         <h2 className='text-zinc-800 text-lg md:text-xl font-semibold text-center leading-tight z-10 relative mb-10'>
-          We are happy to help solve your business problems.
+          We deliver strategic solutions for your business challenges.
         </h2>
 
         <div className="max-w-7xl mx-auto">
@@ -284,9 +284,6 @@ export default function TentangKami() {
           <div className="flex flex-col lg:flex-row justify-center items-center gap-10 mb-16">
             <div className="w-full relative text-center">
               <div className="w-[700px] mx-auto flex items-center justify-center outline outline-lime-500 mb-10 hidden md:flex"></div>
-              <p className='text-lime-500 text-base md:text-xl text-center font-normal md:whitespace-normal leading-tight mt-4'>
-                Experienced, able to maintain quality and professionalism
-              </p>
               <h2 className="text-zinc-800 text-2xl md:text-3xl text-center font-semibold leading-tight z-10 relative mt-6">
                 Keahlian Kami
               </h2>

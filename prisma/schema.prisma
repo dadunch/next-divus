@@ -144,5 +144,5 @@ model sub_services {
   id           BigInt @id @default(autoincrement())
   services_id  BigInt
   sub_services String
-  service      services @relation(fields: [services_id], references: [id])
+  service      services @relation(fields: [services_id], references: [id], onDelete: Cascade)
 }

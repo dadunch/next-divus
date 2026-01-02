@@ -38,7 +38,7 @@ function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const path = router.pathname;
   // Route Auth Admin
-  const isAuthRoute = path === '/admin';
+  const isAuthRoute = path === '/admindvs';
   // Route Admin Panel (setelah login)
   const isAdminRoute = path.startsWith('/Admin');
   const is404 = path === '/404' || Component.name === 'Custom404';

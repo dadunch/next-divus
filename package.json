@@ -24,8 +24,9 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",

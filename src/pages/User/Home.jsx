@@ -10,7 +10,51 @@ import { projectCache } from '../../utils/projectCache';
 import { clientCache } from '../../utils/clientCache';
 import { heroCache } from '../../utils/heroCache';
 
+// ============ SKELETON LOADER COMPONENTS ============
+const HeroImageSkeleton = () => (
+    <div className="w-full md:w-1/2 relative flex justify-center items-center mt-12 md:mt-0">
+        <div className="relative w-full max-w-[550px] aspect-[5/4] sm:aspect-[4/3]">
+            {/* Skeleton untuk gambar utama */}
+            <div className="aspect-square absolute right-3 top-4 w-[57%] rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse shadow-lg" />
+            {/* Skeleton untuk gambar sekunder */}
+            <div className="aspect-square absolute bottom-15 left-0 w-[47%] rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse shadow-lg" />
+        </div>
+    </div>
+);
 
+const ServiceCardSkeleton = () => (
+    <div className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px]">
+        <div className="bg-white rounded-2xl p-6 md:p-8 w-full min-h-[350px] shadow-sm">
+            <div className="animate-pulse">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-tr-3xl rounded-bl-3xl" />
+                    <div className="flex-1">
+                        <div className="h-6 bg-gray-300 rounded w-3/4 mb-2" />
+                    </div>
+                </div>
+                <div className="space-y-3 mb-8">
+                    <div className="h-4 bg-gray-200 rounded w-full" />
+                    <div className="h-4 bg-gray-200 rounded w-5/6" />
+                    <div className="h-4 bg-gray-200 rounded w-4/6" />
+                    <div className="h-4 bg-gray-200 rounded w-3/6" />
+                </div>
+                <div className="h-10 bg-gray-300 rounded-xl w-32" />
+            </div>
+        </div>
+    </div>
+);
+
+const ProductCardSkeleton = () => (
+    <div className="h-64 rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+);
+
+const AboutImageSkeleton = () => (
+    <div className="relative w-full md:w-[635px] h-80 md:h-96 overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+    </div>
+);
+
+// ============ UTILITY FUNCTIONS ============
 const getSummary = (text) => {
     if (!text) return "Layanan profesional dari PT Divus.";
     let cleanText = text.replace(/Layanan\s+Yang\s+Ditawarkan\s*:\s*-?/gi, "").replace(/\*\*/g, "");
@@ -34,122 +78,117 @@ const fadeInUp = {
 };
 
 export default function Home() {
-    // --- STATE DATA ---
     const [services, setServices] = useState([]);
     const [products, setProducts] = useState([]);
     const [projects, setProjects] = useState([]);
-
-    // State Logo Klien (Dinamis dari Database)
     const [clientLogos, setClientLogos] = useState([]);
-
-    // State Statistik
     const [statsData, setStatsData] = useState([
         { value: '0', label: 'Pengalaman' },
         { value: '0+', label: 'Klien Divus' },
         { value: '0+', label: 'Proyek Selesai' },
     ]);
-
     const [activePorto, setActivePorto] = useState('produk');
     const [loading, setLoading] = useState(true);
 
+    // State untuk hero images dengan loading state terpisah
     const [heroImages, setHeroImages] = useState({
+        img1: null,
+        img2: null,
+        img3: null
+    });
+    const [heroLoading, setHeroLoading] = useState({
+        img1: true,
+        img2: true,
+        img3: true
     });
 
-    // --- FETCH DATA ---
-    // useEffect(() => {
-    //     const fetchAllData = async () => {
-    //         try {
-    //             const resService = await fetch('/api/services');
-    //             const dataService = await resService.json();
-    //             if (resService.ok && Array.isArray(dataService)) {
-    //                 setServices(dataService);
-    //             }
-
-    //             const resProd = await fetch('/api/products');
-    //             const dataProd = await resProd.json();
-    //             if (resProd.ok && Array.isArray(dataProd)) {
-    //                 setProducts(dataProd.slice(0, 3));
-    //             }
-
-    //             const resProj = await fetch('/api/projects');
-    //             const dataProj = await resProj.json();
-    //             if (resProj.ok && Array.isArray(dataProj)) {
-    //                 setProjects(dataProj);
-    //             }
-
-    //             try {
-    //                 const resClients = await fetch('/api/clients');
-    //                 const dataClients = await resClients.json();
-    //                 if (resClients.ok && Array.isArray(dataClients)) {
-    //                     const logos = dataClients
-    //                         .map(client => client.client_logo)
-    //                         .filter(logo => logo !== null && logo !== "");
-    //                     setClientLogos(logos);
-    //                 }
-    //             } catch (e) {
-    //                 console.error("Gagal fetch clients:", e);
-    //             }
-
-    //             try {
-    //                     const resDash = await fetch('/api/dashboard');
-    //                     const dataDash = await resDash.json();
-
-    //                     if (resDash.ok && dataDash.stats) {
-    //                         setStatsData([
-    //                             // PERBAIKAN: Ubah .year menjadi .years (tambahkan huruf 's')
-    //                             { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, 
-    //                             { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-    //                             { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-    //                         ]);
-    //                     }
-    //                 } catch (error) {
-    //                     console.warn("Gagal fetch stats dashboard:", error);
-    //                 }
-
-    //             try {
-    //                 const resHero = await fetch('/api/hero'); 
-    //                 if (resHero.ok) {
-    //                     const dataHero = await resHero.json();
-    //                     setHeroImages(prev => ({
-    //                         img1: dataHero.foto1 || prev.img1,
-    //                         img2: dataHero.foto2 || prev.img2,
-    //                         img3: dataHero.foto3 || prev.img3
-    //                     }));
-    //                 }
-    //             } catch (e) {
-    //                 console.log("Gagal load hero assets:", e);
-    //             }
-
-    //         } catch (error) {
-    //             console.error("Gagal mengambil data:", error);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     fetchAllData();
-    // }, []);
-
     useEffect(() => {
+        // ============ OPTIMIZED IMAGE PRELOADER ============
+        const preloadImage = (src, key) => {
+            return new Promise((resolve, reject) => {
+                if (!src) {
+                    reject('No source provided');
+                    return;
+                }
+                
+                const img = new Image();
+                
+                // Set priority untuk hero images
+                img.loading = 'eager';
+                img.fetchPriority = 'high';
+                
+                img.onload = () => {
+                    setHeroImages(prev => ({ ...prev, [key]: src }));
+                    setHeroLoading(prev => ({ ...prev, [key]: false }));
+                    resolve();
+                };
+                
+                img.onerror = () => {
+                    console.warn(`Failed to load ${key}:`, src);
+                    // Gunakan fallback image
+                    setHeroImages(prev => ({ ...prev, [key]: Assets.Hero3 }));
+                    setHeroLoading(prev => ({ ...prev, [key]: false }));
+                    reject();
+                };
+                
+                img.src = src;
+            });
+        };
+
+        // ============ FETCH HERO IMAGES DENGAN PRIORITY TINGGI ============
+        const fetchHeroImagesFirst = async () => {
+            try {
+                const dataHero = await heroCache.fetch();
+                
+                if (dataHero) {
+                    // Load semua gambar secara paralel untuk kecepatan maksimal
+                    const imagePromises = [
+                        preloadImage(dataHero.foto1 || Assets.Hero3, 'img1'),
+                        preloadImage(dataHero.foto2 || Assets.Hero3, 'img2'),
+                        preloadImage(dataHero.foto3 || Assets.Hero3, 'img3')
+                    ];
+                    
+                    // Gunakan Promise.allSettled agar tidak terblokir jika ada yang gagal
+                    await Promise.allSettled(imagePromises);
+                } else {
+                    // Set default images jika tidak ada data
+                    setHeroImages({
+                        img1: Assets.Hero3,
+                        img2: Assets.Hero3,
+                        img3: Assets.Hero3
+                    });
+                    setHeroLoading({
+                        img1: false,
+                        img2: false,
+                        img3: false
+                    });
+                }
+            } catch (e) {
+                console.error("Gagal load hero assets:", e);
+                // Set default images
+                setHeroImages({
+                    img1: Assets.Hero3,
+                    img2: Assets.Hero3,
+                    img3: Assets.Hero3
+                });
+                setHeroLoading({
+                    img1: false,
+                    img2: false,
+                    img3: false
+                });
+            }
+        };
+
+        // Jalankan fetch hero images SEGERA
+        fetchHeroImagesFirst();
+
+        // ============ FETCH DATA LAINNYA (TIDAK BLOCKING) ============
         const fetchAllData = async () => {
             try {
-                // GUNAKAN CACHE untuk hero images
-                try {
-                    const dataHero = await heroCache.fetch();
-                    if (dataHero) {
-                        setHeroImages(prev => ({
-                            img1: dataHero.foto1 || prev.img1,
-                            img2: dataHero.foto2 || prev.img2,
-                            img3: dataHero.foto3 || prev.img3
-                        }));
-                    }
-                } catch (e) {
-                    console.log("Gagal load hero assets:", e);
-                }
+                // Stats Dashboard
                 try {
                     const resDash = await fetch('/api/dashboard');
                     const dataDash = await resDash.json();
-
                     if (resDash.ok && dataDash.stats) {
                         setStatsData([
                             { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' },
@@ -161,26 +200,25 @@ export default function Home() {
                     console.warn("Gagal fetch stats dashboard:", error);
                 }
 
-                // GUNAKAN CACHE untuk services - tidak fetch ulang
+                // Services
                 const dataService = await serviceCache.fetch();
                 if (Array.isArray(dataService)) {
                     setServices(dataService);
                 }
 
-
-                // GUNAKAN CACHE untuk products
+                // Products
                 const dataProd = await productCache.fetch();
                 if (Array.isArray(dataProd)) {
                     setProducts(dataProd.slice(0, 3));
                 }
 
-                // GUNAKAN CACHE untuk projects
+                // Projects
                 const dataProj = await projectCache.fetch();
                 if (Array.isArray(dataProj)) {
                     setProjects(dataProj);
                 }
 
-                // GUNAKAN CACHE untuk clients
+                // Clients
                 try {
                     const dataClients = await clientCache.fetch();
                     if (Array.isArray(dataClients)) {
@@ -192,10 +230,6 @@ export default function Home() {
                 } catch (e) {
                     console.error("Gagal fetch clients:", e);
                 }
-
-
-
-
 
             } catch (error) {
                 console.error("Gagal mengambil data:", error);
@@ -222,6 +256,9 @@ export default function Home() {
             <Head>
                 <title>PT Divus Global Mediacomm</title>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+                {/* Preconnect untuk optimasi */}
+                <link rel="preconnect" href="https://images.unsplash.com" />
+                <link rel="dns-prefetch" href="https://images.unsplash.com" />
             </Head>
 
             <div className="max-w-[1440px] mx-auto">
@@ -273,38 +310,49 @@ export default function Home() {
                             </div>
                         </motion.div>
 
-                        <motion.div initial={{ opacity: 0, x: 100 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                            viewport={{ once: false, amount: 0.2 }}
-                            className="w-full md:w-1/2 relative flex justify-center items-center mt-12 md:mt-0">
-                            <div className="relative w-full max-w-[550px] aspect-[5/4] sm:aspect-[4/3]">
-                                <img className="absolute left-10 top-13 w-[2000px] object-contain z-0 pointer-events-none opacity-90"
-                                    src={Assets.Hero3}
-                                    alt="Dekorasi"
-                                />
-                                <img className="aspect-square object-cover top-4 absolute right-3 w-[57%] rounded-2xl object-cover shadow-lg z"
-                                    src={heroImages.img1}
-                                    alt="Office Meeting"
-                                />
-                                <img className="aspect-square object-cover absolute bottom-15 left-0 w-[47%] rounded-2xl object-cover z-20"
-                                    src={heroImages.img2}
-                                    alt="Team Discussion"
-                                />
-                            </div>
-                        </motion.div>
+                        {/* HERO IMAGES DENGAN SKELETON LOADER */}
+                        {heroLoading.img1 || heroLoading.img2 ? (
+                            <HeroImageSkeleton />
+                        ) : (
+                            <motion.div initial={{ opacity: 0, x: 100 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                viewport={{ once: false, amount: 0.2 }}
+                                className="w-full md:w-1/2 relative flex justify-center items-center mt-12 md:mt-0">
+                                <div className="relative w-full max-w-[550px] aspect-[5/4] sm:aspect-[4/3]">
+                                    <img className="absolute left-10 top-13 w-[2000px] object-contain z-0 pointer-events-none opacity-90"
+                                        src={Assets.Hero3}
+                                        alt="Dekorasi"
+                                    />
+                                    <img 
+                                        className="aspect-square object-cover top-4 absolute right-3 w-[57%] rounded-2xl shadow-lg z-10 transition-opacity duration-500"
+                                        src={heroImages.img1}
+                                        alt="Office Meeting"
+                                        loading="eager"
+                                        fetchpriority="high"
+                                    />
+                                    <img 
+                                        className="aspect-square object-cover absolute bottom-15 left-0 w-[47%] rounded-2xl z-20 transition-opacity duration-500"
+                                        src={heroImages.img2}
+                                        alt="Team Discussion"
+                                        loading="eager"
+                                        fetchpriority="high"
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
                 </section>
 
-                {/* STATS + CLIENT LOGO (DIHAPUS AGAR TIDAK DUPLIKAT) */}
+                {/* STATS + CLIENT LOGO */}
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-12 md:py-16">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                         <h2 className="text-zinc-500 text-lg md:text-xl font-semibold leading-6 w-64 text-center md:text-left">
                             Dipercaya Oleh Mitra Internasional
                         </h2>
                         <div className="flex gap-8 justify-center">
-                            <img className="w-28 md:w-32 h-auto" src={Assets.Client12} alt="Mitra A" />
-                            <img className="w-24 md:w-28 h-auto" src={Assets.Client13} alt="Mitra B" />
+                            <img className="w-28 md:w-32 h-auto" src={Assets.Client12} alt="Mitra A" loading="lazy" />
+                            <img className="w-24 md:w-28 h-auto" src={Assets.Client13} alt="Mitra B" loading="lazy" />
                         </div>
                     </div>
                     <div className="mt-10 w-full relative flex justify-center">
@@ -326,9 +374,18 @@ export default function Home() {
                         </Link>
                     </div>
                     <div className="w-full lg:w-1/2 flex justify-center">
-                        <div className="relative w-full md:w-[635px] h-80 md:h-96 overflow-hidden rounded-2xl">
-                            <img className="absolute inset-0 rounded-2xl object-cover w-full h-full" src={heroImages.img3} alt="Tentang Kami" />
-                        </div>
+                        {heroLoading.img3 ? (
+                            <AboutImageSkeleton />
+                        ) : (
+                            <div className="relative w-full md:w-[635px] h-80 md:h-96 overflow-hidden rounded-2xl">
+                                <img 
+                                    className="absolute inset-0 rounded-2xl object-cover w-full h-full transition-opacity duration-500" 
+                                    src={heroImages.img3} 
+                                    alt="Tentang Kami" 
+                                    loading="lazy"
+                                />
+                            </div>
+                        )}
                     </div>
                 </motion.section>
 
@@ -350,32 +407,40 @@ export default function Home() {
                         </div>
 
                         <div className="flex flex-wrap justify-center gap-13 lg:gap-15">
-                            {services.map((item, index) => (
-                                <div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start">
-                                    <div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md min-h-[350px]">
-                                        <div>
-                                            <div className="flex items-center gap-4 mb-6">
-                                                <div className="w-20 h-20 flex-shrink-0 bg-lime-500/20 rounded-tr-3xl rounded-bl-3xl flex items-center justify-center p-4">
-                                                    {item.icon_url && item.icon_url.startsWith('fa-') ? (
-                                                        <i className={`${item.icon_url} text-4xl text-green-600`}></i>
-                                                    ) : item.image_url ? (
-                                                        <img src={item.image_url} className="w-10 h-10 object-contain" alt={item.title} />
-                                                    ) : (
-                                                        <i className="fa-solid fa-briefcase text-4xl text-green-600"></i>
-                                                    )}
+                            {loading ? (
+                                <>
+                                    <ServiceCardSkeleton />
+                                    <ServiceCardSkeleton />
+                                    <ServiceCardSkeleton />
+                                </>
+                            ) : (
+                                services.map((item, index) => (
+                                    <div key={index} className="w-full md:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2.5rem)] max-w-[420px] flex flex-col items-start">
+                                        <div className="bg-white rounded-2xl p-6 md:p-8 w-full h-full flex flex-col justify-between transition-transform hover:-translate-y-1 duration-300 shadow-sm hover:shadow-md min-h-[350px]">
+                                            <div>
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="w-20 h-20 flex-shrink-0 bg-lime-500/20 rounded-tr-3xl rounded-bl-3xl flex items-center justify-center p-4">
+                                                        {item.icon_url && item.icon_url.startsWith('fa-') ? (
+                                                            <i className={`${item.icon_url} text-4xl text-green-600`}></i>
+                                                        ) : item.image_url ? (
+                                                            <img src={item.image_url} className="w-10 h-10 object-contain" alt={item.title} loading="lazy" />
+                                                        ) : (
+                                                            <i className="fa-solid fa-briefcase text-4xl text-green-600"></i>
+                                                        )}
+                                                    </div>
+                                                    <h3 className="text-zinc-800 text-xl font-semibold leading-snug">{item.title}</h3>
                                                 </div>
-                                                <h3 className="text-zinc-800 text-xl font-semibold leading-snug">{item.title}</h3>
+                                                <p className="text-zinc-600 text-base font-medium capitalize leading-relaxed text-justify mb-8 line-clamp-4">
+                                                    {getSummary(item.description)}
+                                                </p>
                                             </div>
-                                            <p className="text-zinc-600 text-base font-medium capitalize leading-relaxed text-justify mb-8 line-clamp-4">
-                                                {getSummary(item.description)}
-                                            </p>
+                                            <Link href={`/User/Layanan/${item.id}`} className="px-6 py-3 bg-green-500 rounded-xl shadow-[0px_2px_5px_0px_rgba(0,0,0,0.14)] hover:bg-green-600 transition-colors text-white text-sm font-bold self-start">
+                                                Detail Layanan
+                                            </Link>
                                         </div>
-                                        <Link href={`/User/Layanan/${item.id}`} className="px-6 py-3 bg-green-500 rounded-xl shadow-[0px_2px_5px_0px_rgba(0,0,0,0.14)] hover:bg-green-600 transition-colors text-white text-sm font-bold self-start">
-                                            Detail Layanan
-                                        </Link>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
                 </section>
@@ -405,18 +470,26 @@ export default function Home() {
                             <div className="w-full lg:w-7/12 flex justify-center lg:justify-end items-center">
                                 {activePorto === 'produk' && (
                                     <a href='/User/Produk' className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full">
-                                        {products.map((item, idx) => (
-                                            <div key={idx} className="group relative h-64 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-2 transition-transform duration-300 bg-white">
-                                                <div className="w-full h-full">
-                                                    <img src={getProductImage(item.foto_produk)} alt={item.nama_produk} className="w-full h-full object-cover" />
+                                        {loading ? (
+                                            <>
+                                                <ProductCardSkeleton />
+                                                <ProductCardSkeleton />
+                                                <ProductCardSkeleton />
+                                            </>
+                                        ) : (
+                                            products.map((item, idx) => (
+                                                <div key={idx} className="group relative h-64 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-2 transition-transform duration-300 bg-white">
+                                                    <div className="w-full h-full">
+                                                        <img src={getProductImage(item.foto_produk)} alt={item.nama_produk} className="w-full h-full object-cover" loading="lazy" />
+                                                    </div>
+                                                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-end p-3">
+                                                        <span className="text-white text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
+                                                            {item.nama_produk}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all flex items-end p-3">
-                                                    <span className="text-white text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
-                                                        {item.nama_produk}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))
+                                        )}
                                     </a>
                                 )}
                                 {activePorto === 'proyek' && (

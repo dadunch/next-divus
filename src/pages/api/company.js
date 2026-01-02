@@ -4,6 +4,7 @@ import { createLog } from '../../lib/logger';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import path from 'path';
+import { setCachePreset } from '../../lib/cache-headers';
 
 // === KONFIGURASI WAJIB ===
 export const config = {
@@ -18,6 +19,9 @@ export default async function handler(req, res) {
   // --- 1. GET: Ambil Data Profile ---
   if (method === 'GET') {
     try {
+      // Cache 1 jam (data jarang berubah)
+      setCachePreset(res, 'STATIC');
+
       const profile = await prisma.company_profile.findFirst();
       return res.status(200).json(serialize(profile) || {});
     } catch (error) {
@@ -41,8 +45,8 @@ export default async function handler(req, res) {
         keepExtensions: true,
         maxFileSize: 20 * 1024 * 1024, // Limit 20MB (untuk PDF besar)
         filename: (name, ext, part) => {
-            const cleanName = part.originalFilename.replace(/\s+/g, '_');
-            return `${Date.now()}_${cleanName}`;
+          const cleanName = part.originalFilename.replace(/\s+/g, '_');
+          return `${Date.now()}_${cleanName}`;
         }
       });
 
@@ -74,75 +78,75 @@ export default async function handler(req, res) {
 
       // D. Transaction Database
       const result = await prisma.$transaction(async (tx) => {
-        
+
         // 1. Cek Data Lama
         const existingData = await tx.company_profile.findFirst();
-        
+
         // Object data yang akan disimpan
         let dataToSave = {
-            company_name: company_name || "",
-            description: description || "",
-            address: address || "",
-            email: email || "",
-            phone: phone || "",
-            business_field: business_field || "",
-            established_date: established_date ? new Date(established_date) : undefined,
+          company_name: company_name || "",
+          description: description || "",
+          address: address || "",
+          email: email || "",
+          phone: phone || "",
+          business_field: business_field || "",
+          established_date: established_date ? new Date(established_date) : undefined,
         };
 
         // 2. Handle Logo Upload
         if (newLogo) {
-            // Hapus logo lama jika ada
-            if (existingData?.logo_url) {
-                const oldPath = path.join(process.cwd(), 'public', existingData.logo_url);
-                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-            }
-            dataToSave.logo_url = `/uploads/company/${newLogo.newFilename}`;
+          // Hapus logo lama jika ada
+          if (existingData?.logo_url) {
+            const oldPath = path.join(process.cwd(), 'public', existingData.logo_url);
+            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+          }
+          dataToSave.logo_url = `/uploads/company/${newLogo.newFilename}`;
         }
 
         // 3. Handle Document Upload (Pindahkan ke folder docs)
         if (newDoc) {
-            // Pindahkan file dari folder default (company) ke folder docs agar rapi
-            const oldPathTemp = newDoc.filepath;
-            const newFileName = newDoc.newFilename;
-            const newPath = path.join(docDir, newFileName);
-            
-            // Rename/Move file
-            fs.renameSync(oldPathTemp, newPath);
+          // Pindahkan file dari folder default (company) ke folder docs agar rapi
+          const oldPathTemp = newDoc.filepath;
+          const newFileName = newDoc.newFilename;
+          const newPath = path.join(docDir, newFileName);
 
-            // Hapus doc lama jika ada
-            if (existingData?.file_url) {
-                const oldDocPath = path.join(process.cwd(), 'public', existingData.file_url);
-                if (fs.existsSync(oldDocPath)) fs.unlinkSync(oldDocPath);
-            }
-            
-            dataToSave.file_url = `/uploads/docs/${newFileName}`;
+          // Rename/Move file
+          fs.renameSync(oldPathTemp, newPath);
+
+          // Hapus doc lama jika ada
+          if (existingData?.file_url) {
+            const oldDocPath = path.join(process.cwd(), 'public', existingData.file_url);
+            if (fs.existsSync(oldDocPath)) fs.unlinkSync(oldDocPath);
+          }
+
+          dataToSave.file_url = `/uploads/docs/${newFileName}`;
         }
 
         let updatedProfile;
 
         // 4. Update atau Create
         if (existingData) {
-            updatedProfile = await tx.company_profile.update({
-                where: { id: existingData.id },
-                data: dataToSave
-            });
+          updatedProfile = await tx.company_profile.update({
+            where: { id: existingData.id },
+            data: dataToSave
+          });
         } else {
-            // Tambahkan field wajib untuk create baru jika kosong
-            if (!dataToSave.established_date) dataToSave.established_date = new Date();
-            
-            updatedProfile = await tx.company_profile.create({
-                data: dataToSave
-            });
+          // Tambahkan field wajib untuk create baru jika kosong
+          if (!dataToSave.established_date) dataToSave.established_date = new Date();
+
+          updatedProfile = await tx.company_profile.create({
+            data: dataToSave
+          });
         }
 
         // 5. Catat Log
         if (userId) {
-            await createLog(
-                tx, 
-                BigInt(userId), 
-                "Edit Perusahaan", 
-                `Memperbarui profil perusahaan`
-            );
+          await createLog(
+            tx,
+            BigInt(userId),
+            "Edit Perusahaan",
+            `Memperbarui profil perusahaan`
+          );
         }
 
         return updatedProfile;

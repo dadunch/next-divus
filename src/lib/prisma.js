@@ -1,17 +1,34 @@
 // src/lib/prisma.js
 import { PrismaClient } from '@prisma/client'
 
-let prisma
+/**
+ * Prisma Client Singleton untuk Next.js
+ * Optimized untuk serverless (Vercel) dengan connection pooling
+ */
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient()
-} else {
-  if (!global.prisma) {
-    global.prisma = new PrismaClient()
-  }
-  prisma = global.prisma
+const prismaClientSingleton = () => {
+  return new PrismaClient({
+    // Logging configuration
+    log: process.env.NODE_ENV === 'development'
+      ? ['query', 'error', 'warn']
+      : ['error'],
+
+    // Connection pool optimization untuk Vercel
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+  })
 }
 
+// Global singleton untuk development (hot reload safe)
+const globalForPrisma = globalThis
 
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma
+}
 
 export default prisma

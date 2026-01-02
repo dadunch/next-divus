@@ -40,6 +40,8 @@ model client {
   created_at  DateTime?  @default(now()) @db.Timestamptz(6)
   updated_at  DateTime?  @default(now()) @db.Timestamptz(6)
   projects    projects[]
+  
+  @@index([created_at(sort: Desc)])
 }
 
 model company_photos {
@@ -96,6 +98,9 @@ model product {
   tahun       Int?
   deskripsi   String?
   media_items Json?
+  
+  @@index([created_at(sort: Desc)])
+  @@index([tahun])
 }
 
 model projects {
@@ -108,6 +113,10 @@ model projects {
   updated_at   DateTime? @default(now()) @db.Timestamptz(6)
   category     category  @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   client       client    @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@index([client_id])
+  @@index([category_id])
+  @@index([created_at(sort: Desc)])
 }
 
 model role {
@@ -128,6 +137,8 @@ model services {
   updated_at        DateTime? @default(now()) @db.Timestamptz(6)
   short_description String?
   sub_services sub_services[]
+  
+  @@index([created_at(sort: Desc)])
 }
 
 model users {
@@ -145,4 +156,6 @@ model sub_services {
   services_id  BigInt
   sub_services String
   service      services @relation(fields: [services_id], references: [id], onDelete: Cascade)
+  
+  @@index([services_id])
 }

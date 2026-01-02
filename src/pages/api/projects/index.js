@@ -1,12 +1,16 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
+import { setCacheHeaders } from '../../../lib/cache-headers';
 
 export default async function handler(req, res) {
-  
+
   // === GET METHOD: Untuk Menampilkan Data di Halaman User & Admin ===
   if (req.method === 'GET') {
     try {
+      // Cache 10 menit fresh, 1 jam stale-while-revalidate
+      setCacheHeaders(res, 600, 3600);
+
       const projects = await prisma.projects.findMany({
         orderBy: { id: 'desc' }, // Urutkan dari yang terbaru
         include: {
@@ -18,7 +22,7 @@ export default async function handler(req, res) {
       // Solusi BigInt: Mengubah semua BigInt jadi String agar tidak error di browser
       const safeProjects = JSON.parse(JSON.stringify(projects, (key, value) =>
         typeof value === 'bigint'
-          ? value.toString() 
+          ? value.toString()
           : value
       ));
 
@@ -31,8 +35,8 @@ export default async function handler(req, res) {
 
   // === POST METHOD: Untuk Admin Menambah Proyek (Kode Asli Kamu) ===
   if (req.method === 'POST') {
-    const { project_name, client_id, category_id, tahun, userId } = req.body; 
-    
+    const { project_name, client_id, category_id, tahun, userId } = req.body;
+
     try {
       const result = await prisma.$transaction(async (tx) => {
         const newProject = await tx.projects.create({
@@ -46,9 +50,9 @@ export default async function handler(req, res) {
 
         // Catat log aktivitas jika ada userId
         if (userId) {
-            await createLog(tx, userId, "Tambah Proyek", `Menambahkan proyek: ${project_name}`);
+          await createLog(tx, userId, "Tambah Proyek", `Menambahkan proyek: ${project_name}`);
         }
-        
+
         return newProject;
       });
 

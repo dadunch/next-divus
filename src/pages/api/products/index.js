@@ -1,6 +1,7 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger'; // Import Logger
+import { setCacheHeaders } from '../../../lib/cache-headers';
 
 export default async function handler(req, res) {
   const { method } = req;
@@ -10,6 +11,9 @@ export default async function handler(req, res) {
   // ==========================================
   if (method === 'GET') {
     try {
+      // Cache 10 menit fresh, 1 jam stale-while-revalidate
+      setCacheHeaders(res, 600, 3600);
+
       const products = await prisma.product.findMany({
         orderBy: { created_at: 'desc' },
       });
@@ -25,12 +29,12 @@ export default async function handler(req, res) {
   // ==========================================
   if (method === 'POST') {
     try {
-      const { 
-        nama_produk, 
-        deskripsi, 
-        tahun, 
-        foto_produk, 
-        media_items, 
+      const {
+        nama_produk,
+        deskripsi,
+        tahun,
+        foto_produk,
+        media_items,
         userId // Pastikan frontend mengirim userId
       } = req.body;
 
@@ -46,8 +50,8 @@ export default async function handler(req, res) {
       let parsedMediaItems = [];
       if (media_items) {
         try {
-          parsedMediaItems = typeof media_items === 'string' 
-            ? JSON.parse(media_items) 
+          parsedMediaItems = typeof media_items === 'string'
+            ? JSON.parse(media_items)
             : media_items;
         } catch (e) {
           console.error("Gagal parsing media_items:", e);
@@ -57,7 +61,7 @@ export default async function handler(req, res) {
 
       // 2. Transaksi Database (Simpan Produk + Log)
       const result = await prisma.$transaction(async (tx) => {
-        
+
         // A. Create Product
         const newProduct = await tx.product.create({
           data: {
@@ -65,16 +69,16 @@ export default async function handler(req, res) {
             deskripsi,
             // Konversi tahun ke Int (karena schema sudah diubah jadi Int)
             tahun: parseInt(tahun) || new Date().getFullYear(),
-            foto_produk: foto_produk, 
-            media_items: parsedMediaItems, 
+            foto_produk: foto_produk,
+            media_items: parsedMediaItems,
           },
         });
 
         // B. Create Log
         await createLog(
-          tx, 
-          currentUserId, 
-          "Tambah Produk", 
+          tx,
+          currentUserId,
+          "Tambah Produk",
           `Menambahkan produk baru: ${nama_produk}`
         );
 

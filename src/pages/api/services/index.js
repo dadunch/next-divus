@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
+import { setCachePreset } from '../../../lib/cache-headers';
 
 // CONFIG: Matikan Body Parser bawaan Next.js
 export const config = {
@@ -13,11 +14,14 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  
+
   // --- GET: AMBIL DATA ---
   if (req.method === 'GET') {
     try {
-      const services = await prisma.services.findMany({ 
+      // Set cache: 5 menit fresh, 1 jam stale-while-revalidate
+      setCachePreset(res, 'MEDIUM');
+
+      const services = await prisma.services.findMany({
         orderBy: { created_at: 'desc' },
         include: { sub_services: true } // Pastikan relasi ini ada di model services
       });
@@ -30,7 +34,7 @@ export default async function handler(req, res) {
 
   // --- POST: TAMBAH LAYANAN ---
   if (req.method === 'POST') {
-    
+
     const uploadDir = path.join(process.cwd(), 'public/uploads/products');
     await fs.ensureDir(uploadDir);
 
@@ -56,7 +60,7 @@ export default async function handler(req, res) {
       const short_description = Array.isArray(fields.short_description) ? fields.short_description[0] : fields.short_description;
       const icon_url = Array.isArray(fields.icon_url) ? fields.icon_url[0] : fields.icon_url;
       const userId = Array.isArray(fields.userId) ? fields.userId[0] : fields.userId;
-      
+
       // Ambil string JSON sub services
       const subServicesString = Array.isArray(fields.sub_services_data) ? fields.sub_services_data[0] : fields.sub_services_data;
 
@@ -84,27 +88,27 @@ export default async function handler(req, res) {
 
       // === PROSES DATABASE ===
       const result = await prisma.$transaction(async (tx) => {
-        
+
         const newService = await tx.services.create({
-          data: { 
-            title, 
-            slug, 
-            description, 
+          data: {
+            title,
+            slug,
+            description,
             short_description: short_description || '',
-            icon_url: icon_url || '', 
+            icon_url: icon_url || '',
             image_url: dbImageUrl,
-            
+
             // --- PERBAIKAN DI SINI ---
             sub_services: {
               create: subServicesData.map((item) => ({
                 // Sesuai schema: sub_services String
-                sub_services: item 
+                sub_services: item
               }))
             }
           }
         });
 
-        const uid = userId ? parseInt(userId) : null; 
+        const uid = userId ? parseInt(userId) : null;
         if (uid) {
           await createLog(tx, uid, "Tambah Layanan", `Menambahkan layanan baru: ${title}`);
         }
@@ -112,7 +116,7 @@ export default async function handler(req, res) {
         return newService;
       }, {
         maxWait: 5000,
-        timeout: 20000 
+        timeout: 20000
       });
 
       return res.status(201).json(serialize(result));

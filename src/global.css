@@ -1,7 +1,56 @@
 @import "tailwindcss";
 
+/* Global Styles */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  height: 100%;
+}
+
 body {
   font-family: 'Poppins', sans-serif;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  /* Prevent layout shift during loading */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Prevent body scroll and fix position during loading */
+body.loading {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Ensure main content takes up space to push footer down */
+#__next {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  min-height: 80vh;
+}
+
+/* Prevent cumulative layout shift (CLS) */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure images don't cause layout shift */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Smooth loading transitions */
+body,
+#__next {
+  transition: opacity 0.3s ease-in-out;
 }

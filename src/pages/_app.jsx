@@ -37,8 +37,10 @@ const AuthCheck = ({ children }) => {
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
   const path = router.pathname;
-  const isAuthRoute = path === '/Admin/LoginAdmin' || path === '/Admin/RegisterAdmin';
-  const isAdminRoute = path.startsWith('/Admin') && !isAuthRoute;
+  // Route Auth Admin
+  const isAuthRoute = path === '/admin';
+  // Route Admin Panel (setelah login)
+  const isAdminRoute = path.startsWith('/Admin');
   const is404 = path === '/404' || Component.name === 'Custom404';
 
   // Loading state untuk prevent flash of content
@@ -52,17 +54,22 @@ function MyApp({ Component, pageProps }) {
     }
 
     // Handle route change start - show loading
-    const handleRouteChangeStart = () => {
+    const handleRouteChangeStart = (url) => {
+      // Optimization: Skip full loading screen for Admin internal navigation to feel faster
+      if (path.startsWith('/Admin') && url.startsWith('/Admin')) {
+        return;
+      }
       setIsPageLoading(true);
     };
 
     // Handle route change complete - hide loading & scroll to top
     const handleRouteChangeComplete = () => {
+      // Check if we are in admin to behave differently if needed, but for now just reduce delay
       window.scrollTo(0, 0);
-      // Delay sedikit untuk smooth transition
+      // Delay sedikit untuk smooth transition, dipercepat dari 300ms ke 50ms
       setTimeout(() => {
         setIsPageLoading(false);
-      }, 300);
+      }, 50);
     };
 
     // Handle route change error - hide loading
@@ -89,7 +96,7 @@ function MyApp({ Component, pageProps }) {
       router.events.off('routeChangeComplete', handleRouteChangeComplete);
       router.events.off('routeChangeError', handleRouteChangeError);
     };
-  }, [router.events]);
+  }, [router, path]);
 
   // Add/remove loading class from body
   useEffect(() => {
@@ -126,7 +133,7 @@ function MyApp({ Component, pageProps }) {
             <>
               <Navbar />
               {/* Force minimum height on main content */}
-              <main className="flex-grow w-full" style={{ minHeight: '85vh' }}>
+              <main className="grow w-full" style={{ minHeight: '85vh' }}>
                 <Component {...pageProps} />
               </main>
               <Footer />

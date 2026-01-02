@@ -42,17 +42,17 @@ export default function Footer() {
 
     // Setup Data Kontak Dinamis (Fallback ke hardcode jika DB belum siap)
     const contacts = [
-        { 
-            icon: Phone, 
-            text: companyData?.phone || "+62-8522-0203-453" 
+        {
+            icon: Phone,
+            text: companyData?.phone || "+62-8522-0203-453"
         },
-        { 
-            icon: Mail, 
-            text: companyData?.email || "divusgm@gmail.com" 
+        {
+            icon: Mail,
+            text: companyData?.email || "divusgm@gmail.com"
         },
-        { 
-            icon: MapPin, 
-            text: companyData?.address || "Jl. Terusan Kapten Halim, Kampung Sukamulya, Kel. Salammulya, Kec. Pondoksalam, Kab. Purwakarta, Prov. Jawa Barat 41115" 
+        {
+            icon: MapPin,
+            text: companyData?.address || "Jl. Terusan Kapten Halim, Kampung Sukamulya, Kel. Salammulya, Kec. Pondoksalam, Kab. Purwakarta, Prov. Jawa Barat 41115"
         },
     ];
 
@@ -61,18 +61,18 @@ export default function Footer() {
             <div className="max-w-[1440px] mx-auto px-6 md:px-20 py-12">
                 {/* Bagian Atas Footer (Konten, Layanan, Kontak) */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-20 pb-12 border-b border-white/20">
-                    
+
                     {/* Kolom 1: Logo & Deskripsi */}
                     <div className="flex flex-col gap-4">
                         <img
                             className="w-40 h-auto filter brightness-0 invert"
                             src={Assets.Logo}
                             alt="PT Divus Logo"
-                            onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/154x80/000/fff?text=LOGO" }}
+                            onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/154x80/000/fff?text=LOGO" }}
                         />
                         <p className="text-white/70 text-base font-light leading-6 text-justify">
                             {/* Deskripsi Dinamis (Potong jika terlalu panjang) */}
-                            {companyData?.description 
+                            {companyData?.description
                                 ? (companyData.description.length > 200 ? companyData.description.substring(0, 200) + "..." : companyData.description)
                                 : "PT Divus Global Mediacomm menghadirkan layanan konsultasi manajemen, riset, laporan, dan komunikasi korporat untuk mendukung pertumbuhan serta nilai strategis bisnis di berbagai sektor."
                             }
@@ -85,10 +85,10 @@ export default function Footer() {
                         <div className="flex flex-col space-y-2 ml-0 md:ml-12">
                             {servicesList.length > 0 ? (
                                 servicesList.map(service => (
-                                    <Link 
-                                        key={service.id} 
+                                    <Link
+                                        key={service.id}
                                         // Arahkan ke halaman list layanan
-                                        href="/User/LayananProduk" 
+                                        href="/layanan"
                                         className="text-white/70 text-base font-light leading-6 hover:text-lime-500 transition-colors"
                                     >
                                         {service.title}
@@ -111,7 +111,7 @@ export default function Footer() {
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Bagian Bawah Footer (Copyright) */}
                 <div className="pt-8 text-center">
                     <p className="text-zinc-200 text-base md:text-xl light capitalize leading-7">

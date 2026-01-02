@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp, FaChevronDown } from 'react-icons/fa';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import Footer from '../../components/Footer';
-import { Assets } from '../../assets';
+import Footer from '../components/Footer';
+import { Assets } from '../assets';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 50 },
@@ -173,7 +173,7 @@ const Produk = () => {
                     <div className="w-full bg-zinc-300 px-6 py-3 mb-4">
                         <div className="max-w-7xl mx-auto">
                             <p className="text-zinc-800 text-base">
-                                <Link href="/User/Home" className="hover:underline hover:text-green-600 transition-colors">
+                                <Link href="/" className="hover:underline hover:text-green-600 transition-colors">
                                     Beranda
                                 </Link>
                                 <span className="mx-2 text-zinc-500">{'>'}</span>
@@ -474,7 +474,7 @@ const Produk = () => {
 
                                 <div className="p-6 border-t border-gray-100 bg-gray-50">
                                     <a
-                                        href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer" 
+                                        href="https://wa.me/6285220203453" target="_blank" rel="noopener noreferrer"
                                         className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-200"
                                     >
                                         <FaWhatsapp size={18} />

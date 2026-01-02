@@ -54,7 +54,7 @@ function Navbar() {
                 // FORMAT DATA: Gunakan slug dari database untuk path
                 const formattedServices = data.map(service => ({
                     name: service.title,
-                    path: '/User/Layanan/' + service.id
+                    path: '/layanan/' + service.id
                 }));
                 setServicesList(formattedServices);
             } catch (error) {
@@ -81,7 +81,7 @@ function Navbar() {
 
     // Definisi Menu
     const navItems = [
-        { name: "Beranda", path: "/User/Home" },
+        { name: "Beranda", path: "/" },
         {
             name: "Layanan",
             path: "#",
@@ -93,12 +93,12 @@ function Navbar() {
             path: "#",
             isDropdown: true,
             subItems: [
-                { name: "Produk", path: "/User/Produk" },
-                { name: "Proyek", path: "/User/Proyek" },
+                { name: "Produk", path: "/produk" },
+                { name: "Proyek", path: "/proyek" },
             ]
         },
-        { name: "Tentang Kami", path: "/User/TentangKami" },
-        { name: "Kontak", path: "/User/Contact" },
+        { name: "Tentang Kami", path: "/tentang-kami" },
+        { name: "Kontak", path: "/kontak" },
     ];
 
     // Tutup dropdown jika klik di luar
@@ -120,7 +120,7 @@ function Navbar() {
 
                 {/* Logo */}
                 <div className="flex items-center h-full">
-                    <Link href="/User/Home">
+                    <Link href="/">
                         <img className="w-auto h-14 cursor-pointer hover:opacity-90 transition-opacity"
                             src={Assets.Logo}
                             alt="DMUS Logo"

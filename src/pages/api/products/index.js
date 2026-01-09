@@ -21,7 +21,10 @@ export default async function handler(req, res) {
       };
 
       if (limit) {
-        queryOptions.take = parseInt(limit);
+        const parsedLimit = parseInt(limit);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          queryOptions.take = parsedLimit;
+        }
       }
 
       const products = await prisma.product.findMany(queryOptions);

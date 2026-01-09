@@ -16,14 +16,21 @@ export default async function handler(req, res) {
       const queryOptions = {
         orderBy: { id: 'desc' },
         include: {
-          client: true,
-          category: true
+          client: {
+            select: { client_name: true } // Optimize: Only fetch client name
+          },
+          category: {
+            select: { bidang: true }       // Optimize: Only fetch category name
+          }
         }
       };
 
-      // Jika ada limit (misal ?limit=3), batasi jumlah data yang diambil
+      // Handle limit safely
       if (limit) {
-        queryOptions.take = parseInt(limit);
+        const parsedLimit = parseInt(limit);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          queryOptions.take = parsedLimit;
+        }
       }
 
       const projects = await prisma.projects.findMany(queryOptions);

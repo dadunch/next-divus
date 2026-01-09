@@ -206,16 +206,26 @@ export default function Home() {
                     setServices(dataService);
                 }
 
-                // Products
-                const dataProd = await productCache.fetch();
-                if (Array.isArray(dataProd)) {
-                    setProducts(dataProd.slice(0, 3));
+                // Products (Optimized: Fetch only top 3)
+                try {
+                    const resProd = await fetch('/api/products?limit=3');
+                    const dataProd = await resProd.json();
+                    if (Array.isArray(dataProd)) {
+                        setProducts(dataProd);
+                    }
+                } catch (e) {
+                    console.error("Gagal fetch products:", e);
                 }
 
-                // Projects
-                const dataProj = await projectCache.fetch();
-                if (Array.isArray(dataProj)) {
-                    setProjects(dataProj);
+                // Projects (Optimized: Fetch only top 3)
+                try {
+                    const resProj = await fetch('/api/projects?limit=3');
+                    const dataProj = await resProj.json();
+                    if (Array.isArray(dataProj)) {
+                        setProjects(dataProj);
+                    }
+                } catch (e) {
+                    console.error("Gagal fetch projects:", e);
                 }
 
                 // Clients

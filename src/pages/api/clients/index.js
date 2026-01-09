@@ -16,10 +16,25 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const clients = await prisma.client.findMany({
-        include: { projects: true },
+        select: {
+          id: true,
+          client_name: true,
+          client_logo: true,
+          _count: {
+            select: { projects: true }
+          }
+        },
         orderBy: { id: 'desc' }
       });
-      return res.status(200).json(serialize(clients));
+
+      // Map result to flatten structure for frontend
+      const formattedClients = clients.map(client => ({
+        ...client,
+        project_count: client._count.projects,
+        projects: [] // Keep empty array to preventing strict crashes if accessed elsewhere, or remove if confident
+      }));
+
+      return res.status(200).json(serialize(formattedClients));
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }
@@ -35,9 +50,9 @@ export default async function handler(req, res) {
       }
 
       const form = new IncomingForm({
-        uploadDir: uploadDir,      
-        keepExtensions: true,     
-        maxFileSize: 5 * 1024 * 1024, 
+        uploadDir: uploadDir,
+        keepExtensions: true,
+        maxFileSize: 5 * 1024 * 1024,
         filename: (name, ext, part, form) => {
           const cleanName = part.originalFilename.replace(/\s+/g, '_');
           return `${Date.now()}_${cleanName}`;
@@ -72,12 +87,12 @@ export default async function handler(req, res) {
 
       // 4. Simpan ke Database (Transaction)
       const result = await prisma.$transaction(async (tx) => {
-        
+
         // A. Create Client
         const newClient = await tx.client.create({
-          data: { 
-            client_name: client_name, 
-            client_logo: logoPathInDb 
+          data: {
+            client_name: client_name,
+            client_logo: logoPathInDb
           }
         });
 
@@ -85,7 +100,7 @@ export default async function handler(req, res) {
         if (userId) {
           await tx.activity_logs.create({
             data: {
-              user_id: BigInt(userId), 
+              user_id: BigInt(userId),
               action: 'Tambah Client',
               details: `Menambahkan Mitra/Client baru: ${client_name}`
             }

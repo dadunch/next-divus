@@ -14,9 +14,17 @@ export default async function handler(req, res) {
       // Cache 10 menit fresh, 1 jam stale-while-revalidate
       setCacheHeaders(res, 600, 3600);
 
-      const products = await prisma.product.findMany({
+      const { limit } = req.query;
+
+      const queryOptions = {
         orderBy: { created_at: 'desc' },
-      });
+      };
+
+      if (limit) {
+        queryOptions.take = parseInt(limit);
+      }
+
+      const products = await prisma.product.findMany(queryOptions);
       return res.status(200).json(serialize(products));
     } catch (error) {
       console.error("GET Product Error:", error);

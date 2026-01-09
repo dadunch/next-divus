@@ -54,15 +54,15 @@ const PreviewSneakPeek = ({ images }) => {
       {/* TOP */}
       <div className="flex justify-between gap-8">
         <div className="flex-1 space-y-4">
-          <div className="h-6 w-3/4 bg-gray-200 rounded" />
-          <div className="h-5 w-full bg-gray-200 rounded" />
-          <div className="h-4 w-1/2 bg-gray-200 rounded" />
-          <div className="h-4 w-2/3 bg-gray-200 rounded" />
+          <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse" />
+          <div className="h-5 w-full bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse" />
         </div>
 
         <div className="relative w-[260px] h-[180px]">
           {/* IMAGE 1 (Utama/Kanan) */}
-          <div className="absolute top-3 right-5 w-32 h-32 rounded-xl overflow-hidden shadow-lg bg-gray-100 z-10">
+          <div className="absolute top-3 right-5 w-32 h-32 rounded-xl overflow-hidden shadow-lg bg-gray-100 z-10 border border-white">
             {images.img1 ? (
               <img src={images.img1} className="w-full h-full object-cover" />
             ) : (
@@ -73,7 +73,7 @@ const PreviewSneakPeek = ({ images }) => {
           </div>
 
           {/* IMAGE 2 (Kiri/Kecil) */}
-          <div className="absolute top-12.5 left-7.5 w-24 h-24 rounded-md overflow-hidden shadow bg-gray-100 z-10">
+          <div className="absolute top-12.5 left-7.5 w-24 h-24 rounded-md overflow-hidden shadow bg-gray-100 z-10 border border-white">
             {images.img2 ? (
               <img src={images.img2} className="w-full h-full object-cover" />
             ) : (
@@ -92,15 +92,15 @@ const PreviewSneakPeek = ({ images }) => {
         </div>
       </div>
 
-      <div className="my-8 h-3 bg-gray-200 rounded-full" />
+      <div className="my-8 h-3 bg-gray-200 rounded-full opacity-50" />
 
       {/* BOTTOM */}
       <div className="flex justify-between gap-8">
         <div className="flex-1 space-y-4">
-          <div className="h-5 w-2/3 bg-gray-200 rounded" />
-          <div className="h-4 w-full bg-gray-200 rounded" />
-          <div className="h-4 w-5/6 bg-gray-200 rounded" />
-          <div className="h-4 w-1/3 bg-gray-200 rounded" />
+          <div className="h-5 w-2/3 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-1/3 bg-gray-200 rounded animate-pulse" />
         </div>
 
         {/* IMAGE 3 (Tentang Kami) */}

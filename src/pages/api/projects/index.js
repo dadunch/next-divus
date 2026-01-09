@@ -11,13 +11,22 @@ export default async function handler(req, res) {
       // Cache 10 menit fresh, 1 jam stale-while-revalidate
       setCacheHeaders(res, 600, 3600);
 
-      const projects = await prisma.projects.findMany({
-        orderBy: { id: 'desc' }, // Urutkan dari yang terbaru
+      const { limit } = req.query;
+
+      const queryOptions = {
+        orderBy: { id: 'desc' },
         include: {
-          client: true,   // PENTING: Ambil data nama Client
-          category: true  // PENTING: Ambil data nama Bidang (Category)
+          client: true,
+          category: true
         }
-      });
+      };
+
+      // Jika ada limit (misal ?limit=3), batasi jumlah data yang diambil
+      if (limit) {
+        queryOptions.take = parseInt(limit);
+      }
+
+      const projects = await prisma.projects.findMany(queryOptions);
 
       // Solusi BigInt: Mengubah semua BigInt jadi String agar tidak error di browser
       const safeProjects = JSON.parse(JSON.stringify(projects, (key, value) =>

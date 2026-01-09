@@ -38,7 +38,7 @@ const ClientPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [openSortDropdown, setOpenSortDropdown] = useState(false);
-    const sortDropdownRef = useRef(null);
+  const sortDropdownRef = useRef(null);
 
   // 3. Fungsi Fetch Data
   const fetchClients = async () => {
@@ -62,18 +62,18 @@ const ClientPage = () => {
   useEffect(() => {
     fetchClients();
     const handleClickOutside = (event) => {
-    if (
-      sortDropdownRef.current &&
-      !sortDropdownRef.current.contains(event.target)
-    ) {
-      setOpenSortDropdown(false);
-    }
-  };
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(event.target)
+      ) {
+        setOpenSortDropdown(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // 4. Filter Pencarian
@@ -89,9 +89,9 @@ const ClientPage = () => {
       case "za": // Nama Z-A
         return b.client_name.localeCompare(a.client_name);
       case "most_projects": // Proyek Terbanyak
-        return (b.projects?.length || 0) - (a.projects?.length || 0);
+        return (b.project_count || 0) - (a.project_count || 0);
       case "least_projects": // Proyek Paling Sedikit
-        return (a.projects?.length || 0) - (b.projects?.length || 0);
+        return (a.project_count || 0) - (b.project_count || 0);
       default:
         return 0;
     }
@@ -199,7 +199,7 @@ const ClientPage = () => {
                 {sortOrder === "za" && "Abjad Z-A"}
                 {sortOrder === "most_projects" && "Proyek Terbanyak"}
                 {sortOrder === "least_projects" && "Proyek Paling Sedikit"}
-                
+
               </button>
 
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
@@ -214,7 +214,7 @@ const ClientPage = () => {
                     { label: "Abjad Z-A", value: "za" },
                     { label: "Proyek Terbanyak", value: "most_projects" },
                     { label: "Proyek Paling Sedikit", value: "least_projects" },
-                    
+
                   ].map((opt) => (
                     <button
                       key={opt.value}
@@ -222,11 +222,10 @@ const ClientPage = () => {
                         setSortOrder(opt.value);
                         setOpenSortDropdown(false);
                       }}
-                      className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${
-                        sortOrder === opt.value
-                          ? "bg-green-50 text-[#27D14C]"
-                          : "text-gray-600"
-                      }`}
+                      className={`w-full text-left px-5 py-3 text-sm font-medium hover:bg-green-50 hover:text-[#27D14C] transition-colors ${sortOrder === opt.value
+                        ? "bg-green-50 text-[#27D14C]"
+                        : "text-gray-600"
+                        }`}
                     >
                       {opt.label}
                     </button>
@@ -235,7 +234,7 @@ const ClientPage = () => {
               )}
             </div>
 
-            
+
 
             <button
               className="bg-[#2D2D39] hover:bg-black text-white px-6 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-all transform hover:scale-105"
@@ -307,21 +306,22 @@ const ClientPage = () => {
                     </td>
 
                     <td className="py-4 px-6 text-center">
-                      <div className="flex justify-center h-12 w-full items-center">
+                      <div className="flex justify-center items-center w-full">
                         {client.client_logo ? (
                           <img
                             src={client.client_logo}
-                            alt="Logo"
-                            className="h-full max-w-[100px] object-contain"
+                            alt={`Logo ${client.client_name}`}
+                            className="h-10 w-20 max-w-[120px] object-contain"
+                            loading="lazy"
                           />
                         ) : (
-                          <span className="text-xs text-gray-400">No Logo</span>
+                          <span className="text-xs text-gray-400 italic">No Logo</span>
                         )}
                       </div>
                     </td>
 
                     <td className="py-4 px-6 text-center font-semibold text-gray-700">
-                      {client.projects ? client.projects.length : 0}
+                      {client.project_count || 0}
                     </td>
 
                     <td className="py-4 px-6 text-center">

@@ -67,6 +67,13 @@ export default async function handler(req, res) {
       // Helper Imports (Dynamic Import agar tidak error di build time jika file belum ada)
       const { uploadToSupabase, deleteFromSupabase } = await import('../../lib/upload-service');
 
+      // Debug: Log environment status (dihapus setelah confirm jalan)
+      console.log('🔍 Supabase Config Check:', {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      });
+
       // D. Transaction Database
       const result = await prisma.$transaction(async (tx) => {
 

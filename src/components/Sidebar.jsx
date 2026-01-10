@@ -227,7 +227,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       if (result.isConfirmed) {
         dispatch(logout());
         localStorage.removeItem('adminUser');
-        router.push('/Admin/LoginAdmin');
+        router.push('/admindvs');
       }
     });
   };

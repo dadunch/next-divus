@@ -9,6 +9,7 @@ import { productCache } from '../utils/productCache';
 import { projectCache } from '../utils/projectCache';
 import { clientCache } from '../utils/clientCache';
 import { heroCache } from '../utils/heroCache';
+import { getImageUrl, getClientLogoUrl } from '../utils/imageHelper';
 
 // ============ SKELETON LOADER COMPONENTS ============
 const HeroImageSkeleton = () => (
@@ -573,7 +574,7 @@ export default function Home() {
                                         {clientLogos.map((logo, i) => (
                                             <motion.img
                                                 key={i}
-                                                src={logo}
+                                                src={getClientLogoUrl(logo)}
                                                 alt="Client Logo"
                                                 className="h-20 w-20 md:h-28 md:w-28 object-contain opacity-80 hover:opacity-100 hover:scale-110 transition-all duration-300"
                                             />

@@ -1,7 +1,7 @@
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import path from 'path';
-import prisma from '../../lib/prisma'; 
+import prisma from '../../lib/prisma';
 
 // Konfigurasi Upload
 export const config = {
@@ -13,7 +13,7 @@ export const config = {
 // Fungsi helper Formidable
 const parseForm = (req, saveLocally) => {
   if (!fs.existsSync(saveLocally)) fs.mkdirSync(saveLocally, { recursive: true });
-  
+
   const form = new IncomingForm({
     uploadDir: saveLocally,
     keepExtensions: true,
@@ -42,34 +42,60 @@ export default async function handler(req, res) {
 
     // === POST: Upload & Simpan ===
     if (method === 'POST') {
-      const uploadDir = path.join(process.cwd(), 'public/uploads');
-
-      // 1. Upload File
-      console.log("Mulai proses upload..."); // Cek Terminal VS Code
-      const { fields, files } = await parseForm(req, uploadDir);
-      console.log("Upload selesai. Files:", Object.keys(files));
-
-      // Helper path file
-      const getFilePath = (key) => {
-        const file = files[key];
-        if (!file) return null;
-        const fileObj = Array.isArray(file) ? file[0] : file;
-        return `/uploads/${fileObj.newFilename}`;
-      };
-
-      // 2. Siapkan Data
-      const userId = fields.user_id ? fields.user_id[0] : 'System';
-      
-      // Ambil data lama (jika ada)
-      const lastEntry = await prisma.menu_foto.findFirst({
-          orderBy: { created_at: 'desc' },
+      // 1. Parse Form (tanpa uploadDir)
+      const form = new IncomingForm({
+        keepExtensions: true,
+        maxFileSize: 10 * 1024 * 1024,
       });
 
-      const finalFoto1 = getFilePath('img1') || lastEntry?.foto1 || null;
-      const finalFoto2 = getFilePath('img2') || lastEntry?.foto2 || null;
-      const finalFoto3 = getFilePath('img3') || lastEntry?.foto3 || null;
+      console.log("Mulai proses upload...");
+      const { fields, files } = await new Promise((resolve, reject) => {
+        form.parse(req, (err, fields, files) => {
+          if (err) reject(err);
+          else resolve({ fields, files });
+        });
+      });
+      console.log("Form parsed. Files:", Object.keys(files));
 
-      // 3. Simpan Database (Tanpa Transaction/Log dulu agar aman)
+      // 2. Upload ke Supabase
+      const { uploadToSupabase } = await import('../../lib/upload-service');
+
+      const uploadImage = async (fileKey) => {
+        const file = files[fileKey];
+        if (!file) return null;
+
+        const fileObj = Array.isArray(file) ? file[0] : file;
+        try {
+          const url = await uploadToSupabase(fileObj, 'uploads', 'hero');
+          if (!url || !url.startsWith('http')) {
+            throw new Error('Invalid URL');
+          }
+          return url;
+        } catch (err) {
+          console.error(`Upload ${fileKey} failed:`, err);
+          return null;
+        }
+      };
+
+      // Upload 3 gambar secara parallel
+      const [newFoto1, newFoto2, newFoto3] = await Promise.all([
+        uploadImage('img1'),
+        uploadImage('img2'),
+        uploadImage('img3'),
+      ]);
+
+      // 3. Ambil data lama (untuk fallback jika ada foto yang tidak diupload)
+      const lastEntry = await prisma.menu_foto.findFirst({
+        orderBy: { created_at: 'desc' },
+      });
+
+      const finalFoto1 = newFoto1 || lastEntry?.foto1 || null;
+      const finalFoto2 = newFoto2 || lastEntry?.foto2 || null;
+      const finalFoto3 = newFoto3 || lastEntry?.foto3 || null;
+
+      // 4. Simpan Database
+      const userId = fields.user_id ? fields.user_id[0] : 'System';
+
       console.log("Menyimpan ke database...");
       const result = await prisma.menu_foto.create({
         data: {

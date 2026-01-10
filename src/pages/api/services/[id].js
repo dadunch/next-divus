@@ -35,16 +35,10 @@ export default async function handler(req, res) {
 
   // --- PUT: EDIT LAYANAN (DENGAN FILE UPLOAD) ---
   if (req.method === 'PUT') {
-    // Siapkan folder upload
-    const uploadDir = path.join(process.cwd(), 'public/uploads/products');
-    await fs.ensureDir(uploadDir);
-
+    // Parse form tanpa uploadDir (pakai temp)
     const form = new IncomingForm({
-      uploadDir: uploadDir,
       keepExtensions: true,
-      filename: (name, ext, part, form) => {
-        return part.originalFilename; // Gunakan nama file custom dari Frontend
-      }
+      maxFileSize: 10 * 1024 * 1024,
     });
 
     try {
@@ -56,7 +50,7 @@ export default async function handler(req, res) {
         });
       });
 
-      // Ambil Data Text (Formidable v3 mengembalikan array)
+      // Ambil Data Text
       const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
       const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
       const short_description = Array.isArray(fields.short_description) ? fields.short_description[0] : fields.short_description;
@@ -64,36 +58,39 @@ export default async function handler(req, res) {
       const userId = Array.isArray(fields.userId) ? fields.userId[0] : fields.userId;
       const existingImageUrl = Array.isArray(fields.existingImageUrl) ? fields.existingImageUrl[0] : fields.existingImageUrl;
 
-      // Ambil Path Gambar Baru (jika ada upload baru)
+      // Ambil File Baru (jika ada)
       let dbImageUrl = existingImageUrl || null; // Default: gunakan gambar lama
-      
+
       const uploadedFile = files.image ? (Array.isArray(files.image) ? files.image[0] : files.image) : null;
 
       if (uploadedFile) {
-        // Ada file baru yang diupload
-        dbImageUrl = `/uploads/products/${uploadedFile.newFilename}`;
-        
-        // Hapus file lama jika ada dan berbeda
-        if (existingImageUrl && existingImageUrl !== dbImageUrl) {
-          try {
-            const oldFilePath = path.join(process.cwd(), 'public', existingImageUrl);
-            if (await fs.pathExists(oldFilePath)) {
-              await fs.remove(oldFilePath);
-              console.log(`Deleted old image: ${existingImageUrl}`);
-            }
-          } catch (err) {
-            console.error("Error deleting old image:", err);
-            // Tidak perlu throw error, lanjut saja
+        // Ada file baru => Upload ke Supabase
+        const { uploadToSupabase, deleteFromSupabase } = await import('../../../lib/upload-service');
+
+        try {
+          dbImageUrl = await uploadToSupabase(uploadedFile, 'uploads', 'services');
+
+          if (!dbImageUrl || !dbImageUrl.startsWith('http')) {
+            throw new Error('Upload failed: Invalid URL');
           }
+
+          // Hapus file lama dari Supabase jika ada dan berbeda
+          if (existingImageUrl && existingImageUrl.startsWith('http') && existingImageUrl !== dbImageUrl) {
+            await deleteFromSupabase(existingImageUrl, 'uploads');
+            console.log(`Deleted old image from Supabase: ${existingImageUrl}`);
+          }
+        } catch (uploadError) {
+          console.error('Service image upload failed:', uploadError);
+          return res.status(500).json({ error: `Gagal upload gambar: ${uploadError.message}` });
         }
       }
 
       // === UPDATE DATABASE ===
       const result = await prisma.$transaction(async (tx) => {
-        const updateData = { 
-          title, 
-          description, 
-          short_description: short_description || '', 
+        const updateData = {
+          title,
+          description,
+          short_description: short_description || '',
           icon_url: icon_url || '',
           image_url: dbImageUrl
         };
@@ -113,7 +110,7 @@ export default async function handler(req, res) {
       });
 
       return res.status(200).json(serialize(result));
-      
+
     } catch (error) {
       console.error("Error updating service:", error);
       return res.status(500).json({ error: error.message || "Gagal update data" });
@@ -133,10 +130,10 @@ export default async function handler(req, res) {
     try {
       await prisma.$transaction(async (tx) => {
         // 1. Ambil data dulu sebelum dihapus
-        const serviceToDelete = await tx.services.findUnique({ 
-          where: { id: serviceId } 
+        const serviceToDelete = await tx.services.findUnique({
+          where: { id: serviceId }
         });
-        
+
         // 2. Hapus file gambar jika ada
         if (serviceToDelete?.image_url) {
           try {
@@ -149,15 +146,15 @@ export default async function handler(req, res) {
             console.error("Error deleting image file:", err);
           }
         }
-      
+
         // 3. Hapus Data dari Database
         await tx.services.delete({ where: { id: serviceId } });
 
         // 4. Catat Log
-        const detailText = serviceToDelete 
-          ? `Menghapus layanan: ${serviceToDelete.title}` 
+        const detailText = serviceToDelete
+          ? `Menghapus layanan: ${serviceToDelete.title}`
           : `Menghapus layanan ID: ${id}`;
-        
+
         const uid = userId ? parseInt(userId) : null;
         if (uid) {
           await createLog(tx, uid, "Hapus Layanan", detailText);
@@ -165,7 +162,7 @@ export default async function handler(req, res) {
       });
 
       return res.status(200).json({ message: 'Berhasil dihapus' });
-      
+
     } catch (error) {
       console.error("Error deleting service:", error);
       return res.status(500).json({ error: "Gagal menghapus data" });

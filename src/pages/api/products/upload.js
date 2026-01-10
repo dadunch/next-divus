@@ -17,34 +17,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Siapkan folder penyimpanan
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'products');
-    
-    // Buat folder jika belum ada
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    // 2. Setup Formidable
+    // 1. Setup Formidable (tanpa uploadDir, pakai temp)
     const form = new IncomingForm({
-      uploadDir: uploadDir,
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB
-      filename: (name, ext, part, form) => {
-        // Generate nama file unik
-        const originalName = part.originalFilename || 'produk';
-        const nameWithoutExt = path.parse(originalName).name;
-        const extension = path.extname(originalName) || '.jpg';
-        
-        const now = new Date();
-        const timestamp = now.toISOString().replace(/[-:T.]/g, '').slice(0, 14); 
-        const safeName = nameWithoutExt.replace(/[^a-zA-Z0-9]/g, '-');
-        
-        return `${safeName}-${timestamp}${extension}`;
-      }
     });
 
-    // 3. Parse Request
+    // 2. Parse Request
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) return reject(err);
@@ -52,18 +31,30 @@ export default async function handler(req, res) {
       });
     });
 
-    // 4. Ambil File
+    // 3. Ambil File
     const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
 
     if (!uploadedFile) {
       return res.status(400).json({ error: 'Tidak ada file yang diupload' });
     }
 
-    // 5. Kembalikan URL File
-    const fileName = path.basename(uploadedFile.filepath);
-    const url = `/uploads/products/${fileName}`;
+    // 4. Upload ke Supabase
+    const { uploadToSupabase } = await import('../../../lib/upload-service');
 
-    return res.status(200).json({ url });
+    try {
+      const url = await uploadToSupabase(uploadedFile, 'uploads', 'products');
+
+      if (!url || !url.startsWith('http')) {
+        throw new Error('Upload failed: Invalid URL returned');
+      }
+
+      // 5. Kembalikan URL Supabase
+      return res.status(200).json({ url });
+
+    } catch (uploadError) {
+      console.error('Product upload to Supabase failed:', uploadError);
+      return res.status(500).json({ error: `Gagal upload: ${uploadError.message}` });
+    }
 
   } catch (error) {
     console.error('Upload API Error:', error);

@@ -43,20 +43,10 @@ export default async function handler(req, res) {
   // === POST: Tambah Client Baru (Upload File) ===
   if (req.method === 'POST') {
     try {
-      // 1. Konfigurasi Upload
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'client');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
+      // 1. Konfigurasi Form (tanpa uploadDir, pakai temp OS)
       const form = new IncomingForm({
-        uploadDir: uploadDir,
         keepExtensions: true,
         maxFileSize: 5 * 1024 * 1024,
-        filename: (name, ext, part, form) => {
-          const cleanName = part.originalFilename.replace(/\s+/g, '_');
-          return `${Date.now()}_${cleanName}`;
-        }
       });
 
       // 2. Parsing Form Data (Promise Wrapper)
@@ -77,22 +67,32 @@ export default async function handler(req, res) {
 
       // Validasi sederhana
       if (!client_name || !file) {
-        // Jika gagal, hapus file yang terlanjur ter-upload 
-        if (file) fs.unlinkSync(file.filepath);
         return res.status(400).json({ message: 'Nama Client dan Logo wajib diisi' });
       }
 
-      // Path yang akan disimpan di DB (URL akses publik)
-      const logoPathInDb = `/uploads/client/${file.newFilename}`;
+      // 4. Upload ke Supabase
+      const { uploadToSupabase } = await import('../../../lib/upload-service');
 
-      // 4. Simpan ke Database (Transaction)
+      let logoUrl;
+      try {
+        logoUrl = await uploadToSupabase(file, 'uploads', 'client');
+
+        if (!logoUrl || !logoUrl.startsWith('http')) {
+          throw new Error('Upload failed: Invalid URL returned');
+        }
+      } catch (uploadError) {
+        console.error('Client logo upload failed:', uploadError);
+        return res.status(500).json({ error: `Gagal upload logo: ${uploadError.message}` });
+      }
+
+      // 5. Simpan ke Database (Transaction)
       const result = await prisma.$transaction(async (tx) => {
 
         // A. Create Client
         const newClient = await tx.client.create({
           data: {
             client_name: client_name,
-            client_logo: logoPathInDb
+            client_logo: logoUrl
           }
         });
 

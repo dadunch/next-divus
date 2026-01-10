@@ -11,42 +11,39 @@ export const config = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // 1. Tentukan folder tujuan
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'company');
-  
-  // 2. Buat folder jika belum ada
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
+  // 1. Setup Formidable (tanpa uploadDir)
   const form = new IncomingForm({
-    uploadDir,
     keepExtensions: true,
-    filename: (name, ext, part) => {
-      const now = new Date();
-      // Format: YYYYMMDD (contoh: 20251219)
-      const datePart = now.toISOString().slice(0, 10).replace(/-/g, ''); 
-      // Format: HHmm (contoh: 2245)
-      const timePart = now.getHours().toString().padStart(2, '0') + 
-                       now.getMinutes().toString().padStart(2, '0');
-      
-      // Bersihkan karakter aneh di judul agar nama file aman
-      const safeTitle = part.originalFilename.split('.')[0].replace(/[^a-zA-Z0-9]/g, '-');
-      
-      return `${safeTitle}-${datePart}-${timePart}${ext}`;
-    }
+    maxFileSize: 10 * 1024 * 1024,
   });
 
-  return new Promise((resolve) => {
-    form.parse(req, (err, fields, files) => {
-      if (err) return resolve(res.status(500).json({ error: err.message }));
-      
-      const file = Array.isArray(files.file) ? files.file[0] : files.file;
-      if (!file) return resolve(res.status(400).json({ error: "File tidak terdeteksi" }));
-
-      // Ambil nama file akhir untuk dikirim ke DB
-      const fileName = path.basename(file.filepath);
-      resolve(res.status(200).json({ url: `/uploads/company/${fileName}` }));
+  try {
+    const [fields, files] = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) return reject(err);
+        resolve([fields, files]);
+      });
     });
-  });
+
+    const file = Array.isArray(files.file) ? files.file[0] : files.file;
+    if (!file) {
+      return res.status(400).json({ error: "File tidak terdeteksi" });
+    }
+
+    // 2. Upload ke Supabase
+    const { uploadToSupabase } = await import('../../../lib/upload-service');
+
+    const url = await uploadToSupabase(file, 'uploads', 'company_photos');
+
+    if (!url || !url.startsWith('http')) {
+      throw new Error('Upload failed: Invalid URL returned');
+    }
+
+    // 3. Kembalikan URL Supabase
+    return res.status(200).json({ url });
+
+  } catch (error) {
+    console.error('Company photo upload failed:', error);
+    return res.status(500).json({ error: error.message || 'Gagal upload foto' });
+  }
 }

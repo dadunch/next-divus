@@ -1,5 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
+import { setCachePreset } from '../../../lib/cache-headers';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
@@ -8,13 +9,13 @@ export default async function handler(req, res) {
 
   try {
     const now = new Date();
-    let whereClause = {}; 
+    let whereClause = {};
 
     // 1. Tentukan Range Tanggal
     if (filter === 'Bulan Ini') {
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       whereClause = { created_at: { gte: firstDayOfMonth } };
-    } 
+    }
     else if (filter === 'Tahun Ini') {
       const firstDayOfYear = new Date(now.getFullYear(), 0, 1);
       whereClause = { created_at: { gte: firstDayOfYear } };
@@ -22,26 +23,35 @@ export default async function handler(req, res) {
     // "Keseluruhan" tidak perlu whereClause (ambil semua)
 
     // 2. Fetch Data (Parallel)
+    // 2. Fetch Data (Split into batches to avoid connection pool timeout)
+    setCachePreset(res, 'DYNAMIC'); // Cache 1 menit agar tidak spam request ke DB
+
+    // Batch 1: Counts & Profile (5 koneksi max)
     const [
       countMitra, countProduk, countProyek, countLayanan,
-      companyProfile,
-      recentLogs,
-      // Data untuk Grafik (Hanya butuh tanggal dibuat)
-      rawProyek,
-      rawMitra,
-      rawProduk
+      companyProfile
     ] = await Promise.all([
       prisma.client.count({ where: whereClause }),
       prisma.product.count({ where: whereClause }),
       prisma.projects.count({ where: whereClause }),
       prisma.services.count({ where: whereClause }),
       prisma.company_profile.findFirst(),
+    ]);
+
+    // Batch 2: Logs & Charts (4 koneksi)
+    const [
+      recentLogs,
+      rawProyek,
+      rawMitra,
+      rawProduk
+    ] = await Promise.all([
       prisma.activity_logs.findMany({
         where: whereClause,
         orderBy: { created_at: 'desc' },
+        take: 20, // LIMIT LOGS: Hanya ambil 20 log terakhir agar tidak berat
         include: { users: { select: { username: true } } }
       }),
-      // Fetch raw dates untuk grafik
+      // Fetch raw dates untuk grafik (Hanya field created_at, cukup ringan)
       prisma.projects.findMany({ where: whereClause, select: { created_at: true } }),
       prisma.client.findMany({ where: whereClause, select: { created_at: true } }),
       prisma.product.findMany({ where: whereClause, select: { created_at: true } }),

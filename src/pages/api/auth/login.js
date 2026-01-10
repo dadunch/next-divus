@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
-import bcrypt from 'bcryptjs'; 
+import bcrypt from 'bcryptjs';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -11,11 +11,28 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Username dan Password wajib diisi' });
   }
 
+  // Helper: Retry logic untuk mengatasi masalah koneksi "flaky" (Cold Start Supabase)
+  const retryQuery = async (operation, maxRetries = 3) => {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await operation();
+      } catch (error) {
+        // Jika error koneksi (P1001) atau timeout (P2024), coba lagi
+        if ((error.code === 'P1001' || error.code === 'P2024') && i < maxRetries - 1) {
+          console.warn(`Database connection failed (Attempt ${i + 1}/${maxRetries}). Retrying...`);
+          await new Promise(res => setTimeout(res, 1000)); // Tunggu 1 detik
+          continue;
+        }
+        throw error;
+      }
+    }
+  };
+
   try {
-    // 1. Cari user di tabel users
-    const user = await prisma.users.findFirst({
+    // 1. Cari user di tabel users (Gunakan Retry)
+    const user = await retryQuery(() => prisma.users.findFirst({
       where: { username: username }
-    });
+    }));
 
     if (!user) {
       return res.status(401).json({ message: 'Username tidak ditemukan' });
@@ -24,19 +41,19 @@ export default async function handler(req, res) {
     // ============================================================
     // 2. CEK PASSWORD (MODIFIKASI: Support Plain Text)
     // ============================================================
-    
+
     // A. Cek langsung string (untuk akun yang passwordnya belum di-hash)
     let isPasswordValid = user.password === password;
 
     // B. (Opsional) Jika cek string gagal, coba cek pakai bcrypt 
     // (Jaga-jaga kalau Anda punya campuran akun hash & non-hash)
     if (!isPasswordValid) {
-        // Cek apakah string terlihat seperti hash bcrypt (biasanya diawali $2a$ atau $2b$)
-        if (user.password.startsWith('$2')) {
-            isPasswordValid = await bcrypt.compare(password, user.password);
-        }
+      // Cek apakah string terlihat seperti hash bcrypt (biasanya diawali $2a$ atau $2b$)
+      if (user.password.startsWith('$2')) {
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      }
     }
-    
+
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Password salah' });
     }
@@ -46,7 +63,7 @@ export default async function handler(req, res) {
     // 3. AMBIL DATA PEGAWAI & ROLES (Multi Role)
     const employee = await prisma.employee.findFirst({
       where: { users_id: user.id },
-      include: { roles: true } 
+      include: { roles: true }
     });
 
     // Jika user ada tapi belum diset sebagai pegawai
@@ -56,27 +73,27 @@ export default async function handler(req, res) {
 
     // Cek apakah punya role
     if (!employee.roles || employee.roles.length === 0) {
-        return res.status(403).json({ message: 'Akun ini belum memiliki Jabatan/Role apapun.' });
+      return res.status(403).json({ message: 'Akun ini belum memiliki Jabatan/Role apapun.' });
     }
 
     // 4. Login Sukses & Kirim Data Lengkap
     const { password: _, ...userWithoutPassword } = user;
-    
+
     // Ambil semua role untuk dikirim ke frontend
     const userRoles = employee.roles.map(r => ({
-        id: r.id.toString(),
-        name: r.role
+      id: r.id.toString(),
+      name: r.role
     }));
 
-    return res.status(200).json({ 
-        message: 'Login Berhasil', 
-        user: {
-          ...serialize(userWithoutPassword),
-          roles: userRoles,
-          // Fallback untuk frontend lama
-          roleId: userRoles[0]?.id, 
-          roleName: userRoles[0]?.name
-        }
+    return res.status(200).json({
+      message: 'Login Berhasil',
+      user: {
+        ...serialize(userWithoutPassword),
+        roles: userRoles,
+        // Fallback untuk frontend lama
+        roleId: userRoles[0]?.id,
+        roleName: userRoles[0]?.name
+      }
     });
 
   } catch (error) {

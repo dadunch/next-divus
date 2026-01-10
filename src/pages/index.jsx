@@ -182,63 +182,55 @@ export default function Home() {
         // Jalankan fetch hero images SEGERA
         fetchHeroImagesFirst();
 
-        // ============ FETCH DATA LAINNYA (TIDAK BLOCKING) ============
+        // ============ FETCH DATA LAINNYA (PARALLEL) ============
         const fetchAllData = async () => {
             try {
-                // Stats Dashboard
-                try {
-                    const resDash = await fetch('/api/dashboard');
-                    const dataDash = await resDash.json();
-                    if (resDash.ok && dataDash.stats) {
-                        setStatsData([
-                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' },
-                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-                        ]);
-                    }
-                } catch (error) {
-                    console.warn("Gagal fetch stats dashboard:", error);
+                // Definisikan promise untuk setiap request
+                const pDashboard = fetch('/api/dashboard').then(res => res.json()).catch(() => ({}));
+                const pServices = serviceCache.fetch().catch(() => []);
+                const pProducts = fetch('/api/products?limit=3').then(res => res.json()).catch(() => []);
+                const pProjects = fetch('/api/projects?limit=3').then(res => res.json()).catch(() => []);
+                const pClients = clientCache.fetch().catch(() => []);
+
+                // Jalankan semua request secara bersamaan (Parallel)
+                const [dataDash, dataServices, dataProducts, dataProjects, dataClients] = await Promise.all([
+                    pDashboard,
+                    pServices,
+                    pProducts,
+                    pProjects,
+                    pClients
+                ]);
+
+                // 1. Set Data Dashboard
+                if (dataDash?.stats) {
+                    setStatsData([
+                        { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' },
+                        { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
+                        { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
+                    ]);
                 }
 
-                // Services
-                const dataService = await serviceCache.fetch();
-                if (Array.isArray(dataService)) {
-                    setServices(dataService);
+                // 2. Set Data Services
+                if (Array.isArray(dataServices)) {
+                    setServices(dataServices);
                 }
 
-                // Products (Optimized: Fetch only top 3)
-                try {
-                    const resProd = await fetch('/api/products?limit=3');
-                    const dataProd = await resProd.json();
-                    if (Array.isArray(dataProd)) {
-                        setProducts(dataProd);
-                    }
-                } catch (e) {
-                    console.error("Gagal fetch products:", e);
+                // 3. Set Data Products
+                if (Array.isArray(dataProducts)) {
+                    setProducts(dataProducts);
                 }
 
-                // Projects (Optimized: Fetch only top 3)
-                try {
-                    const resProj = await fetch('/api/projects?limit=3');
-                    const dataProj = await resProj.json();
-                    if (Array.isArray(dataProj)) {
-                        setProjects(dataProj);
-                    }
-                } catch (e) {
-                    console.error("Gagal fetch projects:", e);
+                // 4. Set Data Projects
+                if (Array.isArray(dataProjects)) {
+                    setProjects(dataProjects);
                 }
 
-                // Clients
-                try {
-                    const dataClients = await clientCache.fetch();
-                    if (Array.isArray(dataClients)) {
-                        const logos = dataClients
-                            .map(client => client.client_logo)
-                            .filter(logo => logo !== null && logo !== "");
-                        setClientLogos(logos);
-                    }
-                } catch (e) {
-                    console.error("Gagal fetch clients:", e);
+                // 5. Set Data Clients
+                if (Array.isArray(dataClients)) {
+                    const logos = dataClients
+                        .map(client => client.client_logo)
+                        .filter(logo => logo && logo !== "");
+                    setClientLogos(logos);
                 }
 
             } catch (error) {
@@ -265,7 +257,6 @@ export default function Home() {
         <main className="w-full">
             <Head>
                 <title>PT Divus Global Mediacomm</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
                 {/* Preconnect untuk optimasi */}
                 <link rel="preconnect" href="https://images.unsplash.com" />
                 <link rel="dns-prefetch" href="https://images.unsplash.com" />

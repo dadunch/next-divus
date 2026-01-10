@@ -32,22 +32,10 @@ export default async function handler(req, res) {
   // --- 2. PUT: Update/Create Data Profile & Upload ---
   if (method === 'PUT') {
     try {
-      // A. Siapkan Folder Upload
-      const logoDir = path.join(process.cwd(), 'public', 'uploads', 'company');
-      const docDir = path.join(process.cwd(), 'public', 'uploads', 'docs');
-
-      if (!fs.existsSync(logoDir)) fs.mkdirSync(logoDir, { recursive: true });
-      if (!fs.existsSync(docDir)) fs.mkdirSync(docDir, { recursive: true });
-
-      // B. Konfigurasi Formidable
+      // B. Konfigurasi Formidable (Default ke Temp Dir OS yang writable di Vercel)
       const form = new IncomingForm({
-        uploadDir: logoDir, // Default dir (nanti kita pindah jika itu dokumen)
         keepExtensions: true,
-        maxFileSize: 20 * 1024 * 1024, // Limit 20MB (untuk PDF besar)
-        filename: (name, ext, part) => {
-          const cleanName = part.originalFilename.replace(/\s+/g, '_');
-          return `${Date.now()}_${cleanName}`;
-        }
+        maxFileSize: 20 * 1024 * 1024, // Limit 20MB
       });
 
       // C. Parse Request
@@ -76,6 +64,9 @@ export default async function handler(req, res) {
       const newLogo = getFile(data.files.logo_url);
       const newDoc = getFile(data.files.file_url);
 
+      // Helper Imports (Dynamic Import agar tidak error di build time jika file belum ada)
+      const { uploadToSupabase, deleteFromSupabase } = await import('../../lib/upload-service');
+
       // D. Transaction Database
       const result = await prisma.$transaction(async (tx) => {
 
@@ -93,33 +84,28 @@ export default async function handler(req, res) {
           established_date: established_date ? new Date(established_date) : undefined,
         };
 
-        // 2. Handle Logo Upload
+        // 2. Handle Logo Upload (Supabase)
         if (newLogo) {
-          // Hapus logo lama jika ada
+          // Upload ke Supabase
+          const logoUrl = await uploadToSupabase(newLogo, 'uploads', 'company');
+          dataToSave.logo_url = logoUrl;
+
+          // Hapus logo lama dari Supabase jika ada
           if (existingData?.logo_url) {
-            const oldPath = path.join(process.cwd(), 'public', existingData.logo_url);
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            await deleteFromSupabase(existingData.logo_url, 'uploads');
           }
-          dataToSave.logo_url = `/uploads/company/${newLogo.newFilename}`;
         }
 
-        // 3. Handle Document Upload (Pindahkan ke folder docs)
+        // 3. Handle Document Upload (Supabase)
         if (newDoc) {
-          // Pindahkan file dari folder default (company) ke folder docs agar rapi
-          const oldPathTemp = newDoc.filepath;
-          const newFileName = newDoc.newFilename;
-          const newPath = path.join(docDir, newFileName);
+          // Upload ke Supabase
+          const docUrl = await uploadToSupabase(newDoc, 'uploads', 'docs');
+          dataToSave.file_url = docUrl;
 
-          // Rename/Move file
-          fs.renameSync(oldPathTemp, newPath);
-
-          // Hapus doc lama jika ada
+          // Hapus doc lama
           if (existingData?.file_url) {
-            const oldDocPath = path.join(process.cwd(), 'public', existingData.file_url);
-            if (fs.existsSync(oldDocPath)) fs.unlinkSync(oldDocPath);
+            await deleteFromSupabase(existingData.file_url, 'uploads');
           }
-
-          dataToSave.file_url = `/uploads/docs/${newFileName}`;
         }
 
         let updatedProfile;

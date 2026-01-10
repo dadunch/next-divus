@@ -35,15 +35,10 @@ export default async function handler(req, res) {
   // --- POST: TAMBAH LAYANAN ---
   if (req.method === 'POST') {
 
-    const uploadDir = path.join(process.cwd(), 'public/uploads/products');
-    await fs.ensureDir(uploadDir);
-
+    // B. Konfigurasi Formidable
     const form = new IncomingForm({
-      uploadDir: uploadDir,
       keepExtensions: true,
-      filename: (name, ext, part, form) => {
-        return part.originalFilename;
-      }
+      maxFileSize: 10 * 1024 * 1024, // 10MB
     });
 
     try {
@@ -75,12 +70,14 @@ export default async function handler(req, res) {
         }
       }
 
-      // 3. AMBIL GAMBAR
+      // 3. AMBIL GAMBAR & UPLOAD KE SUPABASE
       let dbImageUrl = null;
       const uploadedFile = files.image ? (Array.isArray(files.image) ? files.image[0] : files.image) : null;
 
+      const { uploadToSupabase } = await import('../../../lib/upload-service');
+
       if (uploadedFile) {
-        dbImageUrl = `/uploads/products/${uploadedFile.newFilename}`;
+        dbImageUrl = await uploadToSupabase(uploadedFile, 'uploads', 'services');
       }
 
       // 4. BUAT SLUG

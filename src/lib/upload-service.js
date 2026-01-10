@@ -14,14 +14,41 @@ export async function uploadToSupabase(file, bucket = 'uploads', folder = '') {
             throw new Error("File invalid atau tidak ditemukan");
         }
 
-        // Baca file buffer dari temporary path
-        const fileContent = fs.readFileSync(file.filepath);
+        // 1. Validasi Environment Variables
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        // Bersihkan nama file dan tambahkan timestamp
+        console.log('📋 Upload Config Check:', {
+            hasFile: !!file,
+            hasFilepath: !!file.filepath,
+            bucket,
+            folder,
+            supabaseUrl: supabaseUrl ? '✅ Set' : '❌ Missing',
+            serviceKey: serviceKey ? '✅ Set' : '❌ Missing',
+            anonKey: anonKey ? '✅ Set' : '❌ Missing'
+        });
+
+        if (!supabaseUrl) {
+            throw new Error('❌ SUPABASE_URL tidak ditemukan di environment variables');
+        }
+
+        if (!serviceKey && !anonKey) {
+            throw new Error('❌ Tidak ada Supabase Key (service_role atau anon) di environment variables');
+        }
+
+        // 2. Baca file buffer dari temporary path
+        console.log('📂 Reading file:', file.filepath);
+        const fileContent = fs.readFileSync(file.filepath);
+        console.log('✅ File read successful, size:', fileContent.length, 'bytes');
+
+        // 3. Bersihkan nama file dan tambahkan timestamp
         const cleanName = (file.originalFilename || file.newFilename || 'file').replace(/[^a-zA-Z0-9.]/g, '_');
         const fileName = folder ? `${folder}/${Date.now()}_${cleanName}` : `${Date.now()}_${cleanName}`;
 
-        // Upload ke Supabase
+        console.log('📝 Upload target:', { bucket, fileName });
+
+        // 4. Upload ke Supabase
         const { data, error } = await supabase.storage
             .from(bucket)
             .upload(fileName, fileContent, {
@@ -30,19 +57,28 @@ export async function uploadToSupabase(file, bucket = 'uploads', folder = '') {
             });
 
         if (error) {
-            console.error("Supabase Storage Upload Error:", error);
-            throw error;
+            console.error("❌ Supabase Storage Upload Error:", {
+                message: error.message,
+                statusCode: error.statusCode,
+                error: error
+            });
+            throw new Error(`Supabase upload failed: ${error.message}`);
         }
 
-        // Ambil Public URL
+        console.log('✅ Upload successful:', data);
+
+        // 5. Ambil Public URL
         const { data: publicUrlData } = supabase.storage
             .from(bucket)
             .getPublicUrl(fileName);
 
-        return publicUrlData.publicUrl;
+        const finalUrl = publicUrlData.publicUrl;
+        console.log('🔗 Public URL generated:', finalUrl);
+
+        return finalUrl;
 
     } catch (error) {
-        console.error("Upload Service Error:", error);
+        console.error("💥 Upload Service Error:", error);
         throw error;
     }
 }

@@ -1,8 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
-import { IncomingForm } from 'formidable'; // Library untuk handle upload
-import fs from 'fs';
-import path from 'path';
+import { IncomingForm } from 'formidable';
 
 // PENTING: Matikan body parser bawaan Next.js agar formidable bisa bekerja
 export const config = {

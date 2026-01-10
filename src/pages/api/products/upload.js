@@ -1,6 +1,4 @@
 import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import path from 'path';
 
 // Konfigurasi wajib: Matikan body parser Next.js
 export const config = {

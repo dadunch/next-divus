@@ -2,8 +2,6 @@ import prisma from '../../lib/prisma';
 import { serialize } from '../../lib/utils';
 import { createLog } from '../../lib/logger';
 import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import path from 'path';
 import { setCachePreset } from '../../lib/cache-headers';
 
 // === KONFIGURASI WAJIB ===

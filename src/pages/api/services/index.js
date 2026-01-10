@@ -1,6 +1,4 @@
 import { IncomingForm } from 'formidable';
-import path from 'path';
-import fs from 'fs-extra';
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';

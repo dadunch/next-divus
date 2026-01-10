@@ -1,6 +1,4 @@
 import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import path from 'path';
 import prisma from '../../lib/prisma';
 
 // Konfigurasi Upload
@@ -10,23 +8,6 @@ export const config = {
   },
 };
 
-// Fungsi helper Formidable
-const parseForm = (req, saveLocally) => {
-  if (!fs.existsSync(saveLocally)) fs.mkdirSync(saveLocally, { recursive: true });
-
-  const form = new IncomingForm({
-    uploadDir: saveLocally,
-    keepExtensions: true,
-    filename: (name, ext, part) => part.originalFilename,
-  });
-
-  return new Promise((resolve, reject) => {
-    form.parse(req, (err, fields, files) => {
-      if (err) reject(err);
-      else resolve({ fields, files });
-    });
-  });
-};
 
 export default async function handler(req, res) {
   const { method } = req;

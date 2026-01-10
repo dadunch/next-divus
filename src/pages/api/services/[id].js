@@ -2,8 +2,6 @@ import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
 import { IncomingForm } from 'formidable';
-import path from 'path';
-import fs from 'fs-extra';
 
 // Disable default body parser untuk handle file upload
 export const config = {
@@ -134,16 +132,14 @@ export default async function handler(req, res) {
           where: { id: serviceId }
         });
 
-        // 2. Hapus file gambar jika ada
-        if (serviceToDelete?.image_url) {
+        // 2. Hapus file gambar dari Supabase jika ada
+        if (serviceToDelete?.image_url && serviceToDelete.image_url.startsWith('http')) {
           try {
-            const filePath = path.join(process.cwd(), 'public', serviceToDelete.image_url);
-            if (await fs.pathExists(filePath)) {
-              await fs.remove(filePath);
-              console.log(`Deleted image: ${serviceToDelete.image_url}`);
-            }
+            const { deleteFromSupabase } = await import('../../../lib/upload-service');
+            await deleteFromSupabase(serviceToDelete.image_url, 'uploads');
+            console.log(`Deleted image from Supabase: ${serviceToDelete.image_url}`);
           } catch (err) {
-            console.error("Error deleting image file:", err);
+            console.error("Error deleting image from Supabase:", err);
           }
         }
 

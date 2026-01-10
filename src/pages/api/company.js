@@ -93,25 +93,49 @@ export default async function handler(req, res) {
 
         // 2. Handle Logo Upload (Supabase)
         if (newLogo) {
-          // Upload ke Supabase
-          const logoUrl = await uploadToSupabase(newLogo, 'uploads', 'company');
-          dataToSave.logo_url = logoUrl;
+          try {
+            // Upload ke Supabase
+            const logoUrl = await uploadToSupabase(newLogo, 'uploads', 'company');
 
-          // Hapus logo lama dari Supabase jika ada
-          if (existingData?.logo_url) {
-            await deleteFromSupabase(existingData.logo_url, 'uploads');
+            // Validasi URL (harus lengkap, bukan hanya nama file)
+            if (!logoUrl || !logoUrl.startsWith('http')) {
+              throw new Error(`❌ Upload returned invalid URL: ${logoUrl}`);
+            }
+
+            dataToSave.logo_url = logoUrl;
+            console.log('✅ Logo uploaded successfully:', logoUrl);
+
+            // Hapus logo lama dari Supabase jika ada
+            if (existingData?.logo_url && existingData.logo_url.startsWith('http')) {
+              await deleteFromSupabase(existingData.logo_url, 'uploads');
+            }
+          } catch (uploadError) {
+            console.error('❌ Logo upload FAILED:', uploadError);
+            throw new Error(`Gagal upload logo: ${uploadError.message}`);
           }
         }
 
         // 3. Handle Document Upload (Supabase)
         if (newDoc) {
-          // Upload ke Supabase
-          const docUrl = await uploadToSupabase(newDoc, 'uploads', 'docs');
-          dataToSave.file_url = docUrl;
+          try {
+            // Upload ke Supabase
+            const docUrl = await uploadToSupabase(newDoc, 'uploads', 'docs');
 
-          // Hapus doc lama
-          if (existingData?.file_url) {
-            await deleteFromSupabase(existingData.file_url, 'uploads');
+            // Validasi URL (harus lengkap, bukan hanya nama file)
+            if (!docUrl || !docUrl.startsWith('http')) {
+              throw new Error(`❌ Upload returned invalid URL: ${docUrl}`);
+            }
+
+            dataToSave.file_url = docUrl;
+            console.log('✅ Document uploaded successfully:', docUrl);
+
+            // Hapus doc lama
+            if (existingData?.file_url && existingData.file_url.startsWith('http')) {
+              await deleteFromSupabase(existingData.file_url, 'uploads');
+            }
+          } catch (uploadError) {
+            console.error('❌ Document upload FAILED:', uploadError);
+            throw new Error(`Gagal upload dokumen: ${uploadError.message}`);
           }
         }
 

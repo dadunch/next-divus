@@ -7,7 +7,7 @@ import fs from 'fs';
  * @param {String} bucket - Nama bucket (default: 'uploads')
  * @param {String} folder - Nama folder tujuan (misal: 'company', 'products')
  * @returns {Promise<String>} - URL Public file yang diupload
- */
+ */ 
 export async function uploadToSupabase(file, bucket = 'uploads', folder = '') {
     try {
         if (!file || !file.filepath) {

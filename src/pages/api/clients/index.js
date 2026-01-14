@@ -1,6 +1,9 @@
+// src/pages/api/clients/index.js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { IncomingForm } from 'formidable';
+import { limiter } from '../../../lib/rate-limit'; // Import limiter
 
 // PENTING: Matikan body parser bawaan Next.js agar formidable bisa bekerja
 export const config = {
@@ -10,8 +13,27 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  const { method } = req;
+
+  // ============================================================
+  // 1. IMPLEMENTASI THROTTLE (RATE LIMITING)
+  // ============================================================
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 30 kali per menit (untuk navigasi dashboard)
+    // POST: 3 kali per menit (sangat ketat karena melibatkan proses Upload Storage)
+    const limit = method === 'GET' ? 30 : 3;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Aktivitas terlalu cepat. Untuk melindungi penyimpanan server, silakan tunggu 1 menit.' 
+    });
+  }
+
   // === GET: Ambil Data Client ===
-  if (req.method === 'GET') {
+  if (method === 'GET') {
     try {
       const clients = await prisma.client.findMany({
         select: {
@@ -25,11 +47,10 @@ export default async function handler(req, res) {
         orderBy: { id: 'desc' }
       });
 
-      // Map result to flatten structure for frontend
       const formattedClients = clients.map(client => ({
         ...client,
         project_count: client._count.projects,
-        projects: [] // Keep empty array to preventing strict crashes if accessed elsewhere, or remove if confident
+        projects: [] 
       }));
 
       return res.status(200).json(serialize(formattedClients));
@@ -39,12 +60,12 @@ export default async function handler(req, res) {
   }
 
   // === POST: Tambah Client Baru (Upload File) ===
-  if (req.method === 'POST') {
+  if (method === 'POST') {
     try {
-      // 1. Konfigurasi Form (tanpa uploadDir, pakai temp OS)
+      // 1. Konfigurasi Form
       const form = new IncomingForm({
         keepExtensions: true,
-        maxFileSize: 5 * 1024 * 1024,
+        maxFileSize: 5 * 1024 * 1024, // Limit 5MB
       });
 
       // 2. Parsing Form Data (Promise Wrapper)
@@ -55,7 +76,6 @@ export default async function handler(req, res) {
         });
       });
 
-      // 3. Ambil Data dari Formidable
       const getField = (f) => Array.isArray(f) ? f[0] : f;
       const getFile = (f) => Array.isArray(f) ? f[0] : f;
 
@@ -63,12 +83,11 @@ export default async function handler(req, res) {
       const userId = getField(data.fields.userId);
       const file = getFile(data.files.client_logo);
 
-      // Validasi sederhana
       if (!client_name || !file) {
         return res.status(400).json({ message: 'Nama Client dan Logo wajib diisi' });
       }
 
-      // 4. Upload ke Supabase
+      // 3. Upload ke Supabase (Upload Service)
       const { uploadToSupabase } = await import('../../../lib/upload-service');
 
       let logoUrl;
@@ -83,10 +102,8 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: `Gagal upload logo: ${uploadError.message}` });
       }
 
-      // 5. Simpan ke Database (Transaction)
+      // 4. Simpan ke Database (Transaction)
       const result = await prisma.$transaction(async (tx) => {
-
-        // A. Create Client
         const newClient = await tx.client.create({
           data: {
             client_name: client_name,
@@ -94,7 +111,6 @@ export default async function handler(req, res) {
           }
         });
 
-        // B. Buat Log Aktivitas
         if (userId) {
           await tx.activity_logs.create({
             data: {
@@ -116,7 +132,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Method Not Allowed
   res.setHeader('Allow', ['GET', 'POST']);
   return res.status(405).end(`Method ${req.method} Not Allowed`);
 }

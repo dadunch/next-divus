@@ -1,4 +1,7 @@
+// src/pages/api/photos/upload-photo.js
+
 import { IncomingForm } from 'formidable';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 export const config = {
   api: {
@@ -9,10 +12,22 @@ export const config = {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // 1. Setup Formidable (tanpa uploadDir)
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 2 upload per menit per IP. 
+    // Ini cukup untuk penggunaan manusia normal namun menghentikan bot otomatis.
+    await limiter.check(res, 2, ip); 
+  } catch {
+    return res.status(429).json({ 
+      error: 'Terlalu banyak permintaan upload. Silakan tunggu 1 menit untuk mengunggah foto lagi.' 
+    });
+  }
+
+  // 2. Setup Formidable
   const form = new IncomingForm({
     keepExtensions: true,
-    maxFileSize: 10 * 1024 * 1024,
+    maxFileSize: 10 * 1024 * 1024, // Limit 10MB
   });
 
   try {
@@ -28,7 +43,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "File tidak terdeteksi" });
     }
 
-    // 2. Upload ke Supabase
+    // 3. Upload ke Supabase
     const { uploadToSupabase } = await import('../../../lib/upload-service');
 
     const url = await uploadToSupabase(file, 'uploads', 'company_photos');
@@ -37,7 +52,7 @@ export default async function handler(req, res) {
       throw new Error('Upload failed: Invalid URL returned');
     }
 
-    // 3. Kembalikan URL Supabase
+    // 4. Kembalikan URL Supabase
     return res.status(200).json({ url });
 
   } catch (error) {

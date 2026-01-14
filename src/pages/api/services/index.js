@@ -1,8 +1,11 @@
+// src/pages/api/services/index.js
+
 import { IncomingForm } from 'formidable';
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
 import { setCachePreset } from '../../../lib/cache-headers';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 // CONFIG: Matikan Body Parser bawaan Next.js
 export const config = {
@@ -12,16 +15,31 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  const { method } = req;
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 30 kali per menit (karena daftar layanan sering diakses user/admin)
+    // POST: 3 kali per menit (Sangat ketat karena melibatkan proses Upload & Nested Transaction)
+    const limit = method === 'GET' ? 30 : 3;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Permintaan terlalu cepat. Silakan tunggu 1 menit untuk menambah layanan kembali.' 
+    });
+  }
 
   // --- GET: AMBIL DATA ---
-  if (req.method === 'GET') {
+  if (method === 'GET') {
     try {
       // Set cache: 5 menit fresh, 1 jam stale-while-revalidate
       setCachePreset(res, 'MEDIUM');
 
       const services = await prisma.services.findMany({
         orderBy: { created_at: 'desc' },
-        include: { sub_services: true } // Pastikan relasi ini ada di model services
+        include: { sub_services: true } 
       });
       return res.status(200).json(serialize(services));
     } catch (error) {
@@ -31,9 +49,7 @@ export default async function handler(req, res) {
   }
 
   // --- POST: TAMBAH LAYANAN ---
-  if (req.method === 'POST') {
-
-    // B. Konfigurasi Formidable
+  if (method === 'POST') {
     const form = new IncomingForm({
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB
@@ -53,8 +69,6 @@ export default async function handler(req, res) {
       const short_description = Array.isArray(fields.short_description) ? fields.short_description[0] : fields.short_description;
       const icon_url = Array.isArray(fields.icon_url) ? fields.icon_url[0] : fields.icon_url;
       const userId = Array.isArray(fields.userId) ? fields.userId[0] : fields.userId;
-
-      // Ambil string JSON sub services
       const subServicesString = Array.isArray(fields.sub_services_data) ? fields.sub_services_data[0] : fields.sub_services_data;
 
       // 2. PARSING JSON -> ARRAY
@@ -83,7 +97,6 @@ export default async function handler(req, res) {
 
       // === PROSES DATABASE ===
       const result = await prisma.$transaction(async (tx) => {
-
         const newService = await tx.services.create({
           data: {
             title,
@@ -92,11 +105,8 @@ export default async function handler(req, res) {
             short_description: short_description || '',
             icon_url: icon_url || '',
             image_url: dbImageUrl,
-
-            // --- PERBAIKAN DI SINI ---
             sub_services: {
               create: subServicesData.map((item) => ({
-                // Sesuai schema: sub_services String
                 sub_services: item
               }))
             }

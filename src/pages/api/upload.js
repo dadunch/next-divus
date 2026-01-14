@@ -1,5 +1,6 @@
-// File: src/pages/api/upload.js (Generic File Upload - Supabase)
+// src/pages/api/upload.js 
 import formidable from 'formidable';
+import { limiter } from '../../lib/rate-limit'; // Import Rate Limiter
 
 // Konfigurasi agar Next.js tidak memproses body (karena ditangani formidable)
 export const config = {
@@ -14,14 +15,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+
   try {
-    // 1. Konfigurasi Formidable (tanpa uploadDir, pakai temp)
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 3 upload per menit per IP
+    // Angka ini cukup untuk admin manusia, tapi mematikan bagi bot spam
+    await limiter.check(res, 3, ip); 
+  } catch {
+    return res.status(429).json({ 
+      error: 'Terlalu banyak permintaan upload. Silakan tunggu 1 menit untuk mengunggah file kembali.' 
+    });
+  }
+
+  try {
+    // 2. Konfigurasi Formidable
     const form = formidable({
       keepExtensions: true,
       maxFileSize: 5 * 1024 * 1024, // Batas 5MB
     });
 
-    // 2. Proses Upload dengan Promise
+    // 3. Proses Upload dengan Promise
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) reject(err);
@@ -29,14 +43,14 @@ export default async function handler(req, res) {
       });
     });
 
-    // 3. Ambil File
+    // 4. Ambil File
     const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
 
     if (!uploadedFile) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // 4. Upload ke Supabase
+    // 5. Upload ke Supabase
     const { uploadToSupabase } = await import('../../lib/upload-service');
 
     const url = await uploadToSupabase(uploadedFile, 'uploads', 'services');
@@ -45,7 +59,7 @@ export default async function handler(req, res) {
       throw new Error('Upload failed: Invalid URL returned');
     }
 
-    // 5. Kembalikan URL Supabase
+    // 6. Kembalikan URL Supabase
     return res.status(200).json({ url });
 
   } catch (error) {

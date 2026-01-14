@@ -1,12 +1,30 @@
+// src/pages/api/projects/index.js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
 import { setCacheHeaders } from '../../../lib/cache-headers';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 export default async function handler(req, res) {
+  const { method } = req;
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 30 kali per menit (karena daftar proyek sering diakses pengunjung)
+    // POST: 5 kali per menit (untuk membatasi admin/bot menambah data masal)
+    const limit = method === 'GET' ? 30 : 5;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Permintaan terlalu padat. Silakan tunggu satu menit sebelum mencoba kembali.' 
+    });
+  }
 
   // === GET METHOD: Untuk Menampilkan Data di Halaman User & Admin ===
-  if (req.method === 'GET') {
+  if (method === 'GET') {
     try {
       // Cache 10 menit fresh, 1 jam stale-while-revalidate
       setCacheHeaders(res, 600, 3600);
@@ -49,9 +67,14 @@ export default async function handler(req, res) {
     }
   }
 
-  // === POST METHOD: Untuk Admin Menambah Proyek (Kode Asli Kamu) ===
-  if (req.method === 'POST') {
+  // === POST METHOD: Untuk Admin Menambah Proyek ===
+  if (method === 'POST') {
     const { project_name, client_id, category_id, tahun, userId } = req.body;
+
+    // Validasi input minimal
+    if (!project_name || !client_id || !category_id) {
+        return res.status(400).json({ error: "Data proyek tidak lengkap" });
+    }
 
     try {
       const result = await prisma.$transaction(async (tx) => {
@@ -79,5 +102,6 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader('Allow', ['GET', 'POST']);
+  return res.status(405).json({ error: `Method ${method} not allowed` });
 }

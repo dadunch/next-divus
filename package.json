@@ -11,6 +11,7 @@
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.24",
     "fs-extra": "^11.3.2",
+    "lru-cache": "^11.2.4",
     "lucide-react": "^0.553.0",
     "motion": "^12.23.24",
     "next": "^14.2.33",

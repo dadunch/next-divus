@@ -1,47 +1,65 @@
+// src/pages/api/users/index.js
+
 import prisma from '../../../lib/prisma';
 import { createLog } from '../../../lib/logger';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 export default async function handler(req, res) {
+  const { method } = req;
+
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 20 kali per menit (Daftar user biasanya hanya diakses admin)
+    // POST: 5 kali per menit (Mencegah spam pembuatan akun baru)
+    const limit = method === 'GET' ? 20 : 5;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Terlalu banyak permintaan. Silakan tunggu 1 menit untuk melanjutkan.' 
+    });
+  }
+
   // 1. GET: Ambil Semua User (Beserta Role-nya)
-  if (req.method === 'GET') {
+  if (method === 'GET') {
     try {
       const users = await prisma.users.findMany({
         orderBy: { created_at: 'desc' },
         include: {
           employee: {
             include: {
-              role: true // Sertakan data Role agar tampil di tabel
+              role: true 
             }
           }
         }
       });
       
-      // Ratakan struktur data untuk frontend
       const formattedUsers = users.map(user => ({
-        id: user.id,
+        id: user.id.toString(), // Pastikan ID dikonversi ke string jika BigInt
         username: user.username,
         role: user.employee[0]?.role?.role || 'No Role',
-        role_id: user.employee[0]?.role_id,
+        role_id: user.employee[0]?.role_id?.toString(),
         created_at: user.created_at
       }));
 
       return res.status(200).json(formattedUsers);
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      console.error("Fetch Users Error:", error);
+      return res.status(500).json({ error: "Gagal mengambil daftar user" });
     }
   }
 
   // 2. POST: Tambah User Baru (Pegawai/Admin)
-  if (req.method === 'POST') {
+  if (method === 'POST') {
     const { username, password, role_id, currentUserId } = req.body;
 
-    // Validasi sederhana
     if (!username || !password || !role_id) {
       return res.status(400).json({ error: "Username, Password, dan Role wajib diisi" });
     }
 
     try {
-      // Cek apakah username sudah ada
       const existingUser = await prisma.users.findFirst({
         where: { username: username }
       });
@@ -52,33 +70,36 @@ export default async function handler(req, res) {
 
       // Gunakan Transaksi: Buat User -> Buat Employee -> Catat Log
       const result = await prisma.$transaction(async (tx) => {
-        // A. Buat User
         const newUser = await tx.users.create({
           data: {
             username,
-            password, // Catatan: Sebaiknya di-hash (bcrypt) di project nyata
+            password, // Disarankan melakukan hashing sebelum disimpan
             created_at: new Date(),
             updated_at: new Date()
           }
         });
 
-        // B. Hubungkan ke Employee (Assign Role)
         await tx.employee.create({
           data: {
             users_id: newUser.id,
-            role_id: BigInt(role_id) // Pastikan role_id dikonversi ke BigInt
+            role_id: BigInt(role_id) 
           }
         });
 
-        // C. Catat Log (Jika ada currentUserId pengirim)
         if (currentUserId) {
-          await createLog(tx, currentUserId, "Tambah User", `Menambahkan user baru: ${username}`);
+          await createLog(tx, BigInt(currentUserId), "Tambah User", `Menambahkan user baru: ${username}`);
         }
 
         return newUser;
       });
 
-      return res.status(201).json({ message: "User berhasil dibuat", user: result });
+      // Hilangkan password dari response demi keamanan
+      const { password: _, ...userSafe } = result;
+
+      return res.status(201).json({ 
+        message: "User berhasil dibuat", 
+        user: { ...userSafe, id: userSafe.id.toString() } 
+      });
 
     } catch (error) {
       console.error("Create User Error:", error);
@@ -86,5 +107,6 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader('Allow', ['GET', 'POST']);
+  return res.status(405).json({ error: `Method ${method} not allowed` });
 }

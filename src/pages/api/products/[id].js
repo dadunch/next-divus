@@ -1,5 +1,8 @@
+// src/pages/api/products/[id].js
+
 import prisma from '../../../lib/prisma';
 import { createLog } from '../../../lib/logger';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 // Helper untuk serialize BigInt agar tidak error saat dikirim JSON
 const safeSerialize = (data) => {
@@ -10,6 +13,23 @@ const safeSerialize = (data) => {
 
 export default async function handler(req, res) {
   const { id } = req.query;
+
+  // ============================================================
+  // 1. IMPLEMENTASI THROTTLE (RATE LIMITING)
+  // ============================================================
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 20 kali per menit (view detail produk)
+    // PUT/DELETE: 5 kali per menit (aksi perubahan data berat)
+    const limit = req.method === 'GET' ? 20 : 5;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      error: 'Terlalu banyak permintaan. Silakan tunggu sebentar.' 
+    });
+  }
 
   // Validasi ID sederhana
   if (!id) return res.status(400).json({ error: 'ID required' });
@@ -43,13 +63,10 @@ export default async function handler(req, res) {
   // PUT: Edit Produk
   // ==========================================
   if (req.method === 'PUT') {
-    // Ambil field baru 'media_items'
     const { nama_produk, deskripsi, tahun, foto_produk, media_items, userId } = req.body;
     const currentUserId = userId ? BigInt(userId) : BigInt(1);
 
     try {
-      // Parsing media_items (sama seperti di create)
-      // Jaga-jaga jika dikirim sebagai string JSON atau object
       let parsedMediaItems = [];
       if (media_items) {
         try {
@@ -63,28 +80,20 @@ export default async function handler(req, res) {
       }
 
       const result = await prisma.$transaction(async (tx) => {
-        // 1. Cek data lama
         const oldProduct = await tx.product.findUnique({ where: { id: productId } });
         if (!oldProduct) throw new Error("Produk tidak ditemukan");
 
-        // 2. Update data
         const updated = await tx.product.update({
           where: { id: productId },
           data: { 
             nama_produk, 
             deskripsi, 
-            
-            // PERBAIKAN 1: Tahun jadi Int (parseInt), bukan BigInt
             tahun: parseInt(tahun), 
-            
-            foto_produk, // Tetap simpan (Legacy)
-            
-            // PERBAIKAN 2: Simpan media_items ke kolom Json
+            foto_produk, 
             media_items: parsedMediaItems 
           }
         });
 
-        // 3. Catat Log
         await createLog(
             tx, 
             currentUserId, 
@@ -106,7 +115,7 @@ export default async function handler(req, res) {
   // DELETE: Hapus Produk
   // ==========================================
   if (req.method === 'DELETE') {
-    const { userId } = req.query; // Biasanya DELETE kirim param di query
+    const { userId } = req.query; 
     const currentUserId = userId ? BigInt(userId) : BigInt(1);
 
     try {

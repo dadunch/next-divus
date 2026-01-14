@@ -1,6 +1,9 @@
+// src/pages/api/photos/[id].js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 // KONFIGURASI PENTING: Diperlukan juga di sini untuk fitur Edit (PUT)
 export const config = {
@@ -15,6 +18,17 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const { method } = req;
 
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 10 request per menit untuk aksi modifikasi foto
+    await limiter.check(res, 10, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Terlalu banyak permintaan. Silakan tunggu sebentar sebelum memodifikasi foto kembali.' 
+    });
+  }
+
   // Validasi ID
   if (!id || isNaN(id)) {
     return res.status(400).json({ message: 'Invalid ID' });
@@ -25,7 +39,7 @@ export default async function handler(req, res) {
   try {
     // === DELETE: HAPUS DATA ===
     if (method === 'DELETE') {
-      const { userId } = req.query; // Di DELETE, userId ada di Query URL
+      const { userId } = req.query; 
 
       await prisma.$transaction(async (tx) => {
         // Cek data dulu
@@ -38,7 +52,7 @@ export default async function handler(req, res) {
         // Log
         await createLog(
             tx, 
-            userId, 
+            userId ? BigInt(userId) : BigInt(1), 
             "Hapus Foto", 
             `Menghapus foto: ${existing.title || 'Tanpa Judul'}`
         );
@@ -49,7 +63,7 @@ export default async function handler(req, res) {
 
     // === PUT: UPDATE DATA ===
     if (method === 'PUT') {
-      const { title, image_url, userId } = req.body; // Di PUT, userId ada di Body JSON
+      const { title, image_url, userId } = req.body;
 
       const result = await prisma.$transaction(async (tx) => {
         // Cek data
@@ -68,7 +82,7 @@ export default async function handler(req, res) {
         // Log
         await createLog(
             tx, 
-            userId, 
+            userId ? BigInt(userId) : BigInt(1), 
             "Edit Foto", 
             `Mengupdate foto ID ${id}: ${title || 'Tanpa Judul'}`
         );
@@ -86,7 +100,6 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("API Error:", error);
     
-    // Handle Prisma Error Record Not Found
     if (error.code === 'P2025' || error.message.includes("tidak ditemukan")) {
         return res.status(404).json({ message: 'Data tidak ditemukan' });
     }

@@ -1,6 +1,9 @@
+// src/pages/api/photos/index.js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
-import { createLog } from '../../../lib/logger'; // Pastikan path ini sesuai struktur folder Anda
+import { createLog } from '../../../lib/logger';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 // KONFIGURASI PENTING: Menaikkan limit upload agar tidak Error 413
 export const config = {
@@ -13,6 +16,20 @@ export const config = {
 
 export default async function handler(req, res) {
   const { method } = req;
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 30 kali per menit (karena galeri sering di-fetch oleh user)
+    // POST: 5 kali per menit (untuk membatasi spam input foto baru)
+    const limit = method === 'GET' ? 30 : 5;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Aktivitas terlalu cepat. Silakan coba lagi dalam satu menit.' 
+    });
+  }
 
   try {
     // === GET: AMBIL DATA ===
@@ -43,9 +60,10 @@ export default async function handler(req, res) {
         });
 
         // 2. Catat Log
+        // Mengonversi userId ke BigInt untuk konsistensi skema Supabase
         await createLog(
           tx,
-          userId,
+          userId ? BigInt(userId) : BigInt(1),
           "Tambah Foto",
           `Menambahkan foto: ${title || 'Tanpa Judul'}`
         );

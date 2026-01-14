@@ -1,4 +1,7 @@
+// src/pages/api/products/upload.js
+
 import { IncomingForm } from 'formidable';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 // Konfigurasi wajib: Matikan body parser Next.js
 export const config = {
@@ -15,13 +18,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Setup Formidable (tanpa uploadDir, pakai temp)
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 2 kali upload per menit per IP.
+    // Ini sangat protektif untuk mencegah bot membanjiri storage Supabase Anda.
+    await limiter.check(res, 2, ip); 
+  } catch {
+    return res.status(429).json({ 
+      error: 'Terlalu banyak percobaan upload. Silakan tunggu 1 menit untuk mengunggah file kembali.' 
+    });
+  }
+
+  try {
+    // 2. Setup Formidable
     const form = new IncomingForm({
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024, // 10MB
     });
 
-    // 2. Parse Request
+    // 3. Parse Request
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) return reject(err);
@@ -29,14 +44,14 @@ export default async function handler(req, res) {
       });
     });
 
-    // 3. Ambil File
+    // 4. Ambil File
     const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
 
     if (!uploadedFile) {
       return res.status(400).json({ error: 'Tidak ada file yang diupload' });
     }
 
-    // 4. Upload ke Supabase
+    // 5. Upload ke Supabase
     const { uploadToSupabase } = await import('../../../lib/upload-service');
 
     try {
@@ -46,7 +61,7 @@ export default async function handler(req, res) {
         throw new Error('Upload failed: Invalid URL returned');
       }
 
-      // 5. Kembalikan URL Supabase
+      // 6. Kembalikan URL Supabase
       return res.status(200).json({ url });
 
     } catch (uploadError) {

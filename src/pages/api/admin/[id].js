@@ -1,22 +1,41 @@
+// src/pages/api/admin/[id].js
 import prisma from '../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { createLog } from '../../../lib/logger';
+import { limiter } from '../../../lib/rate-limit'; 
 
 export default async function handler(req, res) {
   const { id } = req.query; // Ini adalah User ID
   const { method } = req;
-  
-  // Validasi ID sebelum convert ke BigInt untuk mencegah error
+
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 10 request per 60 detik per IP untuk endpoint Admin ini
+    await limiter.check(res, 5, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Terlalu banyak permintaan. Keamanan sistem membatasi akses Anda, silakan coba lagi dalam 1 menit.' 
+    });
+  }
+
+
   if (!id) return res.status(400).json({ message: "ID User diperlukan" });
-  const userId = BigInt(id);
+  
+  let userId;
+  try {
+    userId = BigInt(id);
+  } catch (err) {
+    return res.status(400).json({ message: "Format ID tidak valid" });
+  }
 
   try {
     // === DELETE: Hapus Admin ===
     if (method === 'DELETE') {
-      // PERBAIKAN 1: Uncomment & Handle currentUserId dengan aman
       const currentUserId = req.query.currentUserId 
         ? BigInt(req.query.currentUserId) 
-        : BigInt(0); // Fallback ke 0 jika tidak ada user yang login
+        : BigInt(0);
 
       await prisma.$transaction(async (tx) => {
         // 1. Cari data employee (karena foreign key user)
@@ -31,7 +50,6 @@ export default async function handler(req, res) {
             });
         }
 
-        // PERBAIKAN 2: Uncomment user fetch agar bisa dicatat log-nya
         const userToDelete = await tx.users.findUnique({ where: { id: userId } });
 
         // 3. Hapus User
@@ -39,9 +57,8 @@ export default async function handler(req, res) {
           where: { id: userId },
         });
 
-        // 4. Log 
+        // 4. Log aksi penghapusan
         if (userToDelete) {
-           // Gunakan CODE yang konsisten (misal: DELETE_ADMIN)
            await createLog(tx, currentUserId, "Hapus Admin", `Menghapus admin: ${userToDelete.username}`);
         }
       });
@@ -56,7 +73,7 @@ export default async function handler(req, res) {
       await prisma.$transaction(async (tx) => {
         const updateData = { username };
 
-        // Jika password diisi, update password baru.
+        // Jika password diisi, hash password baru
         if (password && password.trim() !== "") {
           const salt = await bcrypt.genSalt(10);
           updateData.password = await bcrypt.hash(password, salt);
@@ -71,26 +88,23 @@ export default async function handler(req, res) {
         // 2. Update Roles di tabel Employee
         const emp = await tx.employee.findFirst({ where: { users_id: userId } });
         
-        // Logika update Multi-Role
         if (emp && role_ids && Array.isArray(role_ids)) {
             await tx.employee.update({
                 where: { id: emp.id },
                 data: {
                     roles: {
-                        // PERBAIKAN 3: Gunakan 'set' dengan array objek ID.
-                        // Ini artinya: "Ganti semua role saat ini dengan daftar role baru ini".
-                        // Prisma otomatis menghapus role lama yang tidak dipilih dan menambah yang baru.
+                        // Mengganti semua role lama dengan daftar role baru
                         set: role_ids.map((rid) => ({ id: BigInt(rid) }))
                     }
                 }
             });
         }
 
-        // 3. Log
+        // 3. Log aksi update
         await createLog(
             tx, 
             BigInt(currentUserId || 1), 
-            "UPDATE_ADMIN", // Gunakan code yang konsisten
+            "UPDATE_ADMIN", 
             `Mengupdate data admin: ${username}`
         );
       });
@@ -98,11 +112,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'Data berhasil diupdate' });
     }
 
+    // Jika method bukan DELETE atau PUT
     res.setHeader('Allow', ['DELETE', 'PUT']);
     return res.status(405).end(`Method ${method} Not Allowed`);
 
   } catch (error) {
     console.error("API Error:", error);
-    return res.status(500).json({ message: 'Gagal memproses data', error: error.message });
+    return res.status(500).json({ 
+      message: 'Gagal memproses data di server', 
+      error: error.message 
+    });
   }
 }

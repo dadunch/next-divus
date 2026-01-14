@@ -1,10 +1,28 @@
+// src/pages/api/products/index.js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
-import { createLog } from '../../../lib/logger'; // Import Logger
+import { createLog } from '../../../lib/logger'; 
 import { setCacheHeaders } from '../../../lib/cache-headers';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 export default async function handler(req, res) {
   const { method } = req;
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasan dinamis: 
+    // GET: 30 kali per menit (karena produk sering di-fetch oleh frontend)
+    // POST: 5 kali per menit (aksi pembuatan produk baru)
+    const limit = method === 'GET' ? 30 : 5;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Permintaan terlalu padat. Silakan tunggu satu menit sebelum mencoba kembali.' 
+    });
+  }
 
   // ==========================================
   // GET: Ambil Semua Produk
@@ -14,14 +32,14 @@ export default async function handler(req, res) {
       // Cache 10 menit fresh, 1 jam stale-while-revalidate
       setCacheHeaders(res, 600, 3600);
 
-      const { limit } = req.query;
+      const { limit: queryLimit } = req.query;
 
       const queryOptions = {
         orderBy: { created_at: 'desc' },
       };
 
-      if (limit) {
-        const parsedLimit = parseInt(limit);
+      if (queryLimit) {
+        const parsedLimit = parseInt(queryLimit);
         if (!isNaN(parsedLimit) && parsedLimit > 0) {
           queryOptions.take = parsedLimit;
         }
@@ -46,7 +64,7 @@ export default async function handler(req, res) {
         tahun,
         foto_produk,
         media_items,
-        userId // Pastikan frontend mengirim userId
+        userId 
       } = req.body;
 
       // Validasi Wajib
@@ -54,7 +72,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Nama produk wajib diisi' });
       }
 
-      // Default userId ke 1 jika tidak dikirim
       const currentUserId = userId ? BigInt(userId) : BigInt(1);
 
       // 1. Parsing media_items (JSON String -> Object)
@@ -78,7 +95,6 @@ export default async function handler(req, res) {
           data: {
             nama_produk,
             deskripsi,
-            // Konversi tahun ke Int (karena schema sudah diubah jadi Int)
             tahun: parseInt(tahun) || new Date().getFullYear(),
             foto_produk: foto_produk,
             media_items: parsedMediaItems,

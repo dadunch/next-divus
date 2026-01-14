@@ -1,9 +1,22 @@
+// src/pages/api/auth/login.js
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import bcrypt from 'bcryptjs';
+import { limiter } from '../../../lib/rate-limit'; // Import utility rate limit
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 5 percobaan login per menit per IP
+    await limiter.check(res, 5, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Terlalu banyak percobaan login. Silakan tunggu 1 menit demi keamanan akun Anda.' 
+    });
+  }
 
   const { username, password } = req.body;
 
@@ -17,10 +30,9 @@ export default async function handler(req, res) {
       try {
         return await operation();
       } catch (error) {
-        // Jika error koneksi (P1001) atau timeout (P2024), coba lagi
         if ((error.code === 'P1001' || error.code === 'P2024') && i < maxRetries - 1) {
           console.warn(`Database connection failed (Attempt ${i + 1}/${maxRetries}). Retrying...`);
-          await new Promise(res => setTimeout(res, 1000)); // Tunggu 1 detik
+          await new Promise(res => setTimeout(res, 1000)); 
           continue;
         }
         throw error;
@@ -35,30 +47,22 @@ export default async function handler(req, res) {
     }));
 
     if (!user) {
-      return res.status(401).json({ message: 'Username tidak ditemukan' });
+      return res.status(401).json({ message: 'Username atau Password salah' }); // Pesan disamarkan demi keamanan
     }
 
-    // ============================================================
-    // 2. CEK PASSWORD (MODIFIKASI: Support Plain Text)
-    // ============================================================
+    // 2. CEK PASSWORD
 
-    // A. Cek langsung string (untuk akun yang passwordnya belum di-hash)
     let isPasswordValid = user.password === password;
 
-    // B. (Opsional) Jika cek string gagal, coba cek pakai bcrypt 
-    // (Jaga-jaga kalau Anda punya campuran akun hash & non-hash)
     if (!isPasswordValid) {
-      // Cek apakah string terlihat seperti hash bcrypt (biasanya diawali $2a$ atau $2b$)
       if (user.password.startsWith('$2')) {
         isPasswordValid = await bcrypt.compare(password, user.password);
       }
     }
 
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Password salah' });
+      return res.status(401).json({ message: 'Username atau Password salah' });
     }
-    // ============================================================
-
 
     // 3. AMBIL DATA PEGAWAI & ROLES (Multi Role)
     const employee = await prisma.employee.findFirst({
@@ -66,12 +70,10 @@ export default async function handler(req, res) {
       include: { roles: true }
     });
 
-    // Jika user ada tapi belum diset sebagai pegawai
     if (!employee) {
       return res.status(403).json({ message: 'Akun ini belum terdaftar sebagai pegawai.' });
     }
 
-    // Cek apakah punya role
     if (!employee.roles || employee.roles.length === 0) {
       return res.status(403).json({ message: 'Akun ini belum memiliki Jabatan/Role apapun.' });
     }
@@ -79,7 +81,6 @@ export default async function handler(req, res) {
     // 4. Login Sukses & Kirim Data Lengkap
     const { password: _, ...userWithoutPassword } = user;
 
-    // Ambil semua role untuk dikirim ke frontend
     const userRoles = employee.roles.map(r => ({
       id: r.id.toString(),
       name: r.role
@@ -90,7 +91,6 @@ export default async function handler(req, res) {
       user: {
         ...serialize(userWithoutPassword),
         roles: userRoles,
-        // Fallback untuk frontend lama
         roleId: userRoles[0]?.id,
         roleName: userRoles[0]?.name
       }
@@ -98,6 +98,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("Login Error:", error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Terjadi kesalahan pada server' });
   }
 }

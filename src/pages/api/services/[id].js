@@ -1,7 +1,10 @@
+// src/pages/api/services/[id].js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
 import { createLog } from '../../../lib/logger';
 import { IncomingForm } from 'formidable';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 // Disable default body parser untuk handle file upload
 export const config = {
@@ -12,10 +15,28 @@ export const config = {
 
 export default async function handler(req, res) {
   const { id } = req.query;
+  const { method } = req;
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // GET: 20 kali per menit (view detail layanan)
+    // PUT/DELETE: 3 kali per menit (Sangat ketat karena ada proses Upload/Hapus Storage)
+    const limit = method === 'GET' ? 20 : 3;
+    
+    await limiter.check(res, limit, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Terlalu banyak permintaan. Silakan tunggu 1 menit untuk melakukan perubahan lagi.' 
+    });
+  }
+
+  // Validasi ID
+  if (!id) return res.status(400).json({ message: "ID Layanan diperlukan" });
   const serviceId = BigInt(id);
 
   // --- GET: AMBIL DATA DETAIL LAYANAN ---
-  if (req.method === 'GET') {
+  if (method === 'GET') {
     try {
       const service = await prisma.services.findUnique({
         where: { id: serviceId }
@@ -32,15 +53,13 @@ export default async function handler(req, res) {
   }
 
   // --- PUT: EDIT LAYANAN (DENGAN FILE UPLOAD) ---
-  if (req.method === 'PUT') {
-    // Parse form tanpa uploadDir (pakai temp)
+  if (method === 'PUT') {
     const form = new IncomingForm({
       keepExtensions: true,
       maxFileSize: 10 * 1024 * 1024,
     });
 
     try {
-      // Parsing Data FormData
       const [fields, files] = await new Promise((resolve, reject) => {
         form.parse(req, (err, fields, files) => {
           if (err) reject(err);
@@ -48,7 +67,6 @@ export default async function handler(req, res) {
         });
       });
 
-      // Ambil Data Text
       const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
       const description = Array.isArray(fields.description) ? fields.description[0] : fields.description;
       const short_description = Array.isArray(fields.short_description) ? fields.short_description[0] : fields.short_description;
@@ -56,13 +74,10 @@ export default async function handler(req, res) {
       const userId = Array.isArray(fields.userId) ? fields.userId[0] : fields.userId;
       const existingImageUrl = Array.isArray(fields.existingImageUrl) ? fields.existingImageUrl[0] : fields.existingImageUrl;
 
-      // Ambil File Baru (jika ada)
-      let dbImageUrl = existingImageUrl || null; // Default: gunakan gambar lama
-
+      let dbImageUrl = existingImageUrl || null;
       const uploadedFile = files.image ? (Array.isArray(files.image) ? files.image[0] : files.image) : null;
 
       if (uploadedFile) {
-        // Ada file baru => Upload ke Supabase
         const { uploadToSupabase, deleteFromSupabase } = await import('../../../lib/upload-service');
 
         try {
@@ -72,10 +87,8 @@ export default async function handler(req, res) {
             throw new Error('Upload failed: Invalid URL');
           }
 
-          // Hapus file lama dari Supabase jika ada dan berbeda
           if (existingImageUrl && existingImageUrl.startsWith('http') && existingImageUrl !== dbImageUrl) {
             await deleteFromSupabase(existingImageUrl, 'uploads');
-            console.log(`Deleted old image from Supabase: ${existingImageUrl}`);
           }
         } catch (uploadError) {
           console.error('Service image upload failed:', uploadError);
@@ -83,7 +96,6 @@ export default async function handler(req, res) {
         }
       }
 
-      // === UPDATE DATABASE ===
       const result = await prisma.$transaction(async (tx) => {
         const updateData = {
           title,
@@ -98,7 +110,6 @@ export default async function handler(req, res) {
           data: updateData
         });
 
-        // Catat Log
         const uid = userId ? parseInt(userId) : null;
         if (uid) {
           await createLog(tx, uid, "Edit Layanan", `Mengubah layanan ID ${id}: ${title}`);
@@ -115,45 +126,37 @@ export default async function handler(req, res) {
     }
   }
 
-  // --- DELETE: HAPUS LAYANAN (PERLU LOG + HAPUS FILE) ---
-  if (req.method === 'DELETE') {
-    // Parse body untuk ambil userId
-    const chunks = [];
-    for await (const chunk of req) {
-      chunks.push(chunk);
-    }
-    const body = JSON.parse(Buffer.concat(chunks).toString());
-    const { userId } = body;
-
+  // --- DELETE: HAPUS LAYANAN ---
+  if (method === 'DELETE') {
     try {
+      // Stream helper untuk parsing JSON body karena bodyParser dimatikan
+      const chunks = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+      const rawBody = Buffer.concat(chunks).toString();
+      const body = rawBody ? JSON.parse(rawBody) : {};
+      const { userId } = body;
+
       await prisma.$transaction(async (tx) => {
-        // 1. Ambil data dulu sebelum dihapus
         const serviceToDelete = await tx.services.findUnique({
           where: { id: serviceId }
         });
 
-        // 2. Hapus file gambar dari Supabase jika ada
         if (serviceToDelete?.image_url && serviceToDelete.image_url.startsWith('http')) {
           try {
             const { deleteFromSupabase } = await import('../../../lib/upload-service');
             await deleteFromSupabase(serviceToDelete.image_url, 'uploads');
-            console.log(`Deleted image from Supabase: ${serviceToDelete.image_url}`);
           } catch (err) {
             console.error("Error deleting image from Supabase:", err);
           }
         }
 
-        // 3. Hapus Data dari Database
         await tx.services.delete({ where: { id: serviceId } });
-
-        // 4. Catat Log
-        const detailText = serviceToDelete
-          ? `Menghapus layanan: ${serviceToDelete.title}`
-          : `Menghapus layanan ID: ${id}`;
 
         const uid = userId ? parseInt(userId) : null;
         if (uid) {
-          await createLog(tx, uid, "Hapus Layanan", detailText);
+          await createLog(tx, uid, "Hapus Layanan", `Menghapus layanan: ${serviceToDelete?.title}`);
         }
       });
 
@@ -165,6 +168,5 @@ export default async function handler(req, res) {
     }
   }
 
-  // Method not allowed
   return res.status(405).json({ error: "Method not allowed" });
 }

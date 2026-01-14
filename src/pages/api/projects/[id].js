@@ -1,8 +1,24 @@
+// src/pages/api/projects/[id].js
+
 import prisma from '../../../lib/prisma';
 import { serialize } from '../../../lib/utils';
+import { limiter } from '../../../lib/rate-limit'; // Import Rate Limiter
 
 export default async function handler(req, res) {
   const { id } = req.query;
+
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    
+    // Batasi: Maksimal 10 request per menit untuk aksi modifikasi proyek
+    // Aksi PUT dan DELETE cukup berat karena melibatkan relasi database
+    await limiter.check(res, 10, ip); 
+  } catch {
+    return res.status(429).json({ 
+      message: 'Aktivitas terlalu cepat. Silakan tunggu sebentar sebelum mencoba lagi.' 
+    });
+  }
 
   // Validasi ID dari URL
   if (!id) {
@@ -17,7 +33,7 @@ export default async function handler(req, res) {
   if (req.method === 'PUT') {
     const { project_name, client_id, category_id, tahun, userId } = req.body;
 
-    // 1. Validasi Input Wajib (Mencegah Error 500 karena undefined)
+    // 1. Validasi Input Wajib
     if (!project_name || !client_id || !category_id || !tahun) {
       return res.status(400).json({ 
         error: "Data tidak lengkap. Pastikan Nama Proyek, Kategori, Client, dan Tahun terisi." 
@@ -26,20 +42,18 @@ export default async function handler(req, res) {
 
     try {
       const result = await prisma.$transaction(async (tx) => {
-        
         // 2. Update Database
         const updated = await tx.projects.update({
           where: { id: projectId },
           data: { 
             project_name, 
-            // Konversi ke tipe data yang sesuai dengan Schema Prisma Anda
-            tahun: Number(tahun),           // Biasanya tahun itu Int
-            client_id: BigInt(client_id),   // ID Relasi biasanya BigInt
-            category_id: BigInt(category_id) // ID Relasi biasanya BigInt
+            tahun: Number(tahun), 
+            client_id: BigInt(client_id), 
+            category_id: BigInt(category_id) 
           }
         });
 
-        // 3. Catat Log Aktivitas (Jika ada userId)
+        // 3. Catat Log Aktivitas
         if (userId) {
           await tx.activity_logs.create({
             data: {
@@ -55,7 +69,7 @@ export default async function handler(req, res) {
       return res.status(200).json(serialize(result));
 
     } catch (error) {
-      console.error("API PUT Error:", error); // Log error ke terminal server
+      console.error("API PUT Error:", error);
       return res.status(500).json({ error: "Gagal menyimpan perubahan", details: error.message });
     }
   }
@@ -64,11 +78,11 @@ export default async function handler(req, res) {
   // METHOD: DELETE (Hapus Data Proyek)
   // ============================================================
   if (req.method === 'DELETE') {
-    const { userId } = req.query; // Biasanya DELETE kirim userId via Query atau Body, sesuaikan kebutuhan
+    const { userId } = req.query; 
 
     try {
       await prisma.$transaction(async (tx) => {
-        // 1. Cek Data Lama (untuk keperluan log)
+        // 1. Cek Data Lama
         const projectToDelete = await tx.projects.findUnique({ 
             where: { id: projectId } 
         });

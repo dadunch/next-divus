@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../assets';
 import { motion } from 'framer-motion';
+
+import prisma from '../lib/prisma';
+import { serialize } from '../lib/utils';
 
 const fadeInLeft = {
     initial: { opacity: 0, x: -50 },
@@ -20,29 +23,32 @@ const fadeInRight = {
     viewport: { once: false, amount: 0.2 }
 };
 
-export default function Contact() {
-    // State Data Perusahaan
-    const [company, setCompany] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+export async function getStaticProps() {
+    try {
+        const companyProfile = await prisma.company_profile.findFirst({
+            select: { company_name: true, address: true, phone: true, email: true, logo_url: true }
+        });
 
-    // Fetch Data dari API
-    useEffect(() => {
-        const fetchCompany = async () => {
-            try {
-                const res = await fetch('/api/company');
-                const data = await res.json();
-                if (res.ok) {
-                    setCompany(data);
-                }
-            } catch (error) {
-                console.error("Gagal mengambil data perusahaan:", error);
-            } finally {
-                setIsLoading(false);
-            }
+        return {
+            props: {
+                initialCompany: serialize(companyProfile)
+            },
+            revalidate: 300 // Revalidate every 5 minutes
         };
+    } catch (error) {
+        console.error("ISR Build Error Kontak:", error);
+        return {
+            props: { initialCompany: null },
+            revalidate: 60
+        };
+    }
+}
 
-        fetchCompany();
-    }, []);
+export default function Contact({ initialCompany }) {
+    // State Data Perusahaan
+    const [company] = useState(initialCompany || null);
+    // Karena pakai ISR, maka loading defaultnya jadi false.
+    const [isLoading] = useState(false);
 
     // Helper untuk link WA dinamis
     const getWhatsappLink = (phone) => {

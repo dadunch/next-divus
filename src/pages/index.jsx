@@ -4,12 +4,11 @@ import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../assets';
 import { motion } from 'framer-motion';
-import { serviceCache } from '../utils/serviceCache';
-import { productCache } from '../utils/productCache';
-import { projectCache } from '../utils/projectCache';
-import { clientCache } from '../utils/clientCache';
-import { heroCache } from '../utils/heroCache';
 import { getImageUrl, getClientLogoUrl } from '../utils/imageHelper';
+
+// SSR IMPORTS
+import prisma from '../lib/prisma';
+import { serialize } from '../lib/utils';
 
 // ============ SKELETON LOADER COMPONENTS ============
 const HeroImageSkeleton = () => (
@@ -78,171 +77,97 @@ const fadeInUp = {
     viewport: { once: false, amount: 0.2 }
 };
 
-export default function Home() {
-    const [services, setServices] = useState([]);
-    const [products, setProducts] = useState([]);
-    const [projects, setProjects] = useState([]);
-    const [clientLogos, setClientLogos] = useState([]);
-    const [statsData, setStatsData] = useState([
-        { value: '0', label: 'Pengalaman' },
-        { value: '0+', label: 'Klien Divus' },
-        { value: '0+', label: 'Proyek Selesai' },
-    ]);
+export async function getStaticProps() {
+    try {
+        const [
+            rawServices,
+            rawProducts,
+            rawProjects,
+            rawClients,
+            heroData,
+            companyProfile,
+            countMitra,
+            countProyek
+        ] = await Promise.all([
+            prisma.services.findMany({ select: { id: true, title: true, description: true, icon_url: true }, orderBy: { created_at: 'desc' }, take: 6 }),
+            prisma.product.findMany({ select: { id: true, nama_produk: true, foto_produk: true, tahun: true, media_items: true }, orderBy: { created_at: 'desc' }, take: 3 }),
+            prisma.projects.findMany({
+                select: { id: true, project_name: true, tahun: true, client: { select: { client_name: true } }, category: { select: { bidang: true } } },
+                orderBy: { id: 'desc' },
+                take: 3
+            }),
+            prisma.client.findMany({ select: { client_logo: true }, orderBy: { id: 'desc' }, take: 20 }),
+            prisma.menu_foto.findFirst({ select: { foto1: true, foto2: true, foto3: true }, orderBy: { created_at: 'desc' } }),
+            prisma.company_profile.findFirst({ select: { established_date: true } }),
+            prisma.client.count(),
+            prisma.projects.count()
+        ]);
+
+        // Hitung tahun pengalaman (berdasarkan established_date)
+        let companyYears = 0;
+        if (companyProfile?.established_date) {
+             companyYears = new Date().getFullYear() - new Date(companyProfile.established_date).getFullYear();
+        }
+
+        const initialStats = [
+             { value: `${companyYears} Thn`, label: 'Pengalaman' },
+             { value: `${countMitra}+`, label: 'Klien Divus' },
+             { value: `${countProyek}+`, label: 'Proyek Selesai' },
+        ];
+
+        const initialHeroImages = {
+             img1: heroData?.foto1 || null,
+             img2: heroData?.foto2 || null,
+             img3: heroData?.foto3 || null,
+        }
+
+        const clientLogos = rawClients.map(c => c.client_logo).filter(Boolean);
+
+        return {
+            props: {
+                initialServices: serialize(rawServices),
+                initialProducts: serialize(rawProducts),
+                initialProjects: serialize(rawProjects),
+                initialClients: clientLogos,
+                initialStats: initialStats,
+                initialHeroImages: initialHeroImages
+            },
+            revalidate: 300 // ISR: Re-generate setiap 5 menit
+        }
+
+    } catch (e) {
+        console.error("ISR Build Error Index:", e);
+        return {
+            props: { initialServices: [], initialProducts: [], initialProjects: [], initialClients: [], initialStats: [
+                { value: '0', label: 'Pengalaman' }, { value: '0+', label: 'Klien Divus' }, { value: '0+', label: 'Proyek Selesai' }
+            ], initialHeroImages: {img1: null, img2: null, img3: null} },
+            revalidate: 60
+        }
+    }
+}
+
+export default function Home({ initialServices, initialProducts, initialProjects, initialClients, initialStats, initialHeroImages }) {
+    const [services] = useState(initialServices || []);
+    const [products] = useState(initialProducts || []);
+    const [projects] = useState(initialProjects || []);
+    const [clientLogos] = useState(initialClients || []);
+    const [statsData] = useState(initialStats || []);
     const [activePorto, setActivePorto] = useState('produk');
-    const [loading, setLoading] = useState(true);
+    // Karena ISR, loading state jadi false dari awal.
+    const [loading] = useState(false);
 
-    // State untuk hero images dengan loading state terpisah
+    // State untuk hero images dengan preloader logic, tapi image utamanya kita dapat dari ISR
     const [heroImages, setHeroImages] = useState({
-        img1: null,
-        img2: null,
-        img3: null
+        img1: initialHeroImages?.img1 || Assets.Hero3,
+        img2: initialHeroImages?.img2 || Assets.Hero3,
+        img3: initialHeroImages?.img3 || Assets.Hero3
     });
+    // Menjadi false secara default karena data disupply langsung saat build. Beban loading hanya ada saat pindah layout
     const [heroLoading, setHeroLoading] = useState({
-        img1: true,
-        img2: true,
-        img3: true
+        img1: false,
+        img2: false,
+        img3: false
     });
-
-    useEffect(() => {
-        // ============ OPTIMIZED IMAGE PRELOADER ============
-        const preloadImage = (src, key) => {
-            return new Promise((resolve, reject) => {
-                if (!src) {
-                    reject('No source provided');
-                    return;
-                }
-
-                const img = new Image();
-
-                // Set priority untuk hero images
-                img.loading = 'eager';
-                img.fetchPriority = 'high';
-
-                img.onload = () => {
-                    setHeroImages(prev => ({ ...prev, [key]: src }));
-                    setHeroLoading(prev => ({ ...prev, [key]: false }));
-                    resolve();
-                };
-
-                img.onerror = () => {
-                    console.warn(`Failed to load ${key}:`, src);
-                    // Gunakan fallback image
-                    setHeroImages(prev => ({ ...prev, [key]: Assets.Hero3 }));
-                    setHeroLoading(prev => ({ ...prev, [key]: false }));
-                    reject();
-                };
-
-                img.src = src;
-            });
-        };
-
-        // ============ FETCH HERO IMAGES DENGAN PRIORITY TINGGI ============
-        const fetchHeroImagesFirst = async () => {
-            try {
-                const dataHero = await heroCache.fetch();
-
-                if (dataHero) {
-                    // Load semua gambar secara paralel untuk kecepatan maksimal
-                    const imagePromises = [
-                        preloadImage(dataHero.foto1 || Assets.Hero3, 'img1'),
-                        preloadImage(dataHero.foto2 || Assets.Hero3, 'img2'),
-                        preloadImage(dataHero.foto3 || Assets.Hero3, 'img3')
-                    ];
-
-                    // Gunakan Promise.allSettled agar tidak terblokir jika ada yang gagal
-                    await Promise.allSettled(imagePromises);
-                } else {
-                    // Set default images jika tidak ada data
-                    setHeroImages({
-                        img1: Assets.Hero3,
-                        img2: Assets.Hero3,
-                        img3: Assets.Hero3
-                    });
-                    setHeroLoading({
-                        img1: false,
-                        img2: false,
-                        img3: false
-                    });
-                }
-            } catch (e) {
-                console.error("Gagal load hero assets:", e);
-                // Set default images
-                setHeroImages({
-                    img1: Assets.Hero3,
-                    img2: Assets.Hero3,
-                    img3: Assets.Hero3
-                });
-                setHeroLoading({
-                    img1: false,
-                    img2: false,
-                    img3: false
-                });
-            }
-        };
-
-        // Jalankan fetch hero images SEGERA
-        fetchHeroImagesFirst();
-
-        // ============ FETCH DATA LAINNYA (PARALLEL) ============
-        const fetchAllData = async () => {
-            try {
-                // Definisikan promise untuk setiap request
-                const pDashboard = fetch('/api/dashboard').then(res => res.json()).catch(() => ({}));
-                const pServices = serviceCache.fetch().catch(() => []);
-                const pProducts = fetch('/api/products?limit=3').then(res => res.json()).catch(() => []);
-                const pProjects = fetch('/api/projects?limit=3').then(res => res.json()).catch(() => []);
-                const pClients = clientCache.fetch().catch(() => []);
-
-                // Jalankan semua request secara bersamaan (Parallel)
-                const [dataDash, dataServices, dataProducts, dataProjects, dataClients] = await Promise.all([
-                    pDashboard,
-                    pServices,
-                    pProducts,
-                    pProjects,
-                    pClients
-                ]);
-
-                // 1. Set Data Dashboard
-                if (dataDash?.stats) {
-                    setStatsData([
-                        { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' },
-                        { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-                        { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-                    ]);
-                }
-
-                // 2. Set Data Services
-                if (Array.isArray(dataServices)) {
-                    setServices(dataServices);
-                }
-
-                // 3. Set Data Products
-                if (Array.isArray(dataProducts)) {
-                    setProducts(dataProducts);
-                }
-
-                // 4. Set Data Projects
-                if (Array.isArray(dataProjects)) {
-                    setProjects(dataProjects);
-                }
-
-                // 5. Set Data Clients
-                if (Array.isArray(dataClients)) {
-                    const logos = dataClients
-                        .map(client => client.client_logo)
-                        .filter(logo => logo && logo !== "");
-                    setClientLogos(logos);
-                }
-
-            } catch (error) {
-                console.error("Gagal mengambil data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllData();
-    }, []);
 
     const getProductImage = (jsonString) => {
         try {

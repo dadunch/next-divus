@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head'; // WAJIB ADA AGAR ICON MUNCUL
 import Link from 'next/link';
 import { FaWhatsapp, FaDownload } from 'react-icons/fa';
 import { Assets } from '../assets';
 import { motion } from 'framer-motion';
 
-import { serviceCache } from '../utils/serviceCache';
-
+import prisma from '../lib/prisma';
+import { serialize } from '../lib/utils';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 50 },
@@ -62,75 +62,73 @@ const fallbackSolutions = [
     },
 ];
 
-export default function TentangKami() {
-    const [company, setCompany] = useState(null);
-    const [photos, setPhotos] = useState([]);
-    const [services, setServices] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
+export async function getStaticProps() {
+    try {
+        const [
+            companyProfile,
+            rawPhotos,
+            rawServices,
+            countMitra,
+            countProyek
+        ] = await Promise.all([
+            prisma.company_profile.findFirst({ select: { company_name: true, business_field: true, established_date: true, address: true, description: true, logo_url: true, phone: true, file_url: true } }),
+            prisma.company_photos.findMany({ select: { id: true, image_url: true, title: true }, orderBy: { id: 'desc'} }),
+            prisma.services.findMany({ select: { id: true, title: true, description: true, icon_url: true }, orderBy: { created_at: 'desc' } }),
+            prisma.client.count(),
+            prisma.projects.count()
+        ]);
+
+        let companyYears = 0;
+        if (companyProfile?.established_date) {
+            companyYears = new Date().getFullYear() - new Date(companyProfile.established_date).getFullYear();
+        }
+
+        const initialStats = [
+             { value: `${companyYears} Thn`, label: 'Pengalaman' },
+             { value: `${countMitra}+`, label: 'Klien Divus' },
+             { value: `${countProyek}+`, label: 'Proyek Selesai' },
+        ];
+
+        return {
+            props: {
+                initialCompany: serialize(companyProfile),
+                initialPhotos: serialize(rawPhotos),
+                initialServices: serialize(rawServices),
+                initialStats: initialStats
+            },
+            revalidate: 300 // ISR: Revalidate setiap 5 menit
+        }
+
+    } catch (e) {
+         console.error("ISR Build error tentang-kami:", e);
+         return {
+             props: {
+                 initialCompany: null,
+                 initialPhotos: [],
+                 initialServices: fallbackSolutions,
+                 initialStats: [
+                    { value: "0", label: "Pengalaman" },
+                    { value: "0+", label: "Klien Divus" },
+                    { value: "0+", label: "Proyek Selesai" },
+                ]
+             },
+             revalidate: 60
+         }
+    }
+}
+
+export default function TentangKami({ initialCompany, initialPhotos, initialServices, initialStats }) {
+    const [company] = useState(initialCompany || null);
+    const [photos] = useState(initialPhotos || []);
+    const [services] = useState(initialServices || fallbackSolutions);
+    const [isLoading] = useState(false);
 
     // --- STATE BARU: Untuk Data Statistik (Dinamis) ---
-    const [statsData, setStatsData] = useState([
+    const [statsData] = useState(initialStats || [
         { value: "0", label: "Pengalaman" },
         { value: "0+", label: "Klien Divus" },
         { value: "0+", label: "Proyek Selesai" },
     ]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setIsLoading(true);
-
-                // 1. Fetch Company
-                const companyRes = await fetch("/api/company");
-                const companyData = await companyRes.json();
-                if (companyRes.ok) setCompany(companyData);
-
-                // 2. Fetch Photos
-                const photosRes = await fetch("/api/photos");
-                const photosData = await photosRes.json();
-                if (photosRes.ok) setPhotos(photosData);
-
-                // // 3. Fetch Services
-                // const servicesRes = await fetch("/api/services");
-                // const servicesData = await servicesRes.json();
-
-                const dataService = await serviceCache.fetch();
-                if (Array.isArray(dataService)) {
-                    setServices(dataService);
-                }
-
-
-                // if (servicesRes.ok && Array.isArray(servicesData) && servicesData.length > 0) {
-                //   setServices(servicesData);
-                // } else {
-                //   setServices(fallbackSolutions);
-                // }
-
-                // 4. Fetch Dashboard Stats (LOGIKA BARU - SEPERTI DI HOME)
-                try {
-                    const resDash = await fetch('/api/dashboard');
-                    const dataDash = await resDash.json();
-
-                    if (resDash.ok && dataDash.stats) {
-                        setStatsData([
-                            { value: `${dataDash.stats.years} Thn`, label: 'Pengalaman' }, // Menambah "Thn" agar sesuai konteks
-                            { value: `${dataDash.stats.mitra}+`, label: 'Klien Divus' },
-                            { value: `${dataDash.stats.proyek}+`, label: 'Proyek Selesai' },
-                        ]);
-                    }
-                } catch (error) {
-                    console.warn("Gagal fetch stats dashboard:", error);
-                }
-
-            } catch (error) {
-                console.error("Error loading data:", error);
-                setServices(fallbackSolutions);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
 
     const formatDate = (dateString) => {
         if (!dateString) return "-";

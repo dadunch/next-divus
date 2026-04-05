@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { FaChevronDown, FaChevronLeft, FaWhatsapp } from 'react-icons/fa';
 import { Assets } from '../assets';
 import { motion } from 'framer-motion';
+
+import prisma from '../lib/prisma';
+import { serialize } from '../lib/utils';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 50 },
@@ -12,66 +15,55 @@ const fadeInUp = {
     viewport: { once: false, amount: 0.2 }
 };
 
-export default function Proyek() {
-    const [company, setCompany] = useState(null);
-    const [proyekData, setProyekData] = useState([]); // Data dari Database
-    const [loading, setLoading] = useState(true);
+export async function getStaticProps() {
+    try {
+        const [rawProjects, companyProfile] = await Promise.all([
+            prisma.projects.findMany({
+                select: { id: true, project_name: true, tahun: true, client: { select: { client_name: true } }, category: { select: { bidang: true } } },
+                orderBy: { id: 'desc' }
+            }),
+            prisma.company_profile.findFirst({ select: { company_name: true, logo_url: true } })
+        ]);
+
+        return {
+            props: {
+                initialProjects: serialize(rawProjects),
+                initialCompany: serialize(companyProfile)
+            },
+            revalidate: 300 // Revalidate every 5 minutes
+        };
+    } catch (error) {
+        console.error("ISR Build Error Proyek:", error);
+        return {
+            props: { initialProjects: [], initialCompany: null },
+            revalidate: 60
+        };
+    }
+}
+
+export default function Proyek({ initialProjects, initialCompany }) {
+    const [company] = useState(initialCompany || null);
+    const [proyekData] = useState(initialProjects || []); // Data dari Database
+    // Karena ISR, tidak ada loading initial fetch
+    const [loading] = useState(false);
 
     // Filter State
     const [activeFilter, setActiveFilter] = useState('Semua Bidang');
-    const [categories, setCategories] = useState(['Semua Bidang']); // Kategori dinamis
+    const [categories, setCategories] = useState(() => {
+        const uniqueCategories = ['Semua Bidang', ...new Set((initialProjects || []).map(item => item.category?.bidang).filter(Boolean))];
+        return uniqueCategories;
+    }); // Kategori dinamis
 
     const [selectedYear, setSelectedYear] = useState('Semua');
-    const [years, setYears] = useState(['Semua']); // Tahun dinamis
+    const [years, setYears] = useState(() => {
+        const uniqueYears = ['Semua', ...new Set((initialProjects || []).map(item => item.tahun).filter(Boolean))].sort((a, b) => b - a);
+        return uniqueYears;
+    }); // Tahun dinamis
     const [showYearDropdown, setShowYearDropdown] = useState(false);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10; // Bisa diatur mau tampil berapa per halaman
-
-    // 1. FETCH DATA DARI API
-    useEffect(() => {
-        fetchProjects();
-    }, []);
-
-    useEffect(() => {
-        const fetchCompany = async () => {
-            try {
-                const res = await fetch('/api/company');
-                if (!res.ok) throw new Error("Gagal mengambil data");
-                const data = await res.json();
-                setCompany(data);
-            } catch (error) {
-                console.error("Error:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCompany();
-    }, []);
-
-    const fetchProjects = async () => {
-        try {
-            const res = await fetch('/api/projects'); // Panggil API yang baru kita buat
-            const data = await res.json();
-
-            if (Array.isArray(data)) {
-                setProyekData(data);
-
-                // Ambil list Kategori unik dari data yang ada
-                const uniqueCategories = ['Semua Bidang', ...new Set(data.map(item => item.category?.bidang).filter(Boolean))];
-                setCategories(uniqueCategories);
-
-                // Ambil list Tahun unik dari data yang ada
-                const uniqueYears = ['Semua', ...new Set(data.map(item => item.tahun).filter(Boolean))].sort((a, b) => b - a);
-                setYears(uniqueYears);
-            }
-        } catch (error) {
-            console.error("Gagal mengambil data:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // 2. LOGIKA FILTER
     const filteredProyek = proyekData.filter((item) => {

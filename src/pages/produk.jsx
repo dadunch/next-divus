@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp, FaChevronDown } from 'react-icons/fa';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import Footer from '../components/Footer';
 import { Assets } from '../assets';
+
+import prisma from '../lib/prisma';
+import { serialize } from '../lib/utils';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 50 },
@@ -14,11 +16,38 @@ const fadeInUp = {
     viewport: { once: false, amount: 0.2 }
 };
 
-const Produk = () => {
+export async function getStaticProps() {
+    try {
+        const [rawProducts, companyProfile] = await Promise.all([
+            prisma.product.findMany({
+                select: { id: true, nama_produk: true, foto_produk: true, tahun: true, deskripsi: true, media_items: true },
+                orderBy: { created_at: 'desc' }
+            }),
+            prisma.company_profile.findFirst({ select: { company_name: true, logo_url: true } })
+        ]);
+
+        return {
+            props: {
+                initialProducts: serialize(rawProducts),
+                initialCompany: serialize(companyProfile)
+            },
+            revalidate: 300 // Revalidate every 5 minutes
+        };
+    } catch (error) {
+        console.error("ISR Build Error Produk:", error);
+        return {
+            props: { initialProducts: [], initialCompany: null },
+            revalidate: 60
+        };
+    }
+}
+
+const Produk = ({ initialProducts, initialCompany }) => {
     // --- STATE ---
-    const [products, setProducts] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [company, setCompany] = useState(null);
+    const [products] = useState(initialProducts || []);
+    // Karena pakai ISR, loading jadi langsung false
+    const [isLoading] = useState(false);
+    const [company] = useState(initialCompany || null);
 
     // State untuk Modal & Slider
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -27,46 +56,17 @@ const Produk = () => {
 
     // State untuk Filter Kategori & Sorting
     const [selectedCategory, setSelectedCategory] = useState("Semua");
-    const [categories, setCategories] = useState(["Semua"]);
+    // Gunakan state inisialisasi yang aman
+    const [categories, setCategories] = useState(() => {
+         const uniqueCategories = ['Semua', ...new Set((initialProducts || []).map(item => item.category?.bidang).filter(Boolean))];
+         return uniqueCategories.length > 1 ? uniqueCategories : ["Semua"];
+    });
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
     // Sort State
     const [sortBy, setSortBy] = useState('newest');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
 
-    // --- 1. FETCH DATA ---
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const res = await fetch('/api/products');
-                if (!res.ok) throw new Error("Gagal mengambil data");
-                const data = await res.json();
-                setProducts(data);
-
-                // Extract categories if available (Safe check)
-                const uniqueCategories = ['Semua', ...new Set(data.map(item => item.category?.bidang).filter(Boolean))];
-                if (uniqueCategories.length > 1) {
-                    setCategories(uniqueCategories);
-                }
-            } catch (error) {
-                console.error("Error:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchProducts();
-        const fetchCompany = async () => {
-            try {
-                const res = await fetch('/api/company');
-                if (!res.ok) throw new Error("Gagal mengambil data");
-                const data = await res.json();
-                setCompany(data);
-            } catch (error) {
-                console.error("Error:", error);
-            }
-        };
-        fetchCompany();
-    }, []);
 
     // --- 2. HELPER PARSE MEDIA ---
     const getMediaItems = (product) => {
@@ -248,7 +248,7 @@ const Produk = () => {
                 </div>
 
                 {/* --- PRODUCT GRID SECTION --- */}
-                <div {...fadeInUp} className="max-w-[1380px] mx-auto px-6 md:px-12 mb-20 mt-10">
+                <motion.div {...fadeInUp} className="max-w-[1380px] mx-auto px-6 md:px-12 mb-20 mt-10">
                     {isLoading ? (
                         <div className="flex justify-center py-20">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
@@ -323,7 +323,7 @@ const Produk = () => {
                             })}
                         </div>
                     )}
-                </div>
+                </motion.div>
 
                 <motion.section {...fadeInUp} className="px-6 md:px-20 py-16 md:py-6 overflow-hidden mb-10">
                     <div className="max-w-7xl mx-auto">

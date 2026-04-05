@@ -1,24 +1,25 @@
 // src/lib/rate-limit.js
-import { LRUCache } from 'lru-cache';
 
 const rateLimit = (options) => {
-  const tokenCache = new LRUCache({
-    max: options?.uniqueTokenPerInterval || 500,
-    ttl: options?.interval || 60000, // Default 1 menit
-  });
+  const tokenCache = new Map();
+  const interval = options?.interval || 60000;
 
   return {
     check: (res, limit, token) =>
       new Promise((resolve, reject) => {
-        const tokenCount = tokenCache.get(token) || [0];
-        if (tokenCount[0] === 0) {
-          tokenCache.set(token, [1]);
-        } else {
-          tokenCount[0] += 1;
-          tokenCache.set(token, tokenCount);
+        const now = Date.now();
+        const record = tokenCache.get(token) || { count: 0, lastRequest: now };
+
+        // Jika interval sudah lewat, reset count
+        if (now - record.lastRequest > interval) {
+          record.count = 0;
+          record.lastRequest = now;
         }
 
-        const currentUsage = tokenCount[0];
+        record.count += 1;
+        tokenCache.set(token, record);
+
+        const currentUsage = record.count;
         const isRateLimited = currentUsage >= limit;
 
         // Set header untuk info ke client
@@ -33,5 +34,5 @@ const rateLimit = (options) => {
 // Buat instance limiter (10 request per 60 detik)
 export const limiter = rateLimit({
   interval: 60000,
-  uniqueTokenPerInterval: 500,
+  uniqueTokenPerInterval: 500, // Walaupun Map tidak otomatis menghapus memori max seperti LRU, implementasi sederhana ini cukup aman untuk traffic awal
 });

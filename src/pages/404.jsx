@@ -21,7 +21,7 @@ export default function Custom404() {
     
             {/* Go Home Button */}
             <a
-            href="/User/Home"
+            href="/"
             className="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-md"
             >
             Go Home

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Provider, useDispatch } from 'react-redux';
 import { store } from '../store';
@@ -113,6 +114,43 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <Provider store={store}>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="PT Divus Global Mediacomm menghadirkan layanan konsultasi manajemen, riset, laporan, dan komunikasi korporat untuk mendukung pertumbuhan serta nilai strategis bisnis." />
+        <meta property="og:site_name" content="PT Divus Global Mediacomm" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="PT Divus Global Mediacomm" />
+        <meta property="og:description" content="PT Divus Global Mediacomm menghadirkan layanan konsultasi manajemen, riset, laporan, dan komunikasi korporat." />
+        <meta property="og:image" content="https://divusglobal.com/og-image.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <link rel="canonical" href={`https://divusglobal.com${path === '/' ? '' : path}`} />
+        {(isAdminRoute || isAuthRoute) && (
+          <meta name="robots" content="noindex, nofollow" />
+        )}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "PT Divus Global Mediacomm",
+              "url": "https://divusglobal.com",
+              "logo": "https://divusglobal.com/assets/Logo.png",
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+62-8522-0203-453",
+                "contactType": "customer service"
+              },
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Purwakarta",
+                "addressRegion": "Jawa Barat",
+                "addressCountry": "ID"
+              }
+            })
+          }}
+        />
+      </Head>
       {/* Loading Screen - OUTSIDE everything else */}
       <LoadingScreen isLoading={isPageLoading} />
 

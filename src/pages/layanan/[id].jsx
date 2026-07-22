@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { Assets } from '../../assets';
 import { FaWhatsapp, FaDownload } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
+import prisma from '../../lib/prisma';
+import { serialize } from '../../lib/utils';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 50 },
@@ -49,85 +52,66 @@ const ServiceHighlights = ({ items }) => (
     </div>
 );
 
-export default function LayananDetail() {
-    const router = useRouter();
-    const { id } = router.query;
+export async function getStaticPaths() {
+    try {
+        const services = await prisma.services.findMany({ select: { id: true } });
+        const paths = services.map((service) => ({
+            params: { id: service.id.toString() }
+        }));
+        return { paths, fallback: 'blocking' };
+    } catch (e) {
+        return { paths: [], fallback: 'blocking' };
+    }
+}
 
-    const [serviceData, setServiceData] = useState(null);
-    const [subServices, setSubServices] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+export async function getStaticProps({ params }) {
+    try {
+        const id = parseInt(params.id);
+        const [rawServiceData, rawSubServices] = await Promise.all([
+            prisma.services.findUnique({ where: { id } }),
+            prisma.sub_services.findMany({ where: { services_id: id } })
+        ]);
 
-    useEffect(() => {
-        if (!id) return;
+        if (!rawServiceData) {
+            return { notFound: true };
+        }
 
-        const fetchServiceData = async () => {
-            try {
-                setLoading(true);
-
-                // 1. Fetch data service berdasarkan ID dari URL
-                const serviceResponse = await fetch(`/api/services/${id}`);
-
-                if (!serviceResponse.ok) {
-                    throw new Error('Layanan tidak ditemukan');
-                }
-
-                const serviceData = await serviceResponse.json();
-                setServiceData(serviceData);
-
-                // 2. Fetch sub-services berdasarkan service ID
-                const subServicesResponse = await fetch(`/api/sub_services/by_services/${id}`);
-
-                if (subServicesResponse.ok) {
-                    const subServicesData = await subServicesResponse.json();
-                    setSubServices(subServicesData);
-                } else {
-                    // Jika tidak ada sub-services, set array kosong
-                    setSubServices([]);
-                }
-
-                setError(null);
-
-            } catch (err) {
-                setError(err.message);
-                console.error('Error fetching service:', err);
-            } finally {
-                setLoading(false);
-            }
+        return {
+            props: {
+                initialServiceData: serialize(rawServiceData),
+                initialSubServices: serialize(rawSubServices)
+            },
+            revalidate: 3600
         };
+    } catch (error) {
+        console.error("ISR Build Error Layanan Detail:", error);
+        return {
+            props: { initialServiceData: null, initialSubServices: [] },
+            revalidate: 60
+        };
+    }
+}
 
-        fetchServiceData();
-    }, [id]);
+export default function LayananDetail({ initialServiceData, initialSubServices }) {
+    const router = useRouter();
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">
-                Loading...
-            </div>
-        );
+    if (router.isFallback) {
+        return <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">Loading...</div>;
     }
 
-    if (error) {
-        return (
-            <div className="min-h-screen flex items-center justify-center text-xl text-red-600">
-                Error: {error}
-            </div>
-        );
+    if (!initialServiceData) {
+        return <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">Layanan tidak ditemukan</div>;
     }
 
-    if (!serviceData) {
-        return (
-            <div className="min-h-screen flex items-center justify-center text-xl text-gray-600">
-                Layanan tidak ditemukan
-            </div>
-        );
-    }
-
-    // Format sub-services menjadi array of strings untuk ServiceHighlights
-    const servicesList = subServices.map(item => item.sub_services);
+    const servicesList = initialSubServices.map(item => item.sub_services);
+    const serviceData = initialServiceData;
 
     return (
         <div className="relative w-full bg-white overflow-hidden font-['Poppins']">
+            <Head>
+                <title>Layanan {serviceData.title} - PT Divus Global Mediacomm</title>
+                <meta name="description" content={serviceData.description ? serviceData.description.substring(0, 160) : `Jasa Konsultan Di Bidang ${serviceData.title}`} />
+            </Head>
 
             <header className="relative w-full">
                 {/* Hero Banner */}

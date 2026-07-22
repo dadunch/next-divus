@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { Assets } from '../../assets'; // Sesuaikan path assets Anda
 import { motion } from 'framer-motion';
+import prisma from '../../lib/prisma';
+import { serialize } from '../../lib/utils';
 
 const fadeInUp = {
     initial: { opacity: 0, y: 50 },
@@ -11,27 +13,30 @@ const fadeInUp = {
     viewport: { once: false, amount: 0.2 }
 };
 
-export default function DaftarLayanan() {
-    const [services, setServices] = useState([]);
-    const [loading, setLoading] = useState(true);
+export async function getStaticProps() {
+    try {
+        const rawServices = await prisma.services.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+        
+        return {
+            props: {
+                initialServices: serialize(rawServices)
+            },
+            revalidate: 3600 // 1 jam
+        };
+    } catch (error) {
+        console.error("ISR Build Error Layanan Index:", error);
+        return {
+            props: { initialServices: [] },
+            revalidate: 60
+        };
+    }
+}
 
-    // Fetch Data dari API
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const res = await fetch('/api/services'); // Pastikan API ini mereturn array layanan
-                const data = await res.json();
-                if (res.ok) {
-                    setServices(data);
-                }
-            } catch (error) {
-                console.error("Gagal ambil data", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchData();
-    }, []);
+export default function DaftarLayanan({ initialServices }) {
+    const [services] = useState(initialServices || []);
+    const [loading] = useState(false);
 
     return (
         <div className="min-h-screen bg-slate-50 font-['Poppins'] pb-20">

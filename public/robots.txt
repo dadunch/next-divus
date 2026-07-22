@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /Admin/
+Disallow: /admindvs
+Disallow: /api/
+
+Sitemap: https://divusglobal.com/sitemap.xml

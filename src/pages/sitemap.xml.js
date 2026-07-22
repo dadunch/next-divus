@@ -1,4 +1,4 @@
-import prisma from '../../lib/prisma';
+import prisma from '../lib/prisma';
 
 const generateSiteMap = (services) => {
   return `<?xml version="1.0" encoding="UTF-8"?>
